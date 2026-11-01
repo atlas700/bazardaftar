@@ -39,7 +39,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           <AppNavigation role={workspace.role} />
         </div>
         <div className="mx-4 border-t border-border px-2 py-5">
-          <p className="mb-3 text-xs leading-5 text-ink-muted"><T>Agricultural supply chain</T></p>
+          <p className="mb-3 text-xs leading-5 text-ink-muted"><T>Trading workspace</T></p>
           <SignOut />
         </div>
       </aside>

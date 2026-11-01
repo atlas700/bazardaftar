@@ -19,10 +19,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Afghanistan Agricultural Supply Chain OS",
-    template: "%s | Afghanistan Agricultural Supply Chain OS",
+    default: "BazarDaftar",
+    template: "%s | BazarDaftar",
   },
-  description: "A workspace for agricultural wholesalers and distributors.",
+  description: "A Pashto-first workspace for grain and mixed-goods wholesalers.",
 };
 
 export const viewport: Viewport = {

@@ -1,4 +1,4 @@
-# Agent-Sized Build Plan — Afghanistan Agricultural Supply Chain OS
+# Agent-Sized Build Plan — BazarDaftar
 
 ## Purpose
 
@@ -51,6 +51,10 @@ task readiness and order. Update both when an approved decision changes the scop
   [ADR 0013's amendment](adr/0013-local-postgresql-foundation.md#amendment--disposable-ci-verification-28-october-2026).
   This does not advance Task 32 or close G1, pilot sign-in, or deployment gates.
 - Preserve unrelated worktree changes.
+- The founder-authorized 1 November project rename uses **BazarDaftar** and
+  `atlas700/bazardaftar`; see its [handoff](handoffs/project-rename-bazardaftar.md).
+  Existing infrastructure identifiers remain compatible. This advances no
+  numbered domain task and leaves G1 and Task 15's blocker open.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
@@ -92,7 +96,7 @@ The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 Copy this, then replace the bracketed task reference with exactly one task below.
 
 ```text
-You are continuing the Afghanistan Agricultural Supply Chain OS repository.
+You are continuing the BazarDaftar repository (formerly AFCS).
 
 First inspect: AGENTS.md; the relevant docs/*.md rules; git diff; the current
 implementation; the gate status and pilot delivery order in this plan; and the

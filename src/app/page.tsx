@@ -23,7 +23,7 @@ export default async function Home() {
           <p className="mt-5 text-sm text-ink-muted"><T>Joining your team?</T> <Link href="/join" prefetch={false} className="inline-flex min-h-11 items-center font-medium text-primary hover:underline"><T>Staff access</T></Link></p>
         </section>
         <section className="overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-[0_16px_64px_#1d1d1f08]" aria-labelledby="workspace-intro">
-          <div className="border-b border-border/70 px-7 py-7"><p className="text-xs font-medium text-ink-muted">AFCS</p><h2 id="workspace-intro" className="mt-2 text-xl font-semibold tracking-tight"><T>A place for the essentials.</T></h2></div>
+          <div className="border-b border-border/70 px-7 py-7"><p className="text-xs font-medium text-ink-muted">BazarDaftar</p><h2 id="workspace-intro" className="mt-2 text-xl font-semibold tracking-tight"><T>A place for the essentials.</T></h2></div>
           <div className="divide-y divide-border/60 px-7">
             <div className="flex gap-4 py-7"><Package className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your products</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>A clear catalogue of what you trade.</T></p></div></div>
             <div className="flex gap-4 py-7"><Scale className="mt-1 size-5 shrink-0 text-success" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your measures</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>Local weight units. Exact definitions.</T></p></div></div>
@@ -31,7 +31,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto max-w-6xl border-t border-border/70 px-6 py-6 text-xs text-ink-muted sm:px-10"><T>Afghanistan Agricultural Supply Chain OS</T></footer>
+      <footer className="mx-auto max-w-6xl border-t border-border/70 px-6 py-6 text-xs text-ink-muted sm:px-10">BazarDaftar · <T>Trading workspace</T></footer>
     </div>
   );
 }
