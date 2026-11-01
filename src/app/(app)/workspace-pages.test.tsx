@@ -38,5 +38,6 @@ describe("workspace identity and permitted actions", () => {
     }
     const settings = renderToStaticMarkup(await SettingsPage());
     expect(settings.includes('href="/suppliers"')).toBe(hasPermission(role, "suppliers.read"));
+    expect(settings).toContain('href="/settings/warehouse"');
   });
 });

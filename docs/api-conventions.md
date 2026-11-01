@@ -226,6 +226,28 @@ names include inactive rows. Outcomes follow the catalogue's `invalid`,
 success refreshes supplier list/detail pages; ambiguous outcomes require reloading
 the directory before retrying. Descriptive terms establish no debt or due date.
 
+## Warehouse setup contract
+
+`/settings/warehouse` uses `getWarehouseWorkspace()` under `organization.read`.
+All approved business roles can read; owner/admin can manage under
+`organization.manage`. `updateWarehouse` authenticates and forwards only operation,
+`warehouseId` (mapped to validated command `id`), name, and optional location.
+Caller organization, role, and active flags never establish authority or bypass
+the explicit `create-warehouse`, `update-warehouse`, `deactivate-warehouse`, and
+`activate-warehouse` commands. Mutations acquire the staff organization lock and
+recheck provider identity/local grants before the tenant-scoped write.
+
+A business owns one record across active/inactive states. A repeated create
+returns `exists`; a missing/foreign record or already-completed status transition
+returns `conflict`. Invalid fields return `invalid`; success refreshes the setup
+page. Unexpected/ambiguous failures return a safe correlation reference and ask
+the user to reload. Deactivation requires confirmation, retains the record, and
+can be reversed by reactivating that same warehouse. Field edits preserve its state.
+
+`getActiveWarehouse()` exposes only an active warehouse from the verified tenant,
+or null. This is a selection helper, not transaction authorization. Future
+purchases/receipts must revalidate ownership and activity inside their transaction.
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).
