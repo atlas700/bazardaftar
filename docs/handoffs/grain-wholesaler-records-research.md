@@ -3,6 +3,11 @@
 Date: 31 October 2026. Status: primary-source desk research; proposed record
 checklist for review. This note changes no pilot policy or G1 evidence status.
 
+Historical desk-research note: B001's later answers and the 1 November G1
+acceptance supersede the then-unknown fields and task blocker described below.
+See the [current evidence register](g1-evidence-register.md); literature still
+adds no field observations or participant records.
+
 ## Evidence and scope
 
 - **Literature:** FAO and CARE guidance below describes general bookkeeping and

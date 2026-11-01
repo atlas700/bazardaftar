@@ -283,8 +283,9 @@ same approval and a separate scope decision. See
 PostgreSQL 16, Drizzle with `pg`, the structural ownership model, and explicitly
 reviewed/run migrations with forward-fix and backup/restore recovery. See
 [ADR 0013](adr/0013-local-postgresql-foundation.md). Detailed business schema and
-screens after Task 14 still require G1 evidence; Tasks 13 and 14 have separate limited
-founder-authorized exceptions in ADR 0003. ADR 0019 resolves the
+screens after Task 14 require task-specific acceptance checks. G1 was accepted on
+retrospective founder evidence on 1 November under ADR 0003; Tasks 13 and 14 had
+separate limited pre-research exceptions. ADR 0019 resolves the
 numeric policy; other G4 readiness gates remain open. Current eligibility is recorded in the
 [build plan's gate status](agent-sized-build-plan.md#current-gate-status).
 
@@ -352,5 +353,5 @@ Apply/reapply reviewed migration 0005 before using products. Run
 `src/db/products.integration.test.ts` with the same isolated verification URL as
 the existing suites. It tests all roles, tenant denial, references, uniqueness,
 concurrent creation, rollback, deactivation, and queued revocation. Default prices,
-inventory, and grade/origin/lot attributes are deferred. G1 remains open despite
-the Task 14 implementation exception.
+inventory, and grade/origin/lot attributes are deferred. Task 14's exception did
+not close G1; the separate 1 November founder decision now records G1 acceptance.

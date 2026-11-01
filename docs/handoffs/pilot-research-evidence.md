@@ -1,6 +1,6 @@
 # Pilot research evidence — founder interview
 
-Initial record: 28 October 2026. Updated: 31 October 2026.
+Initial record: 28 October 2026. Updated: 1 November 2026.
 
 ## Source and status
 
@@ -23,13 +23,15 @@ to the already reported weighing, receiving, and notebook process rather than
 supplying a new transaction example. No new workflow detail is inferred from that
 confirmation. See the [confirmed G0–G4 plan](pilot-readiness-decisions.md).
 
-**G1 remains open.** The reported totals exceed the 20-interview/five-observation
-threshold, but dated, anonymized references and complete per-business workflow
-coverage still need to be reconstructed, reviewed, and supplemented where unknown.
-Do not manufacture historical notes, exact dates, participants, or visit records.
-The earlier 28 October total was ten interviews with an unknown observation count;
-it is superseded by this latest report. Approximately 40 findings was never an
-interview count.
+**G1 accepted by founder decision on 1 November.** After reconstructing B001,
+the founder requested completion because the businesses followed the same workflow
+and did not need repeated questions. The [ADR 0003 amendment](../adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026)
+replaces the original 20-recorded-interview/five-observation prerequisite with
+acceptance of the retrospective shared findings. The original checklist is not
+fulfilled or verified. No historical notes, exact dates, participants, or visits
+are manufactured. The earlier ten-interview report is superseded by the reported
+50; approximately 40 findings was never an interview count. Pilot label and live
+release checks remain separate.
 
 ## Confirmed workflow summary
 
@@ -131,41 +133,40 @@ rounding before allocation; AFN/PKR balances stay separate. Per-payable owner-on
 reduction caps and transactional/idempotent posting remain required. This is an
 approved policy change, not implemented payment behavior or completed G1 evidence.
 
-## Remaining G1 evidence
+## G1 consolidation and acceptance — 1 November 2026
 
-Collection is tracked in the [G1 evidence register](g1-evidence-register.md),
-started on 31 October 2026. Its first partial business/visit record maps an owner,
-two workers, and a manager. The founder confirms that all four answered questions
-about the business. These are four reported participants with partial records;
-the business buys and sells wheat (غنم) and maize/corn (جواری). The founder also
-confirms personally seeing goods weighed and the manager entering actual received
-weight in a notebook at B001, recalled later rather than documented at the visit.
-Individual answers and full workflow coverage still need reconstruction and review. This
-adds no completed observations or accepted interview records to the reviewed
-totals. The reported totals above remain founder-reported.
+The [G1 evidence register](g1-evidence-register.md) now records B001 in Helmand:
+one reconstructed day-long visit, four mapped participants, owner/manager problem
+summaries, grouped worker findings, and recalled observations across purchase,
+receiving, stock, sale, debt, payment, correction, and reporting. It does not claim
+20 reconstructed interviews or five individually mapped observations.
+
+The same purchase agreement/delivery involved approximately 440 kg wheat and
+1,000 kg maize, separately weighed and accepted by the manager with quantities
+matching the agreement. Wheat's quoted 12,000 AFN per khorwar is recalled as exact;
+maize's 11,000 AFN per khorwar is approximate. These historical values are not
+catalogue defaults or current market prices. The observed mixed AFN/PKR payment
+was for a **different supplier**; amounts, conversion, and allocation remain
+unknown. The crossed-out writing correction changed no stock balance. Actual
+sale entry at goods handover is now recalled as observed, not inferred from the
+earlier desk-research proposal. See R006–R015 for the source distinctions.
 
 At the founder's request, the [grain-wholesaler records research](grain-wholesaler-records-research.md)
-provides a source-backed checklist of proposed business records and fields.
-It supports collection without requiring the founder to specify every standard
-field. These recommendations do not establish missing B001 facts or replace
-the required interviews and observations. Sale-recording time remains unknown.
+provides proposed business records and fields. Literature supplies no missing
+field observations. Further work is targeted at concrete discrepancies; the
+founder requested no repeated per-business questionnaire for G1.
 
-- [ ] Reconstruct an anonymized evidence register for the reported interviews and
-  observations against the 20-interview/five-observation requirement. Label
-  recollections, approximate dates, and unknowns; confirm counts without turning
-  the estimated 50 businesses into invented individual records.
-- [ ] Keep dated, anonymized references to the private evidence and summarize
-  each observed business's purchase, receiving, stock, sale, debt, payment,
-  correction, and reporting flow. This common-workflow summary does not establish
-  that all required activities were observed at every business.
-- [ ] Keep per-business evidence for the approved grain and mixed-goods pilot.
-  Market approval does not establish the required interview and observation
-  coverage; identify the businesses and workflows through anonymized references.
-- [ ] Complete the sale-flow evidence and remaining purchase/receipt terminology
-  under [ADR 0011](../adr/0011-validate-purchase-receipt-terminology.md). Observing
-  sales does not add sales to the approved purchasing pilot.
-- [ ] Reconcile material workflow differences with accepted policies before
-  declaring the dependent tasks ready.
+Remaining limitations and follow-up:
+
+- Totals remain founder-reported; mixed-goods coverage is not separately mapped.
+  Do not copy B001 into additional businesses or assign group answers individually.
+- Preserve the approximate visit context and amounts; original documents and
+  independent verification are absent. Interviewer guesses accompanied prompts.
+- Validate remaining purchase/receipt labels under [ADR 0011](../adr/0011-validate-purchase-receipt-terminology.md).
+  Observing sales or loading work adds no sales or labour feature.
+- Resolve real outgoing-stock reconciliation before claiming accurate live stock
+  in a purchasing-only pilot. Keep owner-only posted adjustments distinct from
+  the observed writing correction; retain the approved payment policies.
 
 The confirmed intent is a trustworthy stock and supplier-balance view using the
 familiar notebook workflow. The approved payment policy is recorded in the related
@@ -174,7 +175,10 @@ payments and multiple warehouses remain excluded. Phone-sign-in evidence and
 deployment/restore readiness are recorded separately in the
 [30 October handoff](pilot-readiness-decisions.md).
 
-## Review and verification
+Next: **Task 15 — suppliers**, with G1 accepted. The
+[acceptance handoff](g1-research-acceptance.md) records this documentation delivery.
+
+## Historical review and verification — 28–31 October 2026
 
 The following records the 28 October review. The
 [30 October handoff](pilot-readiness-decisions.md#documentation-delivery) records

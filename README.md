@@ -11,7 +11,9 @@ The current application supports business onboarding, staff access, products,
 weight units, and categories. The approved pilot workflow adds purchasing,
 receiving, supplier debt, supplier payments, and reconciliation in the order set
 out in the [build plan](docs/agent-sized-build-plan.md). Those planned capabilities
-are not all implemented; G1 and the remaining release gates stay open.
+are not all implemented. G1 is accepted on retrospective founder evidence under
+[ADR 0003](docs/adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026);
+remaining pilot-release gates stay open.
 
 ## Getting started
 
