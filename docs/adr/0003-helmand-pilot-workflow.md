@@ -34,8 +34,9 @@ that must be reviewed against G1 evidence.
 
 - The future full workflow remains purchase, receive, sell, payment, and balances,
   but implementation begins with purchasing and receiving only.
-- G1 remains open: record 20 interviews and 5 workflow observations, then review
-  this scope if the evidence contradicts it.
+- G1 originally required 20 recorded interviews and 5 workflow observations.
+  The 1 November amendment below accepts retrospective shared-workflow evidence
+  instead. Review this scope if subsequent evidence contradicts it.
 - Work that introduces an excluded capability requires a new decision record or an
   explicit amendment to this ADR.
 
@@ -81,6 +82,35 @@ identity remains binding; no inventory calculation is included.
 This is a Task 14 exception only. It does not close G1 or authorize Task 15 and
 later, pilot release, or additional workflow policies. The earlier Task 13
 exception remains historical authorization for that task.
+
+## Amendment — Founder acceptance of retrospective G1 research (1 November 2026)
+
+The founder requested completion of G1 because the businesses and workflows were
+the same and instructed the agent not to repeat the interview for each business.
+This follows the reported 50 interviewees and approximately 50 observed businesses,
+the reconstructed B001 example, and disclosure that the original gate still needed
+individual interview and observation records.
+
+Accept G1 as closed by founder decision on that retrospective evidence. This
+replaces the original requirement to reconstruct 20 individual interview records
+and five business observation records as a prerequisite to continued development.
+Those records have **not** been reconstructed or verified; do not label this as
+completion of the original evidence checklist. Keep the reported totals and common
+workflow assertion separate from the single mapped B001 visit. Do not create
+additional participant, business, or visit entries from the shared assertion.
+
+The trade-off is less traceability and weaker evidence about differences between
+businesses. The founder accepts the consolidated findings instead of repeated
+retrospective interviews. Preserve unknowns and collect new evidence when a
+concrete task or pilot discrepancy requires it; repeated interviews are no longer
+a G1 prerequisite. The [evidence register](../handoffs/g1-evidence-register.md) and
+[acceptance handoff](../handoffs/g1-research-acceptance.md) record the review.
+
+Task 15 — suppliers is next, with its G1 blocker removed. This decision implements
+no feature, adds no sales or labour scope, and changes no financial or authorization
+policy. Pashto label validation, handling real outgoing stock in the purchasing-only
+pilot, and authentication/deployment/restore checks remain follow-up work.
+G1 acceptance alone does not establish pilot-release readiness.
 
 ## Links
 

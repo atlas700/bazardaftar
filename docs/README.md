@@ -41,6 +41,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Confirmed G0–G4 readiness decisions and documentation handoff](handoffs/pilot-readiness-decisions.md)
 - [G1 evidence reconstruction, revisit checklist, and private notes template](handoffs/pilot-research-fieldwork.md)
 - [G1 participant, observation, and workflow evidence register](handoffs/g1-evidence-register.md)
+- [G1 retrospective research acceptance and documentation handoff](handoffs/g1-research-acceptance.md)
 - [Grain-wholesaler business records and source-backed field checklist](handoffs/grain-wholesaler-records-research.md)
 - [Completed numeric policy interview](handoffs/pilot-numeric-policy.md)
 - [Pilot-plan and quality maintenance handoff](handoffs/pilot-plan-and-quality.md)

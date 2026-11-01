@@ -1,8 +1,16 @@
 # G1 research — evidence reconstruction and business revisits
 
-Prepared: 28 October 2026. Updated: 31 October 2026. Use for the approved Helmand grain and mixed-goods
+Prepared: 28 October 2026. Updated: 1 November 2026. Use for the approved Helmand grain and mixed-goods
 pilot. Current counts and gaps are in the [research record](pilot-research-evidence.md).
 This is a blank collection template; it records no completed interview or visit.
+
+**Current status:** G1 is accepted on the founder's retrospective shared-workflow
+evidence under [ADR 0003's 1 November amendment](../adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026).
+The original 20-individual-interview/five-observation checklist was not fulfilled.
+Use this template for targeted future questions or discrepancies; do not require
+the founder to repeat it for every reported business. B001's expanded evidence
+and limits are in the register. The older collection instructions below explain
+the original evidence protocol, not an outstanding prerequisite to G1 acceptance.
 
 Use the [G1 evidence register](g1-evidence-register.md) to track reconstructed
 interviews, observations, and workflow coverage. It now contains B001's partial
@@ -72,4 +80,4 @@ Update the research record with completed evidence. Review G1 against its
 [20-interview/five-observation requirement](../agent-sized-build-plan.md#g1--observe-the-work-before-modelling-it),
 per-business workflow coverage, terminology, and unresolved policy differences.
 Researching sales or worker payments does not add them to the pilot's feature
-scope. Task 14 remains blocked until G1 is satisfied.
+scope. Task 14 is implemented; Task 15 is next with G1 acceptance recorded.

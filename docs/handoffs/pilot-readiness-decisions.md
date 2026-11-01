@@ -2,6 +2,11 @@
 
 Date: 30 October 2026.
 
+Historical readiness record. G1 was subsequently accepted on retrospective founder
+evidence on 1 November; see the [acceptance handoff](g1-research-acceptance.md).
+Its revised decision supersedes the G1 reconstruction prerequisite below; other
+pilot authentication, label, and operational follow-up remains required.
+
 ## Source and authorization
 
 The founder confirmed this plan after a one-question-at-a-time interview and

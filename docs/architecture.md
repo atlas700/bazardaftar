@@ -51,8 +51,8 @@ resolves the numeric-policy prerequisite and approves custom weights and recorde
 mixed-currency cash settlement. Amended
 [ADR 0009](adr/0009-specific-obligation-payment-allocation.md) requires
 supplier-balance payment entry with oldest-first same-currency allocations.
-Detailed business modelling still requires G1;
-remaining deployment readiness stays open. The owning details are
+G1 is accepted on retrospective founder evidence under ADR 0003's 1 November
+amendment; task-specific checks and remaining deployment readiness stay open. The owning details are
 tracked in [database](database.md), [security](security.md),
 [API conventions](api-conventions.md), and [deployment](deployment.md).
 

@@ -19,19 +19,20 @@ administrative use. The expected pilot contacts are recorded only as Pilot A (ow
 (warehouse/operations), and Pilot C (sales/accounts). See
 [ADR 0003](adr/0003-helmand-pilot-workflow.md).
 
-**Open — G1 workflow research:** record 20 interviews and 5 workflow observations
-covering purchase, receiving, stock, sale, debt, payment, correction, and reporting.
-On 30 October the founder reports 50 interviewees and approximately 50 personally
-observed businesses, with the same workflow and no original notes. These totals
-are recalled; dated, anonymized references and full business-by-business workflow
-coverage still need reconstruction and review. See the
-[research evidence record](handoffs/pilot-research-evidence.md).
+**Accepted — G1 retrospective workflow research (1 November):** the founder
+accepted the reported 50 interviewees, approximately 50 observed businesses,
+reconfirmed common workflow, and reconstructed B001 example, requesting completion
+without repeated business interviews. The [ADR 0003 amendment](adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026)
+replaces the original 20-individually-recorded-interview/five-observation prerequisite.
+That original checklist remains unverified; reported totals do not become mapped
+records. See the [evidence register](handoffs/g1-evidence-register.md) for B001's
+eight workflow topics, approximate amounts, grouped worker answers, and unknowns.
 
 **Decided — G2 pilot workflow:** validate purchase-to-receipt first to improve stock
 accuracy and supplier balance visibility. The pains, four-week success metric, and
-explicit exclusions are in [ADR 0003](adr/0003-helmand-pilot-workflow.md). G1
-research remains required before treating this founder-approved scope as
-pilot-validated.
+explicit exclusions are in [ADR 0003](adr/0003-helmand-pilot-workflow.md). G1 is
+accepted on retrospective founder evidence; this is not proof of live software
+use, retention, or correctness of every unobserved edge case.
 
 **Decided — G3 units:** accept bags with actual recorded size, maan, khorwar,
 kilograms, and fractional quantities using kg as the common stock unit with
@@ -99,7 +100,8 @@ remaining labels are still awaiting that review.
 kg/gram stock, two-decimal entered unit prices, exact quantity/price conversions,
 half-up two-decimal purchase lines, summed rounded lines, cumulative partial-
 receipt reconciliation, and recorded mixed-currency cash settlement/reductions.
-Validate chosen terminology as part of G1. The
+Validate remaining terminology before pilot label release under ADR 0011;
+G1 acceptance does not complete that review. The
 localization approach remains General Translation with `en-US` and `ps-AF`; see
 [ADR 0001](adr/0001-launch-localization.md). Consult the
 [build plan's gate status](agent-sized-build-plan.md#current-gate-status) for current

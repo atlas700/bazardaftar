@@ -50,8 +50,9 @@ configuration fails without echoing credential values.
 **Decided — G4 role matrix:** the founder approved
 [ADR 0016](adr/0016-local-business-authorization.md) on 27 October: seven fixed local
 roles, an explicit action matrix, membership-bound assignments, one-time owner
-bootstrap, and a server-only guard. Task 10 implements this policy; G1 and the
-remaining operational gates stay open.
+bootstrap, and a server-only guard. Task 10 implements this policy. G1 is accepted
+on retrospective founder evidence under ADR 0003's 1 November amendment; remaining
+operational gates stay open. G1 acceptance changes no permission or security boundary.
 
 [ADR 0019](adr/0019-pilot-numeric-settlement-policy.md) approves a future fixed
 `supplier_payments.adjust_rounding` permission for owner only. Task 25 must enforce

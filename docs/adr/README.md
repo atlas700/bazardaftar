@@ -21,8 +21,9 @@ clearly distinguish evidence from assumptions.
 [ADR 0001](0001-launch-localization.md) and
 [ADR 0002](0002-clerk-authentication.md) record the accepted localization and pilot
 authentication decisions. [ADR 0003](0003-helmand-pilot-workflow.md) records the
-pilot workflow and the 28 October amendment selecting Helmand grain and
-mixed-goods wholesalers. [ADR 0004](0004-single-stock-unit.md) records
+pilot workflow, the 28 October grain/mixed-goods market amendment, and the
+1 November acceptance of retrospective G1 research in place of the original
+individually recorded evidence prerequisite. [ADR 0004](0004-single-stock-unit.md) records
 the pilot's single-stock-unit policy. [ADR 0005](0005-product-stock-identity.md)
 records the pilot's product-identity policy. [ADR 0006](0006-receipt-variance-approval.md)
 records the pilot's receipt-variance approval policy. [ADR 0007](0007-no-negative-stock.md)
@@ -54,9 +55,11 @@ numeric policy, introduces custom weight measures and recorded mixed-currency
 settlement, and approves a future owner-only cash rounding reduction permission.
 The [30 October readiness record](../handoffs/pilot-readiness-decisions.md) captures
 50 reported interviewees, approximately 50 observed businesses without original
-notes, and a reported successful phone-code login. Research coverage, remaining
-pilot authentication validation, terminology review, and deployment readiness stay open.
+notes, and a reported successful phone-code login. G1 was accepted by the founder
+on 1 November with the missing original audit trail explicitly retained as a
+limitation. Remaining pilot authentication validation, terminology review, and
+deployment readiness stay open.
 The [build plan's gate status](../agent-sized-build-plan.md#current-gate-status)
-is the task-readiness record. G1 and the remaining G4 decisions stay
-open until evidence or founder approval exists. Record each decision before starting
+is the task-readiness record. G1 now has founder acceptance; remaining G4 decisions
+and verification stay open. Record each decision before starting
 a task that depends on it.
