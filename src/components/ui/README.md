@@ -2,7 +2,7 @@
 
 Button, Input, NativeSelect, and Field are adapted from the MIT-licensed
 [shadcn/ui new-york-v4 components](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/new-york-v4/ui).
-Retrieved 31 October 2026. Styles use AFCS tokens, 44px touch targets, and logical
+Retrieved 31 October 2026. Styles use BazarDaftar tokens, 44px touch targets, and logical
 directional properties. Field exposes only the native elements this app needs.
 Forms keep native Server Actions and authoritative server-side Zod validation.
 

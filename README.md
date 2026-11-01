@@ -1,33 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BazarDaftar
 
-## Getting Started
+A Pashto-first workspace for grain and mixed-goods wholesalers, starting in
+Helmand, Afghanistan. The name pairs **Bazar** with **Daftar** to evoke a market's
+business records, with room to serve different kinds of wholesale goods.
 
-First, run the development server:
+Repository: [atlas700/bazardaftar](https://github.com/atlas700/bazardaftar).
+The npm package name is `bazardaftar`.
+
+The current application supports business onboarding, staff access, products,
+weight units, and categories. The approved pilot workflow adds purchasing,
+receiving, supplier debt, supplier payments, and reconciliation in the order set
+out in the [build plan](docs/agent-sized-build-plan.md). Those planned capabilities
+are not all implemented; G1 and the remaining release gates stay open.
+
+## Getting started
+
+Use Node.js 24.x and npm. Install the locked dependencies:
+
+```bash
+npm ci
+```
+
+Configure `.env.local` using `.env.example` and the
+[authentication setup](docs/deployment.md#authentication-setup-and-smoke-check)
+and [database guide](docs/database.md). Keep credentials out of Git.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000). Application routes live in `src/app`.
+The stack uses Next.js App Router, React, TypeScript, Clerk, and PostgreSQL/Drizzle.
+See the [documentation index](docs/README.md) and [project rules](AGENTS.md).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Validation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
 
-## Learn More
+Database integration tests require the dedicated isolated database described in
+[Testing](docs/testing.md); a default test run skips them.
 
-To learn more about Next.js, take a look at the following resources:
+## Rename compatibility
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+BazarDaftar was previously called AFCS (Afghanistan Agricultural Supply Chain OS),
+and the repository was `atlas700/code-1`. Historical ADRs and handoffs retain their
+original names. Existing `AFCS_TEST_DATABASE_URL`, PostgreSQL names, Clerk
+`afcs-` onboarding slugs, and `afcsOnboardingId` metadata remain stable so the
+rename does not interrupt existing setups or onboarding recovery. Existing local
+checkouts may keep their folder names; the folder name is not the product name.
 
 ## Deployment plan
 
@@ -35,5 +60,3 @@ Temporary testing targets Netlify Free and Neon Free with synthetic business
 records. Paid production hosting is deferred. Follow the approved targets and
 remaining readiness checks in [Deployment](docs/deployment.md) and
 [ADR 0018](docs/adr/0018-managed-pilot-hosting.md) before setup.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

@@ -1,12 +1,13 @@
 # Documentation index
 
-This directory is the durable context for contributors to the Afghanistan
-Agricultural Supply Chain OS. Facts confirmed by the repository or build plan are
-labelled **Confirmed**. Product and infrastructure choices that need founder or
-pilot evidence are labelled **Open**.
+This directory is the durable context for contributors to BazarDaftar (formerly
+AFCS, Afghanistan Agricultural Supply Chain OS). Facts confirmed by the repository
+or build plan are labelled **Confirmed**. Product and infrastructure choices that
+need founder or pilot evidence are labelled **Open**.
 
 ## Product and engineering documents
 
+- [BazarDaftar rename handoff](handoffs/project-rename-bazardaftar.md)
 - [Product requirements](product-requirements.md)
 - [Architecture](architecture.md)
 - [Database](database.md)
