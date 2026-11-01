@@ -24,6 +24,9 @@
   under the [Task 13 exception](adr/0003-helmand-pilot-workflow.md#amendment--task-13-implementation-before-g1-closure-28-october-2026).
   `0005_products.sql` adds products and same-tenant catalogue foreign keys under
   the [Task 14 exception](adr/0003-helmand-pilot-workflow.md#amendment--task-14-implementation-before-g1-closure-31-october-2026).
+  `0006_suppliers.sql` adds tenant-owned supplier contact records under
+  [ADR 0021](adr/0021-supplier-contact-records.md), after G1 acceptance. It contains
+  no balance, payable, or payment fields.
 - `DATABASE_URL` is required by application startup and migration tooling. It is
   server-only and must never use a `NEXT_PUBLIC_` prefix.
 - SQL and metadata live in `drizzle/`. Migrations are explicit operations, separate
@@ -79,7 +82,7 @@ Use `npm.cmd` when forwarding flags in Windows PowerShell; in other shells use
 `npm`. This avoids the PowerShell `npm.ps1` wrapper consuming migration flags.
 
 Verify reviewed migrations on a separate database before development. The retained
-`afcs_task07_verify` receives the sixth migration for Task 14. A fresh checkout may
+`afcs_task07_verify` receives the seventh migration for Task 15. A fresh checkout may
 instead use a newly provisioned empty database. In a
 dedicated PowerShell terminal, set a process-only override without recording the
 connection string in shell history:
@@ -91,9 +94,9 @@ npm run db:migrate
 Remove-Item Env:DATABASE_URL
 ```
 
-Both runs must succeed, with exactly six migration rows in
-`drizzle.__drizzle_migrations` and seven public tables (the four foundation tables
-plus `catalog_units`, `product_categories`, and `products`) plus the ledger.
+Both runs must succeed, with exactly seven migration rows in
+`drizzle.__drizzle_migrations` and eight public tables (the four foundation tables
+plus `catalog_units`, `product_categories`, `products`, and `suppliers`) plus the ledger.
 Verify prior migration hashes remain unchanged. Run the isolated onboarding tests
 below for uniqueness, concurrency, settings constraints, and rollback. Stop on any
 failure. Removing
@@ -355,3 +358,19 @@ the existing suites. It tests all roles, tenant denial, references, uniqueness,
 concurrent creation, rollback, deactivation, and queued revocation. Default prices,
 inventory, and grade/origin/lot attributes are deferred. Task 14's exception did
 not close G1; the separate 1 November founder decision now records G1 acceptance.
+
+## Suppliers
+
+Task 15 adds `suppliers`: generated UUID, organization, name, optional phone,
+location, Individual/Business type, notes, descriptive payment terms, and active
+state under [ADR 0021](adr/0021-supplier-contact-records.md). Database constraints
+mirror field bounds and the type vocabulary. Display names are unique within a
+business, including inactive rows; phone contacts are not unique or credentials.
+No mutable balance, payment, payable, or automatic due-date field is stored.
+
+`src/db/suppliers.ts` enforces existing read/manage permissions, parameterized
+tenant scoping, the shared organization lock, and fresh membership/grant checks.
+Deactivation preserves readable records. Future purchasing must validate active
+suppliers within its own transaction. Apply/reapply reviewed migration 0006 before
+using the directory. Run `src/db/suppliers.integration.test.ts` with the same
+isolated verification URL as the other suites; CI includes all five suites.

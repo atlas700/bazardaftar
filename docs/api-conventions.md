@@ -207,9 +207,29 @@ records. Malformed, missing, and foreign detail IDs return the same not-found
 control flow. Reads never seed data. Future transaction selectors must check active
 products/units; this general catalogue list does not establish posting eligibility.
 
+## Supplier directory contract
+
+`/suppliers` and `/suppliers/[id]` use `getSuppliersWorkspace()` and
+`getSupplier(id)` under `suppliers.read`. Reads return only tenant-scoped scalar
+contact details; missing, malformed, and foreign IDs share not-found behavior.
+`updateSupplier` authenticates and forwards only supplier fields to
+`manageSupplier` under `suppliers.manage`; it accepts only `create-supplier`,
+`update-supplier`, and `deactivate-supplier`. Caller tenant, role, and balance
+fields are ignored. The shared organization lock precedes fresh provider identity
+and local grant checks on the transaction connection.
+
+Create/edit uses [ADR 0021's contact limits](adr/0021-supplier-contact-records.md).
+Optional Radix type `unspecified` becomes null; unsupported types are rejected.
+Inactive rows remain readable but cannot be edited or revived. Duplicate display
+names include inactive rows. Outcomes follow the catalogue's `invalid`,
+`duplicate`, `conflict`, `success`, and safe correlated `error` contract. Only
+success refreshes supplier list/detail pages; ambiguous outcomes require reloading
+the directory before retrying. Descriptive terms establish no debt or due date.
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).
-Tasks 09–11 follow ADRs 0014–0016. ADR 0019 resolves numeric policy. G1 research,
-pilot sign-in validation, and deployment gates remain open in the
+Tasks 09–11 follow ADRs 0014–0016. ADR 0019 resolves numeric policy, and ADR 0021
+records Task 15 supplier contacts. G1 was accepted on 1 November; pilot sign-in
+validation and deployment gates remain open in the
 [build plan](agent-sized-build-plan.md#current-gate-status).
