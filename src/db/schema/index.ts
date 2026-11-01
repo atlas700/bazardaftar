@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { boolean, check, foreignKey, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { businessRoles } from "@/auth/permissions";
+import { supplierTypes } from "@/domain/supplier";
 
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -53,6 +54,27 @@ export const products = pgTable("products", {
     foreignColumns: [productCategories.organizationId, productCategories.id] }),
   check("products_name", sql`${table.name} = btrim(${table.name}) and length(${table.name}) between 1 and 80`),
   check("products_sku", sql`${table.sku} is null or (${table.sku} = btrim(${table.sku}) and length(${table.sku}) between 1 and 40)`),
+]);
+
+export const suppliers = pgTable("suppliers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  location: text("location"),
+  type: text("type", { enum: supplierTypes }),
+  notes: text("notes"),
+  paymentTerms: text("payment_terms"),
+  isActive: boolean("is_active").default(true).notNull(),
+}, (table) => [
+  uniqueIndex("suppliers_organization_name").on(table.organizationId, sql`lower(btrim(${table.name}))`),
+  check("suppliers_name", sql`${table.name} = btrim(${table.name}) and length(${table.name}) between 1 and 80`),
+  check("suppliers_phone", sql`${table.phone} is null or (${table.phone} = btrim(${table.phone}) and length(${table.phone}) between 3 and 40
+    and ${table.phone} ~ '^[+0-9۰-۹٠-٩(). -]+$' and ${table.phone} ~ '[0-9۰-۹٠-٩]')`),
+  check("suppliers_location", sql`${table.location} is null or (${table.location} = btrim(${table.location}) and length(${table.location}) between 1 and 200)`),
+  check("suppliers_type", sql`${table.type} is null or ${table.type} in ('individual', 'business')`),
+  check("suppliers_notes", sql`${table.notes} is null or (${table.notes} = btrim(${table.notes}) and length(${table.notes}) between 1 and 2000)`),
+  check("suppliers_payment_terms", sql`${table.paymentTerms} is null or (${table.paymentTerms} = btrim(${table.paymentTerms}) and length(${table.paymentTerms}) between 1 and 500)`),
 ]);
 
 export const organizationRoleAssignments = pgTable("organization_role_assignments", {

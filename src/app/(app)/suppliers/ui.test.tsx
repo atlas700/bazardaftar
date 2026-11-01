@@ -59,6 +59,8 @@ describe("supplier pages and form", () => {
     const active = renderToStaticMarkup(await SupplierPage({ params: Promise.resolve({ id: supplier.id }) }));
     expect(mocks.getSupplier).toHaveBeenCalledWith(supplier.id);
     for (const text of ["Edit supplier", "Call before delivery", "By agreement", 'value="update-supplier"', 'value="deactivate-supplier"', 'formNoValidate=""']) expect(active).toContain(text);
+    expect(active).toContain('name="supplierId"');
+    expect(active).not.toContain('name="id"');
     mocks.getSupplier.mockResolvedValue({ ...supplier, isActive: false });
     const inactive = renderToStaticMarkup(await SupplierPage({ params: Promise.resolve({ id: supplier.id }) }));
     expect(inactive).toContain("Inactive"); expect(inactive).toContain("record is retained"); expect(inactive).not.toContain("<form");

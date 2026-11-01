@@ -27,6 +27,11 @@ describe("supplier Server Action", () => {
     await updateSupplier({ status: "idle" }, form);
     expect(mocks.manageSupplier).toHaveBeenCalledWith(expect.objectContaining({ type: null }));
   });
+  it("maps the supplier-specific form identifier to the validated command id", async () => {
+    const form = new FormData(); form.set("operation", "deactivate-supplier"); form.set("supplierId", "supplier"); form.set("id", "spoofed");
+    await updateSupplier({ status: "idle" }, form);
+    expect(mocks.manageSupplier).toHaveBeenCalledWith(expect.objectContaining({ operation: "deactivate-supplier", id: "supplier" }));
+  });
   it("preserves sign-in redirects and permission denials", async () => {
     mocks.requireSession.mockImplementation(() => redirect("/sign-in"));
     await expect(updateSupplier({ status: "idle" }, new FormData())).rejects.toHaveProperty("digest", expect.stringContaining("NEXT_REDIRECT"));

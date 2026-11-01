@@ -14,6 +14,7 @@ vi.mock("gt-next", () => ({ T: ({ children }: { children: ReactNode }) => childr
 import AppLayout from "./layout";
 import DashboardPage from "./dashboard/page";
 import SettingsPage from "./settings/page";
+import { hasPermission } from "@/auth/permissions";
 
 beforeEach(() => {
   mocks.requireSession.mockResolvedValue({ userId: "user_a" });
@@ -35,5 +36,7 @@ describe("workspace identity and permitted actions", () => {
       const html = renderToStaticMarkup(await Page());
       expect(html.includes('href="/settings/staff"')).toBe(role === "owner" || role === "admin");
     }
+    const settings = renderToStaticMarkup(await SettingsPage());
+    expect(settings.includes('href="/suppliers"')).toBe(hasPermission(role, "suppliers.read"));
   });
 });

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { T, useGT } from "gt-next";
 import { hasPermission } from "@/auth/permissions";
-import { ArrowLeftRight, Banknote, Boxes, LayoutGrid, Package, Settings2, ShoppingBag, ShoppingCart } from "lucide-react";
+import { ArrowLeftRight, Banknote, Boxes, ContactRound, LayoutGrid, Package, Settings2, ShoppingBag, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { href: "/dashboard", label: <T>Overview</T>, icon: LayoutGrid, soon: false, permission: "organization.read" },
   { href: "/products", label: <T>Products</T>, icon: Package, soon: false, permission: "catalog.read" },
+  { href: "/suppliers", label: <T>Suppliers</T>, icon: ContactRound, soon: false, permission: "suppliers.read" },
   { href: "/inventory", label: <T>Inventory</T>, icon: Boxes, soon: true, permission: "inventory.read" },
   { href: "/purchases", label: <T>Purchases</T>, icon: ShoppingCart, soon: true, permission: "purchases.read" },
   { href: "/payments", label: <T>Payments</T>, icon: Banknote, soon: true, permission: "supplier_payments.read" },
@@ -42,7 +43,7 @@ export function AppNavigation({ role, compact = false }: AppNavigationProps) {
               >
                 <Icon className={cn("size-[18px] shrink-0", isCurrent && "text-primary")} aria-hidden="true" />
                 <span>{label}</span>
-                {soon && <span className="ms-auto rounded px-1.5 py-0.5 text-[10px] font-normal text-ink-muted">{href === "/sales" ? <T>Outside pilot</T> : <T>Soon</T>}</span>}
+                {soon && <span className="ms-auto rounded px-1.5 py-0.5 text-[11px] font-normal text-ink-muted">{href === "/sales" ? <T>Outside pilot</T> : <T>Soon</T>}</span>}
               </Link>
             </li>
           );

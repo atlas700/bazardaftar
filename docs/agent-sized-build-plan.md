@@ -147,8 +147,10 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 15 — suppliers. **G1 is accepted by founder decision** on the
-revised retrospective-evidence basis; supplier implementation has not started.
+**Next task:** 17 — warehouses; Task 16 customers remains deferred under ADR 0003.
+Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
+[contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
+on the revised retrospective-evidence basis. Pilot release gates remain open.
 Task 14 is implemented under the separate 31 October exception after the founder
 was informed of the G1 blocker; see [ADR 0003's Task 14 amendment](adr/0003-helmand-pilot-workflow.md#amendment--task-14-implementation-before-g1-closure-31-october-2026)
 and [Task 14 handoff](handoffs/14-products.md). Its exception did not close G1;
@@ -247,7 +249,7 @@ The scope column also constrains the detailed task descriptions below.
 | 01–12 | Complete | Foundation, authentication, persistence, tenancy, onboarding, local authorization, staff management, and domain primitives; see [handoffs](README.md) |
 | 13 | Complete | Units/categories; founder-authorized G1 exception on 28 October under ADR 0003 |
 | 14 | Complete | Products; founder-authorized G1 exception on 31 October under ADR 0003 |
-| 15 | Pilot required | Suppliers; G1 accepted on 1 November; next implementation task |
+| 15 | Complete | Suppliers; approved Individual/Business types under ADR 0021; see [handoff](handoffs/15-suppliers.md) |
 | 16 | Deferred | Customers |
 | 17–22 | Pilot required | One warehouse, purchases, accepted receipts/payables, stock, owner-approved corrections |
 | 23–24 | Deferred | Sales drafts and fulfilment |
@@ -528,6 +530,10 @@ and form validation are tested.
 **Handoff:** name any deliberately deferred product attributes.
 
 #### 15 — Implement suppliers
+
+**Readiness at delivery:** G1 accepted on 1 November. The founder authorized this
+task and selected Individual/Business supplier types; [ADR 0021](adr/0021-supplier-contact-records.md)
+records the bounded contact fields, optional classification, and descriptive terms.
 
 **Goal:** Manage purchase counterparties.
 

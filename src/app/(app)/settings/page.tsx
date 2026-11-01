@@ -3,7 +3,7 @@ import Link from "next/link";
 import { T } from "gt-next";
 import { getWorkspaceSummary } from "@/db/workspace";
 import { hasPermission } from "@/auth/permissions";
-import { ArrowUpRight, Package, Scale, Users, Building2 } from "lucide-react";
+import { ArrowUpRight, ContactRound, Package, Scale, Users, Building2 } from "lucide-react";
 import { PageHeader, Panel } from "@/components/workspace";
 
 export const metadata: Metadata = {
@@ -27,6 +27,9 @@ export default async function SettingsPage() {
       </div>
       <div className="space-y-3"><h2 className="px-1 text-xs font-medium text-ink-muted"><T>People & business</T></h2>
         <Panel className="divide-y divide-border/70 overflow-hidden p-0 sm:p-0">
+          {hasPermission(role, "suppliers.read") && <Link href="/suppliers" prefetch={false} className="flex items-center gap-4 px-5 py-5 hover:bg-page sm:px-6">
+            <ContactRound className="size-5 shrink-0 text-ink-muted" aria-hidden="true" /><div className="min-w-0 flex-1"><p className="text-sm font-semibold"><T>Suppliers</T></p><p className="mt-1 text-sm leading-6 text-ink-muted"><T>Purchase contacts and payment terms.</T></p></div><ArrowUpRight className="size-4 shrink-0 text-ink-muted rtl:-scale-x-100" aria-hidden="true" />
+          </Link>}
           {hasPermission(role, "staff.read") && <Link href="/settings/staff" prefetch={false} className="flex items-center gap-4 px-5 py-5 hover:bg-page sm:px-6">
             <Users className="size-5 shrink-0 text-[#7950a3]" aria-hidden="true" /><div className="flex-1"><p className="text-sm font-semibold"><T>Manage staff</T></p><p className="mt-1 text-sm leading-6 text-ink-muted"><T>Owners and admins can manage staff membership and business roles.</T></p></div><ArrowUpRight className="size-4 shrink-0 text-ink-muted rtl:-scale-x-100" aria-hidden="true" />
           </Link>}

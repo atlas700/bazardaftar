@@ -18,6 +18,10 @@ clearly distinguish evidence from assumptions.
 
 ## Current state
 
+[ADR 0021](0021-supplier-contact-records.md) records Task 15's approved Individual/
+Business supplier classification, contact limits, deactivation, and descriptive
+payment terms. It introduces no balance or financial policy.
+
 [ADR 0001](0001-launch-localization.md) and
 [ADR 0002](0002-clerk-authentication.md) record the accepted localization and pilot
 authentication decisions. [ADR 0003](0003-helmand-pilot-workflow.md) records the

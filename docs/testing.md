@@ -30,7 +30,7 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build`.
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
-  twice, and runs the onboarding/authorization, staff, catalogue, and product integration suites with
+  twice, and runs the onboarding/authorization, staff, catalogue, product, and supplier integration suites with
   `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
@@ -127,13 +127,23 @@ These are separate from real browser, Clerk, and translation smoke evidence.
 
 ## Workspace UX verification
 
+Task 15 adds supplier service/action/static-render tests and
+`src/db/suppliers.integration.test.ts` to the isolated database job. The 13 supplier
+database cases cover create/edit/deactivation, optional contact values and local
+digits, every role, tenant denial, spoofed authority, concurrent duplicate names,
+rollback, database constraints, and grant revocation during a queued write.
+UI checks cover Radix Select, linked errors, pending controls, safe feedback,
+read-only and inactive states, escaped notes, and the installed Next.js retry API.
+Rendered fixture evidence remains separate from live Clerk/database interaction.
+
 The UX audit fixes add session-aware home tests, seven-role navigation and
 dashboard/settings checks, locale-aware Select tests, error retry wiring, and
 confirmation cancellation/submission coverage. `src/db/workspace.test.ts` checks
 the metadata read's verified organization/membership/user parameters and safe
 denial/error behavior. The existing opt-in onboarding suite also checks business
 identity/role switching and denial after revocation against isolated PostgreSQL;
-all four database suites now contain 50 tests.
+the four database suites contained 50 tests at that delivery. Task 15 brings the
+five isolated suites to 63 tests.
 
 Local synthetic HTML/browser fixtures are kept under ignored `artifacts/`.
 They exercise layout and native control behavior without contacting a provider or

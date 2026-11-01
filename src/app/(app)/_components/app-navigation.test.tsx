@@ -28,11 +28,17 @@ describe("workspace navigation", () => {
     const html = renderToStaticMarkup(<AppNavigation role={role} />);
     expect(html.includes('href="/purchases"')).toBe(hasPermission(role, "purchases.read"));
     expect(html.includes('href="/payments"')).toBe(hasPermission(role, "supplier_payments.read"));
+    expect(html.includes('href="/suppliers"')).toBe(hasPermission(role, "suppliers.read"));
     expect(html).toContain('href="/products"');
   });
 
   it("offers no business routes to an unrecognized role", () => {
     expect(renderToStaticMarkup(<AppNavigation role="unknown" />)).not.toContain("href=");
+  });
+
+  it("keeps supplier details in the current navigation section", () => {
+    state.pathname = "/suppliers/123";
+    expect(renderToStaticMarkup(<AppNavigation role="owner" />)).toMatch(/<a[^>]*aria-current="page"[^>]*href="\/suppliers"/);
   });
 
   it("keeps unavailable indicators visible in mobile navigation and distinguishes sales", () => {

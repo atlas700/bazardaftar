@@ -33,6 +33,7 @@ describe("supplier service boundary", () => {
     { ...command, phone: "abc" }, { ...command, phone: "1".repeat(41) }, { ...command, phone: 123 },
     { ...command, location: "x".repeat(201) }, { ...command, notes: "x".repeat(2001) },
     { ...command, paymentTerms: "x".repeat(501) }, { operation: "deactivate-supplier", id: "bad" },
+    { ...command, type: "farmer" }, { ...command, type: "" }, { ...command, notes: 42 },
   ])("rejects invalid fields before querying: %j", async (input) => {
     expect(await manageSupplier(input)).toMatchObject({ status: "invalid" });
     expect(mocks.requirePermission).toHaveBeenCalledWith("suppliers.manage");
@@ -53,6 +54,19 @@ describe("supplier service boundary", () => {
     expect(await manageSupplier({ ...command, phone: " ", location: "", notes: null })).toEqual({ status: "success" });
     const values = mocks.query.mock.calls.find(([query]) => query.text.startsWith("insert"))![1];
     expect(values.filter((value: unknown) => value === null).length).toBeGreaterThanOrEqual(4);
+  });
+  it.each(["individual", "business"])("accepts the approved descriptive supplier type %s", async (type) => {
+    expect(await manageSupplier({ ...command, type, phone: "۰۷۰۰۱۲۳۴۵۶" })).toEqual({ status: "success" });
+    expect(mocks.query.mock.calls.find(([query]) => query.text.startsWith("insert"))![1]).toContain(type);
+  });
+  it("maps only the expected unique-name conflict and propagates other write failures", async () => {
+    mocks.query.mockImplementation(async (query: { text: string }) => {
+      if (query.text.startsWith("insert")) throw Object.assign(new Error("private"), { code: "23505", constraint: "suppliers_organization_name" });
+      return { rows: rows(query) };
+    });
+    expect(await manageSupplier(command)).toEqual({ status: "duplicate" });
+    mocks.query.mockRejectedValue(new Error("unexpected"));
+    await expect(manageSupplier(command)).rejects.toThrow();
   });
   it.each(["update-supplier", "deactivate-supplier"])("scopes %s to an active supplier in the server tenant", async (operation) => {
     expect(await manageSupplier({ ...command, operation, id })).toEqual({ status: "conflict" });
