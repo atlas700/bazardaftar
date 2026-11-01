@@ -65,7 +65,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("warehouses against isolate
   it.each(businessRoles)("enforces approved business-setting permissions for %s", async (role) => {
     const f = await fixture(role);
     await f.as(async () => {
-      expect(await getWarehouseWorkspace()).toEqual({ warehouse: null, canManage: hasPermission(role, "organization.manage") });
+      expect(await getWarehouseWorkspace()).toEqual({ organizationId: f.organization.id, warehouse: null, canManage: hasPermission(role, "organization.manage") });
       expect(await getActiveWarehouse()).toBeNull();
       if (hasPermission(role, "organization.manage")) expect(await manageWarehouse(f.command)).toEqual({ status: "success" });
       else await expect(manageWarehouse(f.command)).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
@@ -97,14 +97,13 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("warehouses against isolate
     ]) await expect(db.insert(warehouses).values({ organizationId: empty.organization.id, ...values })).rejects.toThrow();
     await expect(db.insert(warehouses).values({ organizationId: f.organization.id, name: "Second", isActive: false })).rejects.toThrow();
   });
-  it("keeps setup unchanged when a write transaction fails", async () => {
+  it("keeps the warehouse unchanged after an invalid edit or stale status change", async () => {
     const f = await fixture();
     await f.as(() => manageWarehouse(f.command));
     const saved = await f.as(getActiveWarehouse);
-    await expect(db.transaction(async (tx) => {
-      await tx.update(warehouses).set({ name: "Changed" }).where(eq(warehouses.organizationId, f.organization.id));
-      throw new Error("rollback");
-    })).rejects.toThrow("rollback");
+    expect(await f.as(() => manageWarehouse({ operation: "update-warehouse", id: saved!.id,
+      name: "Changed", location: "x".repeat(201) }))).toEqual({ status: "invalid", fields: ["location"] });
+    expect(await f.as(() => manageWarehouse({ operation: "activate-warehouse", id: saved!.id }))).toEqual({ status: "conflict" });
     expect(await f.as(getActiveWarehouse)).toEqual(saved);
   });
   it("denies a role revoked while the mutation waits for the organization lock", async () => {

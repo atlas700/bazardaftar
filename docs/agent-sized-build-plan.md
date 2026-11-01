@@ -147,7 +147,9 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 17 — warehouses; Task 16 customers remains deferred under ADR 0003.
+**Next task:** 18 — purchase order drafts; Task 16 customers remains deferred under ADR 0003.
+Task 17 adds the single warehouse setup under existing business-settings permissions;
+see its [handoff](handoffs/17-warehouses.md). Purchases and receipts remain unimplemented.
 Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
 [contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
 on the revised retrospective-evidence basis. Pilot release gates remain open.
@@ -251,7 +253,8 @@ The scope column also constrains the detailed task descriptions below.
 | 14 | Complete | Products; founder-authorized G1 exception on 31 October under ADR 0003 |
 | 15 | Complete | Suppliers; approved Individual/Business types under ADR 0021; see [handoff](handoffs/15-suppliers.md) |
 | 16 | Deferred | Customers |
-| 17–22 | Pilot required | One warehouse, purchases, accepted receipts/payables, stock, owner-approved corrections |
+| 17 | Complete | One warehouse per business; owner/admin setup under ADRs 0003/0016; see [handoff](handoffs/17-warehouses.md) |
+| 18–22 | Pilot required | Purchases, accepted receipts/payables, stock, owner-approved corrections |
 | 23–24 | Deferred | Sales drafts and fulfilment |
 | 25–28 | Pilot required | Supplier payments/statements, audit logging, purchasing dashboard |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
@@ -566,10 +569,21 @@ its rule is undecided.
 
 #### 17 — Implement warehouses
 
+**Readiness at delivery:** G1 accepted on 1 November. Implemented under ADR 0003's
+single-warehouse scope and ADR 0016's `organization.read` / `organization.manage`
+business-settings permissions. See the [handoff](handoffs/17-warehouses.md).
+
 **Goal:** Identify stock locations for pilot transactions.
 
 **Do:** Add one organization-owned warehouse and the minimal setup needed to choose
 it for purchases and receipts. Enforce approved staff permissions.
+
+The Settings screen stores a required name (1–80 characters), optional location
+(at most 200 characters), and active state. Owner/admin can create, edit, deactivate,
+and explicitly reactivate the same stable record. Every approved role can read.
+Uniqueness across active and inactive rows prevents a second warehouse; no delete
+or replacement flow is exposed. Selection returns only an active tenant warehouse;
+future transaction writes must recheck ownership and active state in their transaction.
 
 **Do not:** add multiple warehouses, warehouse switching/transfers, bins, or stock
 quantities in this task.

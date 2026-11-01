@@ -77,6 +77,19 @@ export const suppliers = pgTable("suppliers", {
   check("suppliers_payment_terms", sql`${table.paymentTerms} is null or (${table.paymentTerms} = btrim(${table.paymentTerms}) and length(${table.paymentTerms}) between 1 and 500)`),
 ]);
 
+export const warehouses = pgTable("warehouses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  location: text("location"),
+  isActive: boolean("is_active").default(true).notNull(),
+}, (table) => [
+  // Inactive records still occupy the single pilot warehouse slot.
+  unique("warehouses_one_per_organization").on(table.organizationId),
+  check("warehouses_name", sql`${table.name} = btrim(${table.name}) and length(${table.name}) between 1 and 80`),
+  check("warehouses_location", sql`${table.location} is null or (${table.location} = btrim(${table.location}) and length(${table.location}) between 1 and 200)`),
+]);
+
 export const organizationRoleAssignments = pgTable("organization_role_assignments", {
   organizationId: uuid("organization_id").notNull().references(() => organizations.id),
   membershipId: text("membership_id").notNull(),

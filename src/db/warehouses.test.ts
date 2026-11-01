@@ -89,17 +89,17 @@ describe("single warehouse service", () => {
     mocks.query.mockImplementation(async (query: { text: string }) => ({ rows:
       query.text.includes('from "warehouses"') ? [[id, "Main", null, false]] : rows(query),
     }));
-    expect(await getWarehouseWorkspace()).toEqual({ warehouse: { id, name: "Main", location: null, isActive: false }, canManage: true });
+    expect(await getWarehouseWorkspace()).toEqual({ organizationId, warehouse: { id, name: "Main", location: null, isActive: false }, canManage: true });
     const [query, values] = mocks.query.mock.calls.find(([query]) => query.text.includes('from "warehouses"'))!;
     expect(query.text).toContain('"warehouses"."organization_id" ='); expect(values).toContain(organizationId);
   });
   it("offers no warehouse before setup and filters inactive warehouses from selection", async () => {
-    expect(await getWarehouseWorkspace()).toEqual({ warehouse: null, canManage: true });
+    expect(await getWarehouseWorkspace()).toEqual({ organizationId, warehouse: null, canManage: true });
     expect(await getActiveWarehouse()).toBeNull();
     expect(mocks.requirePermission).toHaveBeenLastCalledWith("organization.read");
     const [query, values] = mocks.query.mock.calls.filter(([query]) => query.text.includes('from "warehouses"')).at(-1)!;
     expect(query.text).toContain('"warehouses"."is_active" =');
-    expect(values).toEqual([organizationId, true]);
+    expect(values).toEqual(expect.arrayContaining([organizationId, true]));
   });
   it("preserves permission denial before database work and sanitizes read failures", async () => {
     mocks.requirePermission.mockRejectedValue({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });

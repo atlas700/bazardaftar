@@ -27,6 +27,8 @@
   `0006_suppliers.sql` adds tenant-owned supplier contact records under
   [ADR 0021](adr/0021-supplier-contact-records.md), after G1 acceptance. It contains
   no balance, payable, or payment fields.
+  `0007_warehouses.sql` adds one warehouse per organization, including inactive
+  records, under ADR 0003's pilot scope and ADR 0016's business-settings grants.
 - `DATABASE_URL` is required by application startup and migration tooling. It is
   server-only and must never use a `NEXT_PUBLIC_` prefix.
 - SQL and metadata live in `drizzle/`. Migrations are explicit operations, separate
@@ -82,7 +84,7 @@ Use `npm.cmd` when forwarding flags in Windows PowerShell; in other shells use
 `npm`. This avoids the PowerShell `npm.ps1` wrapper consuming migration flags.
 
 Verify reviewed migrations on a separate database before development. The retained
-`afcs_task07_verify` receives the seventh migration for Task 15. A fresh checkout may
+`afcs_task07_verify` receives the eighth migration for Task 17. A fresh checkout may
 instead use a newly provisioned empty database. In a
 dedicated PowerShell terminal, set a process-only override without recording the
 connection string in shell history:
@@ -94,9 +96,9 @@ npm run db:migrate
 Remove-Item Env:DATABASE_URL
 ```
 
-Both runs must succeed, with exactly seven migration rows in
-`drizzle.__drizzle_migrations` and eight public tables (the four foundation tables
-plus `catalog_units`, `product_categories`, `products`, and `suppliers`) plus the ledger.
+Both runs must succeed, with exactly eight migration rows in
+`drizzle.__drizzle_migrations` and nine public tables (the four foundation tables
+plus `catalog_units`, `product_categories`, `products`, `suppliers`, and `warehouses`) plus the ledger.
 Verify prior migration hashes remain unchanged. Run the isolated onboarding tests
 below for uniqueness, concurrency, settings constraints, and rollback. Stop on any
 failure. Removing
@@ -373,4 +375,26 @@ tenant scoping, the shared organization lock, and fresh membership/grant checks.
 Deactivation preserves readable records. Future purchasing must validate active
 suppliers within its own transaction. Apply/reapply reviewed migration 0006 before
 using the directory. Run `src/db/suppliers.integration.test.ts` with the same
-isolated verification URL as the other suites; CI includes all five suites.
+isolated verification URL as the other suites; CI includes all six suites.
+
+## Warehouse setup
+
+Task 17 adds `warehouses`: generated stable UUID, organization foreign key,
+trimmed name (1–80 characters), optional trimmed location (1–200 characters or
+null), and an active flag defaulting to true. A unique organization constraint
+includes inactive rows, so deactivation cannot create a second warehouse or
+switch locations. No stock quantity is stored. The inactive record can be edited
+and explicitly reactivated with the same identity; no deletion is exposed.
+
+`src/db/warehouses.ts` uses `organization.read` for setup/active selection and
+`organization.manage` for owner/admin writes under ADR 0016. Mutations share the
+staff organization lock, then recheck current provider identity and local grants
+on the transaction connection. `/settings/warehouse` is linked from Settings.
+`getActiveWarehouse()` returns null before setup or when inactive; it supports
+selection only. Future purchases/receipts must enforce their own permissions and
+validate active warehouse ownership within their write transaction.
+
+Apply/reapply reviewed migration 0007 before using the screen. The isolated
+`src/db/warehouses.integration.test.ts` suite covers all seven roles, concurrent
+singleton creation, cross-tenant denial, constraints, failed-edit preservation, deactivation,
+reactivation, selection, and queued revocation. CI adds it to the existing job.

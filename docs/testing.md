@@ -30,7 +30,7 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build`.
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
-  twice, and runs the onboarding/authorization, staff, catalogue, product, and supplier integration suites with
+  twice, and runs the onboarding/authorization, staff, catalogue, product, supplier, and warehouse integration suites with
   `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
@@ -78,6 +78,20 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Browser end-to-end coverage is deferred to Task 33; it must use isolated seeded
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
+
+## Warehouse verification
+
+Task 17's service/action/UI tests cover existing business-settings permissions,
+validated scalar fields, bound SQL, tenant-derived authority, fresh actor/grant
+checks after locking, singleton conflicts, safe action failures, retained values,
+linked error summaries, pending controls, read-only/empty/inactive screens, and
+reactivation of the same record. Settings navigation is checked across all roles.
+`src/db/warehouses.integration.test.ts` uses the existing isolated database guard
+and cleanup to verify actual concurrent singleton creation, all seven roles,
+tenant isolation, field/FK constraints, failed-edit preservation, active-only selection, and queued
+revocation. It is included in the existing disposable PostgreSQL CI job.
+Synthetic rendered/hydrated checks are recorded in the [handoff](handoffs/17-warehouses.md);
+they do not establish live Clerk, provider-backed mutations, or deployed acceptance.
 
 ## Staff management verification
 
@@ -143,7 +157,7 @@ the metadata read's verified organization/membership/user parameters and safe
 denial/error behavior. The existing opt-in onboarding suite also checks business
 identity/role switching and denial after revocation against isolated PostgreSQL;
 the four database suites contained 50 tests at that delivery. Task 15 brings the
-five isolated suites to 63 tests.
+five isolated suites to 63 tests. Task 17 brings the six suites to 75 tests.
 
 Local synthetic HTML/browser fixtures are kept under ignored `artifacts/`.
 They exercise layout and native control behavior without contacting a provider or
