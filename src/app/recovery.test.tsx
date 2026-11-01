@@ -28,7 +28,7 @@ describe("safe route recovery", () => {
     expect(error).toContain("Try again");
     expect(error).toContain('href="/join"');
     const missing = renderToStaticMarkup(<NotFound />);
-    expect(missing).toContain("AFCS");
+    expect(missing).toContain("BazarDaftar");
     expect(missing).toContain('href="/dashboard"');
     expect(missing).not.toContain("permission");
   });

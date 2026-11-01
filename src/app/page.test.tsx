@@ -15,6 +15,9 @@ describe("homepage session actions", () => {
     getSession.mockResolvedValue(null);
     const html = renderToStaticMarkup(await Home());
     expect(getSession).toHaveBeenCalledOnce();
+    expect(html).toContain("BazarDaftar");
+    expect(html).not.toContain("AFCS");
+    expect(html).not.toContain("Afghanistan Agricultural Supply Chain OS");
     expect(html).toContain('href="/sign-in"');
     expect(html).not.toContain("Sign up");
   });
