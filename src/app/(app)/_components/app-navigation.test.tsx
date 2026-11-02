@@ -40,6 +40,15 @@ describe("workspace navigation", () => {
     state.pathname = "/suppliers/123";
     expect(renderToStaticMarkup(<AppNavigation role="owner" />)).toMatch(/<a[^>]*aria-current="page"[^>]*href="\/suppliers"/);
   });
+  it("offers purchase drafts as available in desktop and mobile navigation", () => {
+    state.pathname = "/purchases/new";
+    for (const compact of [true, false]) {
+      const html = renderToStaticMarkup(<AppNavigation role="manager" compact={compact} />);
+      const purchaseLink = html.match(/<a[^>]*href="\/purchases"[^>]*>[\s\S]*?<\/a>/)?.[0];
+      expect(purchaseLink).toContain('aria-current="page"');
+      expect(purchaseLink).not.toContain("Soon");
+    }
+  });
 
   it("keeps unavailable indicators visible in mobile navigation and distinguishes sales", () => {
     const html = renderToStaticMarkup(<AppNavigation role="owner" compact />);
