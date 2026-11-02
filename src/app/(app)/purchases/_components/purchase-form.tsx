@@ -17,6 +17,7 @@ const blankLine = (key: number): Line => ({ key, productId: "", quantity: "", qu
 export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; requestId: string }) {
   const gt = useGT();
   const id = useId();
+  const form = useRef<HTMLFormElement>(null);
   const summary = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const nextKey = useRef(2);
@@ -27,6 +28,13 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
   const [structureChanged, setStructureChanged] = useState(false);
   const [state, action, pending] = useActionState(createPurchase, { status: "idle" });
   const invalid = state.status === "invalid" && !structureChanged ? state.fields : [];
+  useEffect(() => {
+    const element = form.current;
+    // React commits its action reset with synthetic events disabled. Cancel it before Radix's native listeners.
+    const retainDraft = (event: Event) => { event.preventDefault(); event.stopImmediatePropagation(); };
+    element?.addEventListener("reset", retainDraft, true);
+    return () => element?.removeEventListener("reset", retainDraft, true);
+  }, []);
   useEffect(() => { if (state.status === "invalid") summary.current?.focus(); }, [state]);
   const fieldId = (key: string) => `${id}-${key.replaceAll(".", "-")}`;
   const errors: { key: string; message: string }[] = [];
@@ -91,7 +99,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
     </div>
     <FieldDescription><T>Choose the measure used for the quantity and the measure used for the price. They can differ. Each line is rounded to two decimals before the purchase total is calculated.</T></FieldDescription>
   </fieldset>;
-  return <form action={action} onSubmit={() => setStructureChanged(false)} aria-busy={pending} className="space-y-6">
+  return <form ref={form} action={action} onSubmit={() => setStructureChanged(false)} aria-busy={pending} className="space-y-6">
     {state.status === "invalid" && !structureChanged && <div ref={summary} tabIndex={-1} role="alert" aria-labelledby={`${id}-error-title`} className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm outline-offset-4">
       <p id={`${id}-error-title`} className="font-medium"><T>Check the highlighted fields.</T></p>
       <ul className="mt-2 list-inside list-disc space-y-1">{errors.map(({ key, message }) => <li key={key}><a className="underline underline-offset-2" href={`#${fieldId(key)}`}>{message}</a></li>)}</ul>
