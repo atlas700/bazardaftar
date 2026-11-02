@@ -57,6 +57,20 @@
       "when": 1793527128715,
       "tag": "0007_warehouses",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793615717421,
+      "tag": "0008_purchase_drafts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793616057000,
+      "tag": "0009_exact_purchase_line_check",
+      "breakpoints": true
     }
   ]
 }

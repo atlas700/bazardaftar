@@ -29,6 +29,10 @@
   no balance, payable, or payment fields.
   `0007_warehouses.sql` adds one warehouse per organization, including inactive
   records, under ADR 0003's pilot scope and ADR 0016's business-settings grants.
+  `0008_purchase_drafts.sql` adds draft purchase orders/items with tenant foreign
+  keys and durable weight/price snapshots. `0009_exact_purchase_line_check.sql`
+  enforces exact half-up line totals using quotient/remainder arithmetic, avoiding
+  intermediate division rounding near a half-cent boundary.
 - `DATABASE_URL` is required by application startup and migration tooling. It is
   server-only and must never use a `NEXT_PUBLIC_` prefix.
 - SQL and metadata live in `drizzle/`. Migrations are explicit operations, separate
@@ -84,7 +88,7 @@ Use `npm.cmd` when forwarding flags in Windows PowerShell; in other shells use
 `npm`. This avoids the PowerShell `npm.ps1` wrapper consuming migration flags.
 
 Verify reviewed migrations on a separate database before development. The retained
-`afcs_task07_verify` receives the eighth migration for Task 17. A fresh checkout may
+`afcs_task07_verify` receives the ninth and tenth migrations for Task 18. A fresh checkout may
 instead use a newly provisioned empty database. In a
 dedicated PowerShell terminal, set a process-only override without recording the
 connection string in shell history:
@@ -96,9 +100,10 @@ npm run db:migrate
 Remove-Item Env:DATABASE_URL
 ```
 
-Both runs must succeed, with exactly eight migration rows in
-`drizzle.__drizzle_migrations` and nine public tables (the four foundation tables
-plus `catalog_units`, `product_categories`, `products`, `suppliers`, and `warehouses`) plus the ledger.
+Both runs must succeed, with exactly ten migration rows in
+`drizzle.__drizzle_migrations` and eleven public tables (the four foundation tables
+plus `catalog_units`, `product_categories`, `products`, `suppliers`, `warehouses`,
+`purchase_orders`, and `purchase_order_items`) plus the ledger.
 Verify prior migration hashes remain unchanged. Run the isolated onboarding tests
 below for uniqueness, concurrency, settings constraints, and rollback. Stop on any
 failure. Removing
@@ -398,3 +403,37 @@ Apply/reapply reviewed migration 0007 before using the screen. The isolated
 `src/db/warehouses.integration.test.ts` suite covers all seven roles, concurrent
 singleton creation, cross-tenant denial, constraints, failed-edit preservation, deactivation,
 reactivation, selection, and queued revocation. CI adds it to the existing job.
+
+## Purchase drafts
+
+Task 18 adds `purchase_orders` and `purchase_order_items`. Each order owns its
+currency, draft status, server total, supplier/warehouse identity and name
+snapshots, request UUID/fingerprint, actor membership/user, and UTC creation time.
+Each numbered line retains product name/code, entered quantity and measure,
+actual bag/fixed measure kg, normalized total kg, agreed unit price and separate
+price measure/kg, and rounded line total. Catalogue/contact changes do not rewrite
+these historical values. No stock or supplier debt is stored or posted.
+
+Composite tenant foreign keys protect supplier/warehouse/product/unit/order
+references. Unique `(organization_id, request_id)` and the shared organization
+lock serialize retries; same normalized contents return the saved ID, different
+contents conflict. Header/items commit together. CHECK constraints bound exact
+unscaled numerics, positive weights/quantities, two-place non-negative money,
+supported currency, and server-owned draft state. Header totals are computed
+from validated rounded lines in the service transaction. The line constraint uses
+`div`/`mod` half-up arithmetic; ordinary numeric division can round an intermediate
+ratio near a half-cent at the supported bounds. Migration 0009 fixes that check
+without rewriting the already-applied 0008 migration.
+
+Apply both reviewed migrations before using `/purchases`. Corrections use forward
+migrations; reverting application code retains these additive tables. Task 19
+must expand the draft-only status constraint and implement its approved transition
+matrix. Task 20 must recheck posting authority/references and reconcile receipt
+quantities/values independently. The pilot register currently loads its small
+history in full; paginate before a large trading history.
+
+Run `src/db/purchases.integration.test.ts` with the same isolated verification URL
+as the other suites. It covers actual rollback, constraints, exact rounding,
+snapshots, all roles, tenant isolation, inactive references, concurrent idempotent
+retries, changed provider identity, and queued role revocation. CI includes it in
+the existing disposable PostgreSQL job; no live Clerk calls are made.

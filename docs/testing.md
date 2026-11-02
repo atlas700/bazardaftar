@@ -30,7 +30,8 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build`.
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
-  twice, and runs the onboarding/authorization, staff, catalogue, product, supplier, and warehouse integration suites with
+  twice, and runs the onboarding/authorization, staff, catalogue, product, supplier,
+  warehouse, and purchase integration suites with
   `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
@@ -92,6 +93,29 @@ tenant isolation, field/FK constraints, failed-edit preservation, active-only se
 revocation. It is included in the existing disposable PostgreSQL CI job.
 Synthetic rendered/hydrated checks are recorded in the [handoff](handoffs/17-warehouses.md);
 they do not establish live Clerk, provider-backed mutations, or deployed acceptance.
+
+## Purchase draft verification
+
+Task 18 adds service/action/UI cases for bounded validated commands, permissions,
+safe read/action errors, explicit aligned form fields, success refresh/redirect,
+server-owned authority and totals, read-only views, snapshots, exact decimal
+display, labelled fields, linked errors, pending state, and available navigation.
+The isolated `src/db/purchases.integration.test.ts` suite adds 21 cases for real
+transaction rollback, same-tenant foreign keys, active reference rechecks, all
+seven roles, cross-tenant denial, historical snapshots, half-up line sums,
+near-half-cent precision, concurrent retries/conflicts, and revocation while
+waiting for the shared organization lock. The seven database suites contain
+96 tests; default database-free runs skip these explicitly.
+
+Ignored synthetic browser fixtures exercise actual purchase components and
+hydrated form behavior: separate quantity/price measures and bag weights, stable
+line removal, retained selectors/values after validation, pending controls,
+keyboard/error focus, same-business retry identity, and business-switch reset.
+A native capture listener prevents React's action reset from invoking Radix's
+native reset listeners and erasing controlled selections. This local browser
+regression is recorded in the [handoff](handoffs/18-purchase-drafts.md); it does
+not establish live Clerk, translated terminology, deployed routes, or a real
+provider-backed application session. Task 33 retains full E2E scope.
 
 ## Staff management verification
 
