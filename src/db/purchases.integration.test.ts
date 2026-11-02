@@ -84,6 +84,43 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     expect(purchase.total).toBe("0.02");
     expect(purchase.items.map(({ lineTotal }) => lineTotal)).toEqual(["0.01", "0.01", "0.00"]);
   });
+  it("keeps near-half-cent ratios exact even at the supported numeric bounds", async () => {
+    const f = await fixture();
+    await db.update(catalogUnits).set({ kilogramsPerUnit: "999999999999999999.999" }).where(eq(catalogUnits.id, f.maan.id));
+    f.command.items = [{ ...f.item, quantity: "499999999999999999.999", quantityUnitId: f.kg.id, quantityBagWeightKg: null, unitPrice: "0.01" }];
+    expect((await saved(f)).total).toBe("0.00");
+  });
+  it("rolls back the order if inserting its items fails, then allows the same retry", async () => {
+    const f = await fixture();
+    const original = db.transaction.bind(db);
+    const spy = vi.spyOn(db, "transaction").mockImplementation(function <T>(...args: Parameters<typeof db.transaction<T>>) {
+      return original<T>(async (tx) => {
+        const insert = tx.insert.bind(tx);
+        vi.spyOn(tx, "insert").mockImplementation((table) => {
+          if (table === purchaseOrderItems) throw new Error("Injected item-write failure.");
+          return insert(table);
+        });
+        return args[0](tx);
+      });
+    });
+    try { await expect(f.as(() => createPurchaseDraft(f.command))).rejects.toThrow("Injected item-write failure."); }
+    finally { spy.mockRestore(); }
+    expect((await f.as(getPurchasesWorkspace)).purchases).toEqual([]);
+    await saved(f);
+  });
+  it("enforces tenant references, supported draft state and exact numeric constraints in PostgreSQL", async () => {
+    const f = await fixture(); const foreign = await fixture(); const purchase = await saved(f);
+    const [order] = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, purchase.id));
+    const [line] = await db.select().from(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, purchase.id));
+    for (const values of [{ ...order, supplierId: foreign.supplier.id }, { ...order, warehouseId: foreign.warehouse.id }, { ...order, total: "0.001" }, { ...order, total: "NaN" }]) {
+      await expect(db.insert(purchaseOrders).values({ ...values, id: randomUUID(), requestId: randomUUID() })).rejects.toThrow();
+    }
+    for (const extra of [{ productId: foreign.product.id }, { quantityUnitId: foreign.bag.id }, { priceUnitId: foreign.maan.id },
+      { quantity: "0" }, { quantityKg: "0.0001" }, { unitPrice: "1.001" }, { lineTotal: "1.00" }, { quantityMeasureKg: "NaN" },
+    ]) await expect(db.insert(purchaseOrderItems).values({ ...line, ...extra, id: randomUUID(), lineNumber: 2 })).rejects.toThrow();
+    await expect(db.execute(sql`update purchase_orders set status = 'received' where id = ${purchase.id}`)).rejects.toThrow();
+    await expect(db.execute(sql`update purchase_orders set currency = 'USD' where id = ${purchase.id}`)).rejects.toThrow();
+  });
   it("atomically rejects invalid references, sub-gram weights and overflow in later items", async () => {
     const f = await fixture();
     for (const bad of [
@@ -133,6 +170,9 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     await db.update(catalogUnits).set({ isActive: false }).where(eq(catalogUnits.id, f.maan.id));
     expect(await f.as(() => createPurchaseDraft(f.command))).toEqual(results[0]);
     expect((await f.as(getPurchasesWorkspace)).purchases).toHaveLength(1);
+    await db.update(catalogUnits).set({ isActive: true }).where(eq(catalogUnits.id, f.maan.id));
+    expect(await f.as(() => createPurchaseDraft({ ...f.command, requestId: randomUUID() }))).toMatchObject({ status: "success" });
+    expect((await f.as(getPurchasesWorkspace)).purchases).toHaveLength(2);
   });
   it("denies changed provider identity after acquiring the organization lock", async () => {
     const f = await fixture();
