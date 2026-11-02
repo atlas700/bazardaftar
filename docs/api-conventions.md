@@ -248,6 +248,42 @@ can be reversed by reactivating that same warehouse. Field edits preserve its st
 or null. This is a selection helper, not transaction authorization. Future
 purchases/receipts must revalidate ownership and activity inside their transaction.
 
+## Purchase draft contract
+
+`getPurchasesWorkspace()` and `getPurchase(id)` require `purchases.read` and
+scope every read to the verified tenant. Malformed, missing, and foreign detail
+IDs share not-found behavior. Owner/admin/manager may create under
+`purchases.manage`; sales cannot read purchases. Read-only roles receive no
+creation selectors or controls. Reads never seed or repair data.
+
+`createPurchase` authenticates and accepts only request/supplier/warehouse UUIDs,
+AFN/PKR currency, and 1–100 aligned lines: product UUID, positive decimal quantity,
+quantity measure UUID/optional actual bag kg, non-negative unit price, and separate
+price measure UUID/optional actual bag kg. Unknown tenant, role, status, and total
+fields confer no authority. The service validates with Zod and the existing exact
+decimal helpers. Quantities support 18 fractional digits but must convert exactly
+to positive whole grams; weights support three, money two. All values/results
+must fit fewer than 19 integer digits. Fixed measures reject weight overrides;
+bags require an explicit positive actual weight for each selected measure.
+
+The transaction acquires the shared organization lock, then verifies current
+provider identity and the exact local grant on that connection. Supplier,
+warehouse, products, product default units, and both selected measures must still
+be active in that tenant. Persist snapshots, round each line half-up, sum those
+rounded lines, and insert the order/items atomically. Only server-owned `draft`
+status is accepted. This task exposes no editing, ordering, cancellation, receipt,
+stock, or payable mutation.
+
+The form keeps one request UUID across validation errors, ambiguous saves, and
+same-business server refreshes. A same-tenant retry with the same normalized
+command returns the existing purchase; changed contents return `conflict` and
+cannot overwrite it. A new request UUID permits a new agreement. Membership and
+manage permission are checked even for replays. An error does not establish
+whether the save committed: retain unchanged details and retry, or inspect the
+register before starting another draft. Successful saves refresh `/purchases`
+and redirect to the confirmed detail. Unexpected failures expose only a safe
+correlation UUID. Framework redirects/not-found control flow are preserved.
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).

@@ -103,7 +103,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
     {state.status === "invalid" && !structureChanged && <div ref={summary} tabIndex={-1} role="alert" aria-labelledby={`${id}-error-title`} className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm outline-offset-4">
       <p id={`${id}-error-title`} className="font-medium"><T>Check the highlighted fields.</T></p>
       <ul className="mt-2 list-inside list-disc space-y-1">{errors.map(({ key, message }) => <li key={key}><a className="underline underline-offset-2" href={`#${fieldId(key)}`}>{message}</a></li>)}</ul>
-      {invalid.includes("items") && <p className="mt-2"><T>Use 1–100 lines and amounts below 18 integer digits. Check the quantities, prices, and total.</T></p>}
+      {invalid.includes("items") && <p className="mt-2"><T>Use 1–100 lines and amounts with at most 18 integer digits. Check the quantities, prices, and total.</T></p>}
       {invalid.includes("warehouseId") && <a className="mt-2 inline-block underline" href={`#${fieldId("warehouseId")}`}><T>Check the warehouse.</T></a>}
       {invalid.includes("requestId") && <p className="mt-2"><T>Reload this page to start a new purchase draft.</T></p>}
     </div>}

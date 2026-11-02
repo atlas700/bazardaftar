@@ -90,6 +90,21 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     f.command.items = [{ ...f.item, quantity: "499999999999999999.999", quantityUnitId: f.kg.id, quantityBagWeightKg: null, unitPrice: "0.01" }];
     expect((await saved(f)).total).toBe("0.00");
   });
+  it("stores a separate actual bag weight for the agreed price", async () => {
+    const f = await fixture();
+    f.command.items = [{ ...f.item, priceUnitId: f.bag.id, priceBagWeightKg: "48.4" }];
+    const purchase = await saved(f);
+    expect(purchase.total).toBe("181.82");
+    expect(purchase.items[0]).toMatchObject({ quantityMeasureKg: "44.000", priceMeasureKg: "48.400", priceUnitKind: "bag", priceUnitName: "bag" });
+  });
+  it("rejects an overflowing order total even when individual lines fit", async () => {
+    const f = await fixture();
+    const item = { ...f.item, quantity: "1", quantityUnitId: f.kg.id, quantityBagWeightKg: null,
+      unitPrice: "500000000000000000.00", priceUnitId: f.kg.id };
+    expect(await f.as(() => createPurchaseDraft({ ...f.command, items: [item, item] }))).toEqual({ status: "invalid", fields: ["items"] });
+    expect((await f.as(getPurchasesWorkspace)).purchases).toEqual([]);
+    expect(await db.select().from(purchaseOrderItems).where(eq(purchaseOrderItems.organizationId, f.organization.id))).toEqual([]);
+  });
   it("rolls back the order if inserting its items fails, then allows the same retry", async () => {
     const f = await fixture();
     const original = db.transaction.bind(db);
