@@ -14,6 +14,7 @@ import PurchasesPage from "./page";
 import PurchasePage from "./[id]/page";
 import { PurchaseForm } from "./_components/purchase-form";
 import PurchasesError from "./error";
+import { PurchaseNumber } from "./_components/purchase-number";
 
 const workspace = { organizationId: "business", canManage: true, purchases: [], suppliers: [{ id: "supplier", name: "Helmand Grain" }],
   warehouse: { id: "warehouse", name: "Main warehouse" }, products: [{ id: "wheat", name: "Wheat", unitId: "kg" }],
@@ -44,6 +45,12 @@ describe("purchase pages and draft form", () => {
     const markup = renderToStaticMarkup(await PurchasePage({ params: Promise.resolve({ id: "purchase" }) }));
     for (const text of ["Helmand Grain", "Main warehouse", "Wheat", "44.000", "88.000", "4.400", "100.00", "2,000.00", "Draft"]) expect(markup).toContain(text);
     expect(markup).not.toMatch(/<form|Receive stock|Cancel purchase|Mark as ordered/);
+  });
+  it("preserves whole quantity zeros and exact large decimal display", async () => {
+    mocks.getPurchase.mockResolvedValue({ ...purchase, items: [{ ...purchase.items[0], quantity: "10" }] });
+    const markup = renderToStaticMarkup(await PurchasePage({ params: Promise.resolve({ id: "purchase" }) }));
+    expect(markup).toMatch(/>10<\/bdi>/);
+    expect(renderToStaticMarkup(<PurchaseNumber value="999999999999999999.99" currency="PKR" />)).toContain("999,999,999,999,999,999.99");
   });
   it("labels controls, carries retry identity and keeps authority and calculated totals off the form", () => {
     const markup = renderToStaticMarkup(<PurchaseForm workspace={workspace} requestId="retry" />);

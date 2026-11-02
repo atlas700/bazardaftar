@@ -131,6 +131,12 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     expect((await f.as(getPurchasesWorkspace)).purchases).toEqual([]);
     expect(await db.select().from(purchaseOrderItems).where(eq(purchaseOrderItems.organizationId, f.organization.id))).toEqual([]);
   });
+  it("identifies price overflow separately from an invalid quantity", async () => {
+    const f = await fixture();
+    expect(await f.as(() => createPurchaseDraft({ ...f.command, items: [{ ...f.item, quantity: "2", quantityUnitId: f.kg.id,
+      quantityBagWeightKg: null, priceUnitId: f.kg.id, unitPrice: "999999999999999999.99" }] }))).toEqual({ status: "invalid", fields: ["items.0.unitPrice"] });
+    expect((await f.as(getPurchasesWorkspace)).purchases).toEqual([]);
+  });
   it.each(businessRoles)("enforces purchase read/manage permissions for %s", async (role) => {
     const f = await fixture(role);
     if (hasPermission(role, "purchases.read")) {
