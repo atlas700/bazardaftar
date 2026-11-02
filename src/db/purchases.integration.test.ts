@@ -31,7 +31,8 @@ async function fixture(role: BusinessRole = "owner") {
     { organizationId, name: "bag", kind: "bag", kilogramsPerUnit: null },
   ]).returning();
   const [product] = await db.insert(products).values({ organizationId, name: "Wheat", sku: "W-1", unitId: kg.id }).returning();
-  const item = { productId: product.id, quantity: "2", quantityUnitId: bag.id, quantityBagWeightKg: "44", unitPrice: "100", priceUnitId: maan.id, priceBagWeightKg: null };
+  const item: { productId: string; quantity: string; quantityUnitId: string; quantityBagWeightKg: string | null; unitPrice: string; priceUnitId: string; priceBagWeightKg: string | null } =
+    { productId: product.id, quantity: "2", quantityUnitId: bag.id, quantityBagWeightKg: "44", unitPrice: "100", priceUnitId: maan.id, priceBagWeightKg: null };
   return { organization, actor, supplier, warehouse, product, kg, maan, bag, item,
     command: { requestId: randomUUID(), supplierId: supplier.id, warehouseId: warehouse.id, currency: "AFN", items: [item] },
     as: <T>(work: () => Promise<T>) => context.run(actor, work) };
