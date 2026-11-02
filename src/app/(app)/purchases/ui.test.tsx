@@ -5,6 +5,7 @@ import type { PurchaseState } from "@/db/purchases";
 
 const mocks = vi.hoisted(() => ({ getPurchasesWorkspace: vi.fn(), getPurchase: vi.fn(), getState: vi.fn<() => PurchaseState>(), pending: false }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/db/authorization", () => ({ requirePermission: vi.fn() }));
 vi.mock("@/db/purchases", () => mocks);
 vi.mock("./actions", () => ({ createPurchase: vi.fn() }));
 vi.mock("gt-next", () => ({ useLocaleDirection: () => "rtl", useGT: () => (text: string) => text, T: ({ children }: { children: ReactNode }) => children, Var: ({ children }: { children: ReactNode }) => children }));
