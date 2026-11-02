@@ -59,7 +59,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
       {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers, setSupplierId)}
       {options("currency", gt("Purchase currency"), currency, [{ id: "AFN", name: "AFN" }, { id: "PKR", name: "PKR" }], setCurrency)}
     </div>
-    <div id={fieldId("warehouseId")} className="text-sm"><span className="text-ink-muted"><T>Warehouse:</T> </span><bdi dir="auto">{workspace.warehouse?.name}</bdi>
+    <div id={fieldId("warehouseId")} tabIndex={-1} className="text-sm"><span className="text-ink-muted"><T>Warehouse:</T> </span><bdi dir="auto">{workspace.warehouse?.name}</bdi>
       {invalid.includes("warehouseId") && <p className="mt-2 text-destructive"><T>The warehouse is unavailable or inactive. Ask an owner or admin to check its setup, then reload.</T></p>}
     </div>
     <div className="space-y-6">{lines.map((line, index) => {
@@ -86,7 +86,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
       </fieldset>;
     })}</div>
     <div className="flex flex-wrap gap-3 border-t border-border/70 pt-5">
-      <Button type="button" ref={addButton} variant="outline" disabled={lines.length >= 100} onClick={() => { setStructureChanged(true); setLines((current) => [...current, blankLine(nextKey.current++)]); }}><Plus aria-hidden="true" /><T>Add purchase line</T></Button>
+      <Button type="button" ref={addButton} variant="outline" disabled={lines.length >= 100} onClick={() => { const key = nextKey.current++; setStructureChanged(true); setLines((current) => [...current, blankLine(key)]); }}><Plus aria-hidden="true" /><T>Add purchase line</T></Button>
       <Button type="submit"><Save aria-hidden="true" /><T>Save purchase draft</T></Button>
     </div>
     <FieldDescription><T>Choose the measure used for the quantity and the measure used for the price. They can differ. Each line is rounded to two decimals before the purchase total is calculated.</T></FieldDescription>

@@ -122,13 +122,15 @@ export async function createPurchaseDraft(input: unknown): Promise<PurchaseState
       const quantityMeasureKg = measureWeight(quantityUnit, item.quantityBagWeightKg, "quantityBagWeightKg");
       const priceMeasureKg = measureWeight(priceUnit, item.priceBagWeightKg, "priceBagWeightKg");
       if (!quantityMeasureKg || !priceMeasureKg) continue;
+      let quantityKg: string;
+      try { quantityKg = quantityToKg(item.quantity, quantityMeasureKg); }
+      catch { fields.push(`items.${index}.quantity`); continue; }
       try {
-        const quantityKg = quantityToKg(item.quantity, quantityMeasureKg);
         const lineTotal = calculateLineTotal({ quantity: item.quantity, quantityMeasureKg, unitPrice: item.unitPrice, priceMeasureKg });
         items.push({ organizationId: tenant.organizationId, lineNumber: index + 1, productId: product.id, productName: product.name, productSku: product.sku,
           quantity: item.quantity, quantityUnitId: quantityUnit.id, quantityUnitName: quantityUnit.name, quantityUnitKind: quantityUnit.kind,
           quantityMeasureKg, quantityKg, unitPrice: item.unitPrice, priceUnitId: priceUnit.id, priceUnitName: priceUnit.name, priceUnitKind: priceUnit.kind, priceMeasureKg, lineTotal });
-      } catch { fields.push(`items.${index}.quantity`); }
+      } catch { fields.push(`items.${index}.unitPrice`); }
     }
     if (fields.length || !supplier || !warehouse) return { status: "invalid", fields };
     let total: string;

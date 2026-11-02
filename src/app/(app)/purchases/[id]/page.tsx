@@ -28,7 +28,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
           {item.productSku && <p className="mt-1 break-words text-sm text-ink-muted"><bdi dir="auto">{item.productSku}</bdi></p>}</div>
           <p className="max-w-full font-semibold"><PurchaseNumber value={item.lineTotal} currency={purchase.currency} /></p></div>
         <dl className="grid min-w-0 gap-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <div className="min-w-0"><dt className="text-ink-muted"><T>Agreed quantity</T></dt><dd className="mt-2 break-words"><PurchaseNumber value={item.quantity.replace(/\.?0+$/, "")} /> <bdi dir="auto">{item.quantityUnitName}</bdi></dd>
+          <div className="min-w-0"><dt className="text-ink-muted"><T>Agreed quantity</T></dt><dd className="mt-2 break-words"><PurchaseNumber value={item.quantity.includes(".") ? item.quantity.replace(/0+$/, "").replace(/\.$/, "") : item.quantity} /> <bdi dir="auto">{item.quantityUnitName}</bdi></dd>
             <dd className="mt-1 text-ink-muted"><PurchaseNumber value={item.quantityMeasureKg} /> <T>kg per measure</T></dd></div>
           <div className="min-w-0"><dt className="text-ink-muted"><T>Total weight</T></dt><dd className="mt-2"><PurchaseNumber value={item.quantityKg} /> <T>kg</T></dd></div>
           <div className="min-w-0"><dt className="text-ink-muted"><T>Agreed unit price</T></dt><dd className="mt-2 break-words"><PurchaseNumber value={item.unitPrice} currency={purchase.currency} /> / <bdi dir="auto">{item.priceUnitName}</bdi></dd>
