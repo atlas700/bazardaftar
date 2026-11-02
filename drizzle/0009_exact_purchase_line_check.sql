@@ -1,0 +1,5 @@
+ALTER TABLE "purchase_order_items" DROP CONSTRAINT "purchase_items_money";--> statement-breakpoint
+ALTER TABLE "purchase_order_items" ADD CONSTRAINT "purchase_items_money" CHECK ("purchase_order_items"."unit_price" >= 0 and "purchase_order_items"."unit_price" < 1000000000000000000 and scale("purchase_order_items"."unit_price") <= 2
+    and "purchase_order_items"."line_total" >= 0 and "purchase_order_items"."line_total" < 1000000000000000000 and scale("purchase_order_items"."line_total") <= 2
+    and "purchase_order_items"."line_total" * 100 = div("purchase_order_items"."quantity_kg" * "purchase_order_items"."unit_price" * 100, "purchase_order_items"."price_measure_kg")
+      + case when mod("purchase_order_items"."quantity_kg" * "purchase_order_items"."unit_price" * 100, "purchase_order_items"."price_measure_kg") * 2 >= "purchase_order_items"."price_measure_kg" then 1 else 0 end);

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPurchase } from "../actions";
 
-type Workspace = Awaited<ReturnType<typeof getPurchasesWorkspace>>;
+type Workspace = Pick<Awaited<ReturnType<typeof getPurchasesWorkspace>>, "warehouse" | "suppliers" | "products" | "units">;
 type Line = { key: number; productId: string; quantity: string; quantityUnitId: string; quantityBagWeightKg: string; unitPrice: string; priceUnitId: string; priceBagWeightKg: string };
 const blankLine = (key: number): Line => ({ key, productId: "", quantity: "", quantityUnitId: "", quantityBagWeightKg: "", unitPrice: "", priceUnitId: "", priceBagWeightKg: "" });
 
@@ -20,6 +20,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
   const summary = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const nextKey = useRef(2);
+  const [retryId] = useState(requestId);
   const [lines, setLines] = useState<Line[]>([blankLine(1)]);
   const [supplierId, setSupplierId] = useState("");
   const [currency, setCurrency] = useState("AFN");
@@ -52,7 +53,7 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
   };
   const update = (key: number, changes: Partial<Line>) => setLines((current) => current.map((line) => line.key === key ? { ...line, ...changes } : line));
   const fields = <fieldset disabled={pending} className="min-w-0 space-y-7 disabled:opacity-60">
-    <input type="hidden" name="requestId" value={requestId} />
+    <input type="hidden" name="requestId" value={retryId} />
     <input type="hidden" name="warehouseId" value={workspace.warehouse?.id ?? ""} />
     <div className="grid min-w-0 gap-5 sm:grid-cols-2">
       {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers, setSupplierId)}

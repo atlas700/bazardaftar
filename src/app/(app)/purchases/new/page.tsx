@@ -16,7 +16,7 @@ export default async function NewPurchasePage() {
   return <div className="space-y-7">
     <Link href="/purchases" className="inline-flex min-h-11 items-center gap-2 text-sm text-ink-muted hover:text-primary"><ArrowLeft className="size-4 rtl:-scale-x-100" aria-hidden="true" /><T>Purchases</T></Link>
     <PageHeader title={<T>Create purchase draft</T>} description={<T>Record the supplier agreement before delivery.</T>} />
-    {ready ? <Panel className="shadow-none"><PurchaseForm key={workspace.organizationId} workspace={workspace} requestId={randomUUID()} /></Panel> : <Panel className="space-y-4 shadow-none" aria-labelledby="purchase-setup">
+    {ready ? <Panel className="shadow-none"><PurchaseForm key={workspace.organizationId} workspace={{ warehouse: workspace.warehouse, suppliers: workspace.suppliers, products: workspace.products, units: workspace.units }} requestId={randomUUID()} /></Panel> : <Panel className="space-y-4 shadow-none" aria-labelledby="purchase-setup">
       <h2 id="purchase-setup" className="font-semibold"><T>Finish purchase setup</T></h2>
       <p className="text-sm leading-6 text-ink-muted"><T>A draft needs an active supplier, a product with an active weight measure, and your active warehouse. Ask an owner or admin to help with unavailable setup.</T></p>
       <ul className="space-y-2 text-sm">

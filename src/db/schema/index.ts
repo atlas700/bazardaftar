@@ -159,7 +159,8 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
     and ${table.priceMeasureKg} > 0 and ${table.priceMeasureKg} < 1000000000000000000 and scale(${table.priceMeasureKg}) <= 3`),
   check("purchase_items_money", sql`${table.unitPrice} >= 0 and ${table.unitPrice} < 1000000000000000000 and scale(${table.unitPrice}) <= 2
     and ${table.lineTotal} >= 0 and ${table.lineTotal} < 1000000000000000000 and scale(${table.lineTotal}) <= 2
-    and ${table.lineTotal} = round(${table.quantityKg} * ${table.unitPrice} / ${table.priceMeasureKg}, 2)`),
+    and ${table.lineTotal} * 100 = div(${table.quantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg})
+      + case when mod(${table.quantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg}) * 2 >= ${table.priceMeasureKg} then 1 else 0 end`),
 ]);
 
 export const organizationRoleAssignments = pgTable("organization_role_assignments", {

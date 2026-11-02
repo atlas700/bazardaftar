@@ -97,12 +97,10 @@ export async function createPurchaseDraft(input: unknown): Promise<PurchaseState
       current.userId !== tenant.userId || !actor || !hasPermission(actor.role, "purchases.manage")) notFound();
     const [existing] = await tx.select({ id: purchaseOrders.id, fingerprint: purchaseOrders.requestFingerprint }).from(purchaseOrders).where(and(eq(purchaseOrders.organizationId, tenant.organizationId), eq(purchaseOrders.requestId, command.requestId))).limit(1);
     if (existing) return existing.fingerprint === requestFingerprint ? { status: "success", purchaseId: existing.id } : { status: "conflict" };
-    const [[supplier], [warehouse], productRows, unitRows] = await Promise.all([
-      tx.select({ id: suppliers.id, name: suppliers.name }).from(suppliers).where(and(eq(suppliers.organizationId, tenant.organizationId), eq(suppliers.id, command.supplierId), eq(suppliers.isActive, true))),
-      tx.select({ id: warehouses.id, name: warehouses.name }).from(warehouses).where(and(eq(warehouses.organizationId, tenant.organizationId), eq(warehouses.id, command.warehouseId), eq(warehouses.isActive, true))),
-      tx.select({ id: products.id, name: products.name, sku: products.sku, unitId: products.unitId }).from(products).where(and(eq(products.organizationId, tenant.organizationId), inArray(products.id, command.items.map((item) => item.productId)), eq(products.isActive, true))),
-      tx.select({ id: catalogUnits.id, name: catalogUnits.name, kind: catalogUnits.kind, kilogramsPerUnit: catalogUnits.kilogramsPerUnit }).from(catalogUnits).where(and(eq(catalogUnits.organizationId, tenant.organizationId), eq(catalogUnits.isActive, true))),
-    ]);
+    const [supplier] = await tx.select({ id: suppliers.id, name: suppliers.name }).from(suppliers).where(and(eq(suppliers.organizationId, tenant.organizationId), eq(suppliers.id, command.supplierId), eq(suppliers.isActive, true)));
+    const [warehouse] = await tx.select({ id: warehouses.id, name: warehouses.name }).from(warehouses).where(and(eq(warehouses.organizationId, tenant.organizationId), eq(warehouses.id, command.warehouseId), eq(warehouses.isActive, true)));
+    const productRows = await tx.select({ id: products.id, name: products.name, sku: products.sku, unitId: products.unitId }).from(products).where(and(eq(products.organizationId, tenant.organizationId), inArray(products.id, command.items.map((item) => item.productId)), eq(products.isActive, true)));
+    const unitRows = await tx.select({ id: catalogUnits.id, name: catalogUnits.name, kind: catalogUnits.kind, kilogramsPerUnit: catalogUnits.kilogramsPerUnit }).from(catalogUnits).where(and(eq(catalogUnits.organizationId, tenant.organizationId), eq(catalogUnits.isActive, true)));
     const fields: string[] = [];
     if (!supplier) fields.push("supplierId");
     if (!warehouse) fields.push("warehouseId");
