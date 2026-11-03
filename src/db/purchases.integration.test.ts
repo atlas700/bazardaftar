@@ -246,12 +246,12 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     }
   });
   it.each(businessRoles)("enforces editing, ordering and owner-only cancellation for %s", async (role) => {
-    const f = await fixture(); const purchase = await saved(f);
-    await db.update(organizationRoleAssignments).set({ role }).where(eq(organizationRoleAssignments.membershipId, f.actor.membershipId));
     for (const action of ["edit", "order", "cancel"]) {
+      const f = await fixture(); const purchase = await saved(f);
+      await db.update(organizationRoleAssignments).set({ role }).where(eq(organizationRoleAssignments.membershipId, f.actor.membershipId));
       const command = { ...f.command, action, id: purchase.id, revision: 1, requestId: randomUUID(), reason: "Owner approval" };
       if (hasPermission(role, action === "cancel" ? "transactions.cancel" : "purchases.manage")) {
-        expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: action === "edit" ? "success" : "conflict" });
+        expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: "success" });
       } else await expect(f.as(() => mutatePurchase(command))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     }
   });
@@ -300,6 +300,60 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     expect(await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 1, requestId: randomUUID() }))).toMatchObject({ status: "invalid" });
     expect(await f.as(() => getPurchase(purchase.id))).toEqual(purchase);
     expect(await f.as(() => mutatePurchase({ action: "cancel", id: purchase.id, revision: 1, requestId: randomUUID(), reason: "Product unavailable" }))).toMatchObject({ status: "success" });
+  });
+  it("makes ordered agreements immutable, deduplicates concurrent order retries, and preserves ordering approval on cancellation", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    const command = { action: "order", id: purchase.id, revision: 1, requestId: randomUUID() };
+    const results = await f.as(() => Promise.all([mutatePurchase(command), mutatePurchase(command)]));
+    expect(results[0]).toEqual(results[1]); expect(results[0].status).toBe("success");
+    const ordered = await f.as(() => getPurchase(purchase.id));
+    expect(ordered).toMatchObject({ revision: 2, status: "ordered", orderedByUserId: f.actor.userId, orderedByMembershipId: f.actor.membershipId });
+    expect(ordered.orderedAt).toBeInstanceOf(Date); expect(ordered.items).toEqual(purchase.items);
+    for (const action of ["edit", "order"]) expect(await f.as(() => mutatePurchase({ ...f.command, action, id: purchase.id,
+      revision: 2, requestId: randomUUID() }))).toEqual({ status: "conflict" });
+    await f.as(() => mutatePurchase({ action: "cancel", id: purchase.id, revision: 2, requestId: randomUUID(), reason: "Cannot deliver" }));
+    expect((await f.as(() => getPurchase(purchase.id))).orderedAt).toEqual(ordered.orderedAt);
+    expect(await f.as(() => mutatePurchase(command))).toEqual({ status: "conflict" });
+  });
+  it("checks every active reference at ordering and retains snapshots through unit kind changes", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    for (const [table, id] of [[suppliers, f.supplier.id], [warehouses, f.warehouse.id], [products, f.product.id], [catalogUnits, f.kg.id], [catalogUnits, f.maan.id], [catalogUnits, f.bag.id]] as const) {
+      await db.update(table).set({ isActive: false }).where(eq(table.id, id));
+      expect(await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 1, requestId: randomUUID() }))).toMatchObject({ status: "invalid" });
+      await db.update(table).set({ isActive: true }).where(eq(table.id, id));
+    }
+    await db.update(catalogUnits).set({ kind: "bag", kilogramsPerUnit: null }).where(eq(catalogUnits.id, f.maan.id));
+    expect(await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 1, requestId: randomUUID() }))).toMatchObject({ status: "success" });
+    expect((await f.as(() => getPurchase(purchase.id))).items).toEqual(purchase.items);
+  });
+  it("enforces lifecycle metadata checks in PostgreSQL", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    for (const values of [{ revision: 0 }, { revision: 2 }, { status: "ordered" as const }, { status: "cancelled" as const },
+      { cancelledAt: new Date() }, { orderedAt: new Date() }, { lastMutationId: randomUUID() }]) {
+      await expect(db.update(purchaseOrders).set(values).where(eq(purchaseOrders.id, purchase.id))).rejects.toThrow();
+    }
+    expect(await f.as(() => getPurchase(purchase.id))).toEqual(purchase);
+  });
+  it.each(["edit", "order", "cancel"])("rechecks revoked authority after a queued %s acquires the organization lock", async (action) => {
+    const f = await fixture(); const purchase = await saved(f); let announceLock = () => {}; let releaseLock = () => {};
+    const locked = new Promise<void>((resolve) => { announceLock = resolve; });
+    const released = new Promise<void>((resolve) => { releaseLock = resolve; });
+    const blocker = db.transaction(async (tx) => {
+      await tx.select().from(organizations).where(eq(organizations.id, f.organization.id)).for("update");
+      await tx.update(organizationRoleAssignments).set({ role: "viewer" }).where(eq(organizationRoleAssignments.membershipId, f.actor.membershipId));
+      announceLock(); await released;
+    });
+    await locked; let announceTransaction = () => {};
+    const entered = new Promise<void>((resolve) => { announceTransaction = resolve; });
+    const original = db.transaction.bind(db);
+    const spy = vi.spyOn(db, "transaction").mockImplementation(function <T>(...args: Parameters<typeof db.transaction<T>>) { announceTransaction(); return original<T>(...args); });
+    try {
+      const queued = f.as(() => mutatePurchase({ ...f.command, action, id: purchase.id, revision: 1, requestId: randomUUID(), reason: "Owner approval" }));
+      await entered; releaseLock(); await blocker;
+      await expect(queued).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+      const [unchanged] = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, purchase.id));
+      expect(unchanged).toMatchObject({ status: "draft", revision: 1, cancelledAt: null, orderedAt: null });
+    } finally { releaseLock(); spy.mockRestore(); }
   });
   it("denies a grant revoked while a draft waits for the organization lock", async () => {
     const f = await fixture(); let announceLock = () => {}; let releaseLock = () => {};

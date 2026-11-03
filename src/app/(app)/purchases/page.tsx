@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/workspace";
 import { getPurchasesWorkspace } from "@/db/purchases";
 import { PurchaseNumber } from "./_components/purchase-number";
+import { PurchaseStatus } from "./_components/purchase-status";
 
 export const metadata: Metadata = {
   title: "Purchases",
@@ -28,7 +29,7 @@ export default async function PurchasesPage() {
         <div className="min-w-0"><Link href={`/purchases/${purchase.id}`} className="inline-flex min-h-11 max-w-full items-center break-words font-semibold hover:text-primary hover:underline"><bdi dir="auto">{purchase.supplierName}</bdi></Link>
           <p className="break-words text-sm text-ink-muted"><bdi dir="auto">{purchase.warehouseName}</bdi> · <time dateTime={purchase.createdAt.toISOString()}>{purchase.createdAt.toISOString().slice(0, 10)}</time></p></div>
         <div className="min-w-0 space-y-2 sm:text-end"><p className="font-semibold"><PurchaseNumber value={purchase.total} currency={purchase.currency} /></p>
-          <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium"><T>Draft</T></span></div>
+          <PurchaseStatus status={purchase.status} /></div>
       </li>)}</ul>}
     </Panel>
   </div>;
