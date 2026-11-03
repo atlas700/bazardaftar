@@ -89,7 +89,7 @@ describe("purchase pages and draft form", () => {
     const props = { purchase, requestId: "retry" };
     const markup = renderToStaticMarkup(<PurchaseLifecycle {...props} />);
     expect(markup).toMatch(/<label[^>]*for=/); expect(markup).toContain('name="reason"');
-    expect(markup).toContain('type="button"'); expect(markup).toContain('name="revision" value="1"');
+    expect([...markup.matchAll(/<form\b/g)]).toHaveLength(2); expect(markup).toContain('name="revision" value="1"');
     mocks.pending = true; expect(renderToStaticMarkup(<PurchaseLifecycle {...props} />)).toContain('<fieldset disabled=""');
     mocks.pending = false; mocks.getState.mockReturnValue({ status: "conflict" });
     expect(renderToStaticMarkup(<PurchaseLifecycle {...props} />)).toContain("Reload purchase");
@@ -99,6 +99,8 @@ describe("purchase pages and draft form", () => {
     const markup = renderToStaticMarkup(await PurchasePage({ params: Promise.resolve({ id: "purchase" }) }));
     expect(markup).toMatch(/>10<\/bdi>/);
     expect(renderToStaticMarkup(<PurchaseNumber value="999999999999999999.99" currency="PKR" />)).toContain("999,999,999,999,999,999.99");
+    const editor = renderToStaticMarkup(<PurchaseForm workspace={workspace} purchase={{ ...purchase, items: [{ ...purchase.items[0], quantity: "10.000000000000000000" }] }} requestId="edit" />);
+    expect(editor).toMatch(/name="quantity"[^>]*value="10"/);
   });
   it("labels controls, carries retry identity and keeps authority and calculated totals off the form", () => {
     const markup = renderToStaticMarkup(<PurchaseForm workspace={workspace} requestId="retry" />);
