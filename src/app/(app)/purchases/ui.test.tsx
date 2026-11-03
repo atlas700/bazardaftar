@@ -71,6 +71,12 @@ describe("purchase pages and draft form", () => {
     const markup = renderToStaticMarkup(await EditPurchasePage({ params: Promise.resolve({ id: "purchase" }) }));
     for (const text of ['name="revision" value="1"', 'name="savedItemId" value="line"', 'name="action" value="edit"', 'value="44.000"', "Save changes", "Saved measure weights stay with unchanged selections"]) expect(markup).toContain(text);
   });
+  it("keeps saved supplier and product labels when the catalogue names change", () => {
+    const changed = { ...workspace, suppliers: [{ id: "supplier", name: "Renamed supplier" }], products: [{ id: "wheat", name: "Renamed wheat", unitId: "kg" }] };
+    const markup = renderToStaticMarkup(<PurchaseForm workspace={changed} purchase={purchase} requestId="edit" />);
+    expect(markup).toContain("Helmand Grain"); expect(markup).not.toContain("Renamed supplier");
+    expect(markup).not.toContain("Renamed wheat");
+  });
   it("rejects editing terminal purchases and preserves history when current selections are unavailable", async () => {
     mocks.getPurchase.mockResolvedValue({ ...purchase, status: "ordered" });
     await expect(EditPurchasePage({ params: Promise.resolve({ id: "purchase" }) })).rejects.toHaveProperty("digest", expect.stringContaining("/purchases/purchase"));
