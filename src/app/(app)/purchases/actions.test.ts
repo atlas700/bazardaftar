@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ requireSession: vi.fn(), createPurchaseDraft: vi.fn(), revalidatePath: vi.fn() }));
+const mocks = vi.hoisted(() => ({ requireSession: vi.fn(), createPurchaseDraft: vi.fn(), mutatePurchase: vi.fn(), revalidatePath: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/auth/server", () => mocks);
 vi.mock("@/db/purchases", () => mocks);
 vi.mock("next/cache", () => mocks);
-import { createPurchase } from "./actions";
+import { createPurchase, changePurchase } from "./actions";
 
 beforeEach(() => { mocks.requireSession.mockResolvedValue({ userId: "user_a" }); mocks.createPurchaseDraft.mockResolvedValue({ status: "invalid", fields: ["items"] }); });
 afterEach(() => { vi.resetAllMocks(); vi.restoreAllMocks(); });
@@ -18,6 +18,32 @@ function form() {
   return data;
 }
 describe("purchase create Server Action", () => {
+  it("forwards lifecycle revision, replay identity and aligned saved lines without trusting authority", async () => {
+    const data = form(); data.set("action", "edit"); data.set("id", "purchase"); data.set("revision", "2"); data.set("savedItemId", "line");
+    mocks.mutatePurchase.mockResolvedValue({ status: "invalid", fields: ["items"] });
+    await changePurchase({ status: "idle" }, data);
+    expect(mocks.mutatePurchase).toHaveBeenCalledWith({ action: "edit", id: "purchase", requestId: "request", revision: 2,
+      supplierId: "supplier", warehouseId: "warehouse", currency: "AFN", items: [{ savedItemId: "line", productId: "product", quantity: "2", quantityUnitId: "bag", quantityBagWeightKg: "44", unitPrice: "100", priceUnitId: "maan", priceBagWeightKg: null }] });
+    expect(mocks.requireSession).toHaveBeenCalled();
+  });
+  it.each(["order", "cancel"])("refreshes detail, editor and register after confirmed %s", async (action) => {
+    const data = form(); data.set("action", action); data.set("id", "purchase"); data.set("revision", "1"); data.set("reason", "Supplier unavailable");
+    mocks.mutatePurchase.mockResolvedValue({ status: "success", purchaseId: "purchase" });
+    await expect(changePurchase({ status: "idle" }, data)).rejects.toHaveProperty("digest", expect.stringContaining("/purchases/purchase"));
+    expect(mocks.mutatePurchase).toHaveBeenCalledWith({ action, id: "purchase", requestId: "request", revision: 1, reason: "Supplier unavailable" });
+    for (const path of ["/purchases", "/purchases/purchase", "/purchases/purchase/edit"]) expect(mocks.revalidatePath).toHaveBeenCalledWith(path);
+  });
+  it("rejects misaligned saved line identities and preserves safe lifecycle failures", async () => {
+    const data = form(); data.set("action", "edit");
+    mocks.mutatePurchase.mockResolvedValue({ status: "invalid", fields: ["items"] });
+    await changePurchase({ status: "idle" }, data);
+    expect(mocks.mutatePurchase).toHaveBeenCalledWith(null);
+    mocks.mutatePurchase.mockRejectedValue(new Error("private SQL password"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    data.set("action", "cancel");
+    expect(await changePurchase({ status: "idle" }, data)).toMatchObject({ status: "error" });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|password|Supplier unavailable/);
+  });
   it("authenticates and forwards only supported scalar fields and aligned items", async () => {
     await createPurchase({ status: "idle" }, form());
     expect(mocks.requireSession).toHaveBeenCalled();
