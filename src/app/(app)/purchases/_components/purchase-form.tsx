@@ -70,7 +70,7 @@ export function PurchaseForm({ workspace, requestId, purchase }: { workspace: Wo
     {purchase && <><input type="hidden" name="action" value="edit" /><input type="hidden" name="id" value={purchase.id} /><input type="hidden" name="revision" value={purchase.revision} /></>}
     <input type="hidden" name="warehouseId" value={purchase?.warehouseId ?? workspace.warehouse?.id ?? ""} />
     <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-      {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers, setSupplierId, purchase?.supplierName)}
+      {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers.map((supplier) => supplier.id === purchase?.supplierId ? { ...supplier, name: purchase.supplierName } : supplier), setSupplierId, purchase?.supplierName)}
       {options("currency", gt("Purchase currency"), currency, [{ id: "AFN", name: "AFN" }, { id: "PKR", name: "PKR" }], setCurrency)}
     </div>
     <div id={fieldId("warehouseId")} tabIndex={-1} className="text-sm"><span className="text-ink-muted"><T>Warehouse:</T> </span><bdi dir="auto">{purchase?.warehouseName ?? workspace.warehouse?.name}</bdi>
@@ -90,7 +90,7 @@ export function PurchaseForm({ workspace, requestId, purchase }: { workspace: Wo
         <legend className="pe-3 text-base font-semibold"><T>Purchase line <Var>{index + 1}</Var></T></legend>
         {purchase && <input type="hidden" name="savedItemId" value={line.savedItemId} />}
         <div className="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {options(`${prefix}productId`, gt("Product"), line.productId, workspace.products, (productId) => {
+          {options(`${prefix}productId`, gt("Product"), line.productId, workspace.products.map((product) => product.id === original?.productId ? { ...product, name: original.productName } : product), (productId) => {
             const unitId = workspace.products.find((product) => product.id === productId)?.unitId ?? "";
             update(line.key, { productId, quantityUnitId: unitId, priceUnitId: unitId, quantityBagWeightKg: "", priceBagWeightKg: "" });
           }, original?.productName)}
