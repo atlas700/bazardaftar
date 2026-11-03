@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({ requirePermission: vi.fn(), transaction: vi.fn
 vi.mock("server-only", () => ({}));
 vi.mock("./authorization", () => mocks);
 vi.mock("./index", () => ({ db: mocks }));
-import { createPurchaseDraft, getPurchase, getPurchasesWorkspace } from "./purchases";
+import { createPurchaseDraft, getPurchase, getPurchasesWorkspace, mutatePurchase } from "./purchases";
 
 const id = "53409e5c-e4d7-4351-a6b3-46ee18c4f532";
 const item = { productId: id, quantity: "2", quantityUnitId: id, quantityBagWeightKg: null,
@@ -14,6 +14,16 @@ beforeEach(() => mocks.requirePermission.mockResolvedValue({ organizationId: id,
 afterEach(() => vi.resetAllMocks());
 
 describe("purchase draft service boundaries", () => {
+  it.each([null, {}, { action: "received", id, requestId: id, revision: 1 },
+    { action: "order", id: "bad", requestId: id, revision: 1 },
+    { action: "order", id, requestId: id, revision: 0 },
+    { action: "cancel", id, requestId: id, revision: 1, reason: " " },
+    { action: "cancel", id, requestId: id, revision: 1, reason: "x".repeat(501) },
+    { ...command, action: "edit", id, revision: 1, items: [] },
+  ])("rejects invalid lifecycle commands before database work: %j", async (input) => {
+    expect(await mutatePurchase(input)).toMatchObject({ status: "invalid" });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
   it.each([
     null, { ...command, requestId: "bad" }, { ...command, supplierId: "bad" }, { ...command, warehouseId: "bad" },
     { ...command, currency: "USD" }, { ...command, items: [] }, { ...command, items: Array(101).fill(item) },

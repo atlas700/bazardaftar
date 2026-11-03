@@ -9,7 +9,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/auth/server", () => mocks);
 vi.mock("@/auth/organizations", () => mocks);
 vi.mock("@/env", () => ({ env: { databaseUrl: process.env.AFCS_TEST_DATABASE_URL ?? "postgresql://unused:unused@127.0.0.1:1/unused", nodeEnvironment: "test" } }));
-import { createPurchaseDraft, getPurchase, getPurchasesWorkspace } from "./purchases";
+import { createPurchaseDraft, getPurchase, getPurchasesWorkspace, mutatePurchase } from "./purchases";
 import { db } from "./index";
 import { catalogUnits, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, suppliers, warehouses } from "./schema";
 
@@ -201,6 +201,105 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     mocks.getActiveOrganizationMembership.mockImplementation(async () => ++calls === 1 ? f.actor : { ...f.actor, membershipId: "removed" });
     await expect(f.as(() => createPurchaseDraft(f.command))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     expect(await db.select().from(purchaseOrders).where(eq(purchaseOrders.organizationId, f.organization.id))).toEqual([]);
+  });
+  it("edits drafts exactly, retains original creation identity, and replays without overwriting later changes", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    const command = { ...f.command, action: "edit", id: purchase.id, revision: 1, requestId: randomUUID(), currency: "PKR",
+      items: [{ ...f.item, savedItemId: purchase.items[0].id, quantity: "3" }] };
+    expect(await f.as(() => mutatePurchase(command))).toEqual({ status: "success", purchaseId: purchase.id });
+    const edited = await f.as(() => getPurchase(purchase.id));
+    expect(edited).toMatchObject({ revision: 2, status: "draft", total: "3000.00", currency: "PKR", createdAt: purchase.createdAt });
+    expect(edited.items[0]).toMatchObject({ quantityKg: "132.000", lineTotal: "3000.00" });
+    expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: "success" });
+    expect(await f.as(() => mutatePurchase({ ...command, currency: "AFN" }))).toEqual({ status: "conflict" });
+    expect(await f.as(() => createPurchaseDraft(f.command))).toMatchObject({ status: "success", purchaseId: purchase.id });
+    expect(await f.as(() => getPurchase(purchase.id))).toEqual(edited);
+  });
+  it("preserves selected historical names and weights through editing and ordering after catalogue changes", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    await db.update(catalogUnits).set({ name: "new maan", kilogramsPerUnit: "5.000" }).where(eq(catalogUnits.id, f.maan.id));
+    await db.update(products).set({ name: "New wheat" }).where(eq(products.id, f.product.id));
+    await db.update(suppliers).set({ name: "New supplier" }).where(eq(suppliers.id, f.supplier.id));
+    expect(await f.as(() => mutatePurchase({ ...f.command, action: "edit", id: purchase.id, revision: 1, requestId: randomUUID(),
+      items: [{ ...f.item, savedItemId: purchase.items[0].id, quantity: "3" }] }))).toMatchObject({ status: "success" });
+    expect(await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 2, requestId: randomUUID() }))).toMatchObject({ status: "success" });
+    const ordered = await f.as(() => getPurchase(purchase.id));
+    expect(ordered).toMatchObject({ status: "ordered", revision: 3, supplierName: "Helmand Grain", total: "3000.00" });
+    expect(ordered.items[0]).toMatchObject({ productName: "Wheat", priceUnitName: "maan", priceMeasureKg: "4.400" });
+  });
+  it("cancels drafts and ordered purchases with durable owner approval and no item deletion", async () => {
+    for (const orderFirst of [false, true]) {
+      const f = await fixture(); const purchase = await saved(f);
+      if (orderFirst) await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 1, requestId: randomUUID() }));
+      const command = { action: "cancel", id: purchase.id, revision: orderFirst ? 2 : 1, requestId: randomUUID(), reason: " Supplier cannot deliver. " };
+      expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: "success" });
+      const cancelled = await f.as(() => getPurchase(purchase.id));
+      expect(cancelled).toMatchObject({ status: "cancelled", cancellationReason: "Supplier cannot deliver.",
+        cancelledByUserId: f.actor.userId, cancelledByMembershipId: f.actor.membershipId });
+      expect(cancelled.cancelledAt).toBeInstanceOf(Date);
+      expect(cancelled.items).toEqual(purchase.items);
+      expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: "success" });
+      for (const action of ["order", "edit", "cancel"]) {
+        expect(await f.as(() => mutatePurchase({ ...f.command, action, id: purchase.id, revision: cancelled.revision,
+          requestId: randomUUID(), reason: "Again" }))).toEqual({ status: "conflict" });
+      }
+    }
+  });
+  it.each(businessRoles)("enforces editing, ordering and owner-only cancellation for %s", async (role) => {
+    const f = await fixture(); const purchase = await saved(f);
+    await db.update(organizationRoleAssignments).set({ role }).where(eq(organizationRoleAssignments.membershipId, f.actor.membershipId));
+    for (const action of ["edit", "order", "cancel"]) {
+      const command = { ...f.command, action, id: purchase.id, revision: 1, requestId: randomUUID(), reason: "Owner approval" };
+      if (hasPermission(role, action === "cancel" ? "transactions.cancel" : "purchases.manage")) {
+        expect(await f.as(() => mutatePurchase(command))).toMatchObject({ status: action === "edit" ? "success" : "conflict" });
+      } else await expect(f.as(() => mutatePurchase(command))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    }
+  });
+  it("rejects stale competing edits and transitions without losing either saved items or the winning state", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    const base = { ...f.command, id: purchase.id, revision: 1 };
+    const results = await f.as(() => Promise.all([
+      mutatePurchase({ ...base, action: "edit", requestId: randomUUID(), items: [{ ...f.item, quantity: "3" }] }),
+      mutatePurchase({ ...base, action: "order", requestId: randomUUID() }),
+      mutatePurchase({ ...base, action: "cancel", requestId: randomUUID(), reason: "Cancelled by owner" }),
+    ]));
+    expect(results.filter(({ status }) => status === "success")).toHaveLength(1);
+    expect(results.filter(({ status }) => status === "conflict")).toHaveLength(2);
+    const current = await f.as(() => getPurchase(purchase.id));
+    expect(current.revision).toBe(2); expect(current.items).toHaveLength(1);
+    if (current.status === "draft") expect(current.total).toBe("3000.00");
+    else expect(current.total).toBe("2000.00");
+  });
+  it("denies cross-tenant targets and line identities, and atomically retains a draft on invalid edits", async () => {
+    const f = await fixture(); const foreign = await fixture(); const purchase = await saved(f); const other = await saved(foreign);
+    for (const action of ["edit", "order", "cancel"]) await expect(f.as(() => mutatePurchase({ ...f.command, action, id: other.id,
+      revision: 1, requestId: randomUUID(), reason: "Cannot cross tenants" }))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    for (const items of [[{ ...f.item, savedItemId: other.items[0].id }], [f.item, { ...f.item, quantity: "0.00001", quantityUnitId: f.kg.id, quantityBagWeightKg: null }]]) {
+      expect(await f.as(() => mutatePurchase({ ...f.command, action: "edit", id: purchase.id, revision: 1, requestId: randomUUID(), items }))).toMatchObject({ status: "invalid" });
+      expect(await f.as(() => getPurchase(purchase.id))).toEqual(purchase);
+    }
+  });
+  it("rolls back edited header and deleted lines when replacement insertion fails", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    const original = db.transaction.bind(db);
+    const spy = vi.spyOn(db, "transaction").mockImplementation(function <T>(...args: Parameters<typeof db.transaction<T>>) {
+      return original<T>(async (tx) => {
+        const insert = tx.insert.bind(tx);
+        vi.spyOn(tx, "insert").mockImplementation((table) => { if (table === purchaseOrderItems) throw new Error("Injected edit failure."); return insert(table); });
+        return args[0](tx);
+      });
+    });
+    try { await expect(f.as(() => mutatePurchase({ ...f.command, action: "edit", id: purchase.id, revision: 1,
+      requestId: randomUUID(), currency: "PKR" }))).rejects.toThrow("Injected edit failure."); }
+    finally { spy.mockRestore(); }
+    expect(await f.as(() => getPurchase(purchase.id))).toEqual(purchase);
+  });
+  it("rejects inactive references at ordering but still permits owner cancellation", async () => {
+    const f = await fixture(); const purchase = await saved(f);
+    await db.update(products).set({ isActive: false }).where(eq(products.id, f.product.id));
+    expect(await f.as(() => mutatePurchase({ action: "order", id: purchase.id, revision: 1, requestId: randomUUID() }))).toMatchObject({ status: "invalid" });
+    expect(await f.as(() => getPurchase(purchase.id))).toEqual(purchase);
+    expect(await f.as(() => mutatePurchase({ action: "cancel", id: purchase.id, revision: 1, requestId: randomUUID(), reason: "Product unavailable" }))).toMatchObject({ status: "success" });
   });
   it("denies a grant revoked while a draft waits for the organization lock", async () => {
     const f = await fixture(); let announceLock = () => {}; let releaseLock = () => {};
