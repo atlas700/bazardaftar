@@ -21,10 +21,10 @@ import { PurchaseLifecycle } from "./_components/purchase-lifecycle";
 const workspace = { organizationId: "business", canManage: true, purchases: [], suppliers: [{ id: "supplier", name: "Helmand Grain" }],
   warehouse: { id: "warehouse", name: "Main warehouse" }, products: [{ id: "wheat", name: "Wheat", unitId: "kg" }],
   units: [{ id: "kg", name: "kg", kind: "fixed" as const, kilogramsPerUnit: "1.000" }, { id: "bag", name: "bag", kind: "bag" as const, kilogramsPerUnit: null }] };
-const purchase = { id: "purchase", organizationId: "business", supplierId: "supplier", warehouseId: "warehouse", canManage: true, canCancel: true, revision: 1,
+const purchase = { id: "purchase", organizationId: "business", supplierId: "supplier", warehouseId: "warehouse", canManage: true, canCancel: true, canAccept: true, canApproveVariance: true, receipts: [], revision: 1,
   orderedAt: null, cancelledAt: null, cancelledByUserId: null, cancelledByMembershipId: null, cancellationReason: null, orderedByUserId: null, orderedByMembershipId: null,
   updatedAt: new Date("2026-11-02T07:00:00Z"), supplierName: "Helmand Grain", warehouseName: "Main warehouse", status: "draft" as const, total: "2000.00", currency: "AFN" as const, createdAt: new Date("2026-11-02T07:00:00Z"), items: [
-  { id: "line", lineNumber: 1, productId: "wheat", quantityUnitId: "bag", priceUnitId: "kg", productName: "Wheat", productSku: "W-1", quantity: "2.000000000000000000", quantityUnitName: "bag", quantityUnitKind: "bag" as const, quantityMeasureKg: "44.000", quantityKg: "88.000", unitPrice: "100.00", priceUnitName: "maan", priceUnitKind: "fixed" as const, priceMeasureKg: "4.400", lineTotal: "2000.00" },
+  { id: "line", lineNumber: 1, productId: "wheat", quantityUnitId: "bag", priceUnitId: "kg", productName: "Wheat", productSku: "W-1", quantity: "2.000000000000000000", quantityUnitName: "bag", quantityUnitKind: "bag" as const, quantityMeasureKg: "44.000", quantityKg: "88.000", unitPrice: "100.00", priceUnitName: "maan", priceUnitKind: "fixed" as const, priceMeasureKg: "4.400", lineTotal: "2000.00", receivedQuantityKg: "0.000", recognizedValue: "0.00" },
 ] };
 beforeEach(() => { mocks.getState.mockReturnValue({ status: "idle" }); mocks.getPurchasesWorkspace.mockResolvedValue(workspace); mocks.getPurchase.mockResolvedValue(purchase); });
 afterEach(() => { vi.resetAllMocks(); mocks.pending = false; });
@@ -66,6 +66,13 @@ describe("purchase pages and draft form", () => {
   it("keeps read-only detail free of lifecycle mutations", async () => {
     mocks.getPurchase.mockResolvedValue({ ...purchase, canManage: false, canCancel: false });
     expect(renderToStaticMarkup(await PurchasePage({ params: Promise.resolve({ id: "purchase" }) }))).not.toMatch(/<form|Edit purchase draft/);
+  });
+  it.each(["partially_received", "received"])("shows %s receipt state without cancellation controls", async (status) => {
+    mocks.getPurchase.mockResolvedValue({ ...purchase, status });
+    const html = renderToStaticMarkup(await PurchasePage({ params: Promise.resolve({ id: "purchase" }) }));
+    expect(html).toContain(status === "received" ? "Received" : "Partially received");
+    expect(html).not.toMatch(/Cancel purchase|Mark as ordered|Edit purchase draft/);
+    expect(html.includes('href="/purchases/purchase/receive"')).toBe(status === "partially_received");
   });
   it("loads the saved draft into the shared editor with revision, line IDs and actual bag weight", async () => {
     const markup = renderToStaticMarkup(await EditPurchasePage({ params: Promise.resolve({ id: "purchase" }) }));

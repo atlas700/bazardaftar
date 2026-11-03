@@ -103,7 +103,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
   warehouseId: uuid("warehouse_id").notNull(),
   warehouseName: text("warehouse_name").notNull(),
   currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
-  status: text("status", { enum: ["draft", "ordered", "cancelled"] }).default("draft").notNull(),
+  status: text("status", { enum: ["draft", "ordered", "partially_received", "received", "cancelled"] }).default("draft").notNull(),
   revision: integer("revision").default(1).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   lastMutationId: uuid("last_mutation_id"),
@@ -123,18 +123,19 @@ export const purchaseOrders = pgTable("purchase_orders", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   unique("purchase_orders_organization_id").on(table.organizationId, table.id),
+  unique("purchase_orders_receipt_context").on(table.organizationId, table.id, table.supplierId, table.warehouseId, table.currency),
   unique("purchase_orders_request").on(table.organizationId, table.requestId),
   index("purchase_orders_tenant_created").on(table.organizationId, table.createdAt, table.id),
   foreignKey({ name: "purchase_orders_tenant_supplier", columns: [table.organizationId, table.supplierId], foreignColumns: [suppliers.organizationId, suppliers.id] }),
   foreignKey({ name: "purchase_orders_tenant_warehouse", columns: [table.organizationId, table.warehouseId], foreignColumns: [warehouses.organizationId, warehouses.id] }),
-  check("purchase_orders_status", sql`${table.status} in ('draft', 'ordered', 'cancelled')`),
+  check("purchase_orders_status", sql`${table.status} in ('draft', 'ordered', 'partially_received', 'received', 'cancelled')`),
   check("purchase_orders_revision", sql`${table.revision} >= 1 and (
     (${table.revision} = 1 and ${table.lastMutationId} is null and ${table.lastMutationFingerprint} is null)
     or (${table.revision} > 1 and ${table.lastMutationId} is not null and ${table.lastMutationFingerprint} is not null
       and ${table.lastMutationFingerprint} ~ '^[0-9a-f]{64}$' and ${table.updatedByUserId} is not null
       and length(btrim(${table.updatedByUserId})) > 0 and ${table.updatedByMembershipId} is not null and length(btrim(${table.updatedByMembershipId})) > 0))`),
   check("purchase_orders_ordering", sql`(
-    (${table.orderedAt} is null and ${table.orderedByUserId} is null and ${table.orderedByMembershipId} is null and ${table.status} <> 'ordered')
+    (${table.orderedAt} is null and ${table.orderedByUserId} is null and ${table.orderedByMembershipId} is null and ${table.status} not in ('ordered', 'partially_received', 'received'))
     or (${table.orderedAt} is not null and ${table.orderedByUserId} is not null and length(btrim(${table.orderedByUserId})) > 0
       and ${table.orderedByMembershipId} is not null and length(btrim(${table.orderedByMembershipId})) > 0 and ${table.status} <> 'draft'))`),
   check("purchase_orders_cancellation", sql`(
@@ -170,8 +171,18 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
   priceUnitKind: text("price_unit_kind", { enum: ["fixed", "bag"] }).notNull(),
   priceMeasureKg: numeric("price_measure_kg").notNull(),
   lineTotal: numeric("line_total").notNull(),
+  receivedQuantityKg: numeric("received_quantity_kg").default("0.000").notNull(),
+  recognizedValue: numeric("recognized_value").default("0.00").notNull(),
+  approvedExtraKg: numeric("approved_extra_kg").default("0.000").notNull(),
 }, (table) => [
   unique("purchase_items_line").on(table.organizationId, table.purchaseOrderId, table.lineNumber),
+  unique("purchase_items_receipt_context").on(table.organizationId, table.purchaseOrderId, table.id, table.productId),
+  check("purchase_items_received", sql`${table.receivedQuantityKg} >= 0 and ${table.receivedQuantityKg} < 1000000000000000000 and scale(${table.receivedQuantityKg}) <= 3
+    and ${table.approvedExtraKg} >= 0 and ${table.approvedExtraKg} < 1000000000000000000 and scale(${table.approvedExtraKg}) <= 3
+    and ${table.receivedQuantityKg} <= ${table.quantityKg} + ${table.approvedExtraKg}
+    and ${table.recognizedValue} >= 0 and ${table.recognizedValue} < 1000000000000000000 and scale(${table.recognizedValue}) <= 2
+    and ${table.recognizedValue} * 100 = div(${table.receivedQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg})
+      + case when mod(${table.receivedQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg}) * 2 >= ${table.priceMeasureKg} then 1 else 0 end`),
   foreignKey({ name: "purchase_items_tenant_order", columns: [table.organizationId, table.purchaseOrderId], foreignColumns: [purchaseOrders.organizationId, purchaseOrders.id] }),
   foreignKey({ name: "purchase_items_tenant_product", columns: [table.organizationId, table.productId], foreignColumns: [products.organizationId, products.id] }),
   foreignKey({ name: "purchase_items_tenant_quantity_unit", columns: [table.organizationId, table.quantityUnitId], foreignColumns: [catalogUnits.organizationId, catalogUnits.id] }),
@@ -188,6 +199,120 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
     and ${table.lineTotal} >= 0 and ${table.lineTotal} < 1000000000000000000 and scale(${table.lineTotal}) <= 2
     and ${table.lineTotal} * 100 = div(${table.quantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg})
       + case when mod(${table.quantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg}) * 2 >= ${table.priceMeasureKg} then 1 else 0 end`),
+]);
+
+export const goodsReceipts = pgTable("goods_receipts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  purchaseOrderId: uuid("purchase_order_id").notNull(),
+  requestId: uuid("request_id").notNull(),
+  requestFingerprint: text("request_fingerprint").notNull(),
+  supplierId: uuid("supplier_id").notNull(),
+  warehouseId: uuid("warehouse_id").notNull(),
+  currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
+  total: numeric("total").notNull(),
+  completesPurchase: boolean("completes_purchase").notNull(),
+  varianceReason: text("variance_reason"),
+  varianceApprovedByUserId: text("variance_approved_by_user_id"),
+  varianceApprovedByMembershipId: text("variance_approved_by_membership_id"),
+  acceptedByUserId: text("accepted_by_user_id").notNull(),
+  acceptedByMembershipId: text("accepted_by_membership_id").notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  unique("receipts_tenant_id").on(table.organizationId, table.id),
+  unique("receipts_request").on(table.organizationId, table.requestId),
+  unique("receipts_purchase_context").on(table.organizationId, table.id, table.purchaseOrderId),
+  unique("receipts_payable_context").on(table.organizationId, table.id, table.supplierId, table.currency, table.total),
+  index("receipts_purchase").on(table.organizationId, table.purchaseOrderId, table.acceptedAt, table.id),
+  foreignKey({ name: "receipts_agreement", columns: [table.organizationId, table.purchaseOrderId, table.supplierId, table.warehouseId, table.currency],
+    foreignColumns: [purchaseOrders.organizationId, purchaseOrders.id, purchaseOrders.supplierId, purchaseOrders.warehouseId, purchaseOrders.currency] }),
+  check("receipts_total", sql`${table.total} >= 0 and ${table.total} < 1000000000000000000 and scale(${table.total}) <= 2`),
+  check("receipts_fingerprint", sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$'`),
+  check("receipts_actor", sql`length(btrim(${table.acceptedByUserId})) > 0 and length(btrim(${table.acceptedByMembershipId})) > 0`),
+  check("receipts_approval", sql`(${table.varianceReason} is null and ${table.varianceApprovedByUserId} is null and ${table.varianceApprovedByMembershipId} is null)
+    or (${table.varianceReason} is not null and length(btrim(${table.varianceReason})) between 1 and 500
+      and ${table.varianceApprovedByUserId} is not null and ${table.varianceApprovedByUserId} = ${table.acceptedByUserId}
+      and ${table.varianceApprovedByMembershipId} is not null and ${table.varianceApprovedByMembershipId} = ${table.acceptedByMembershipId})`),
+]);
+
+export const goodsReceiptItems = pgTable("goods_receipt_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  receiptId: uuid("receipt_id").notNull(),
+  purchaseOrderId: uuid("purchase_order_id").notNull(),
+  purchaseItemId: uuid("purchase_item_id").notNull(),
+  productId: uuid("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  quantity: numeric("quantity").notNull(),
+  quantityUnitId: uuid("quantity_unit_id").notNull(),
+  quantityUnitName: text("quantity_unit_name").notNull(),
+  quantityUnitKind: text("quantity_unit_kind", { enum: ["fixed", "bag"] }).notNull(),
+  quantityMeasureKg: numeric("quantity_measure_kg").notNull(),
+  quantityKg: numeric("quantity_kg").notNull(),
+  unitPrice: numeric("unit_price").notNull(),
+  priceUnitName: text("price_unit_name").notNull(),
+  priceMeasureKg: numeric("price_measure_kg").notNull(),
+  previousQuantityKg: numeric("previous_quantity_kg").notNull(),
+  cumulativeQuantityKg: numeric("cumulative_quantity_kg").notNull(),
+  previouslyRecognized: numeric("previously_recognized").notNull(),
+  recognizedValue: numeric("recognized_value").notNull(),
+}, (table) => [
+  unique("receipt_items_tenant_id").on(table.organizationId, table.id),
+  unique("receipt_items_once").on(table.organizationId, table.receiptId, table.purchaseItemId),
+  unique("receipt_items_movement_context").on(table.organizationId, table.id, table.productId, table.quantityKg),
+  foreignKey({ name: "receipt_items_receipt", columns: [table.organizationId, table.receiptId, table.purchaseOrderId], foreignColumns: [goodsReceipts.organizationId, goodsReceipts.id, goodsReceipts.purchaseOrderId] }),
+  foreignKey({ name: "receipt_items_agreement", columns: [table.organizationId, table.purchaseOrderId, table.purchaseItemId, table.productId], foreignColumns: [purchaseOrderItems.organizationId, purchaseOrderItems.purchaseOrderId, purchaseOrderItems.id, purchaseOrderItems.productId] }),
+  foreignKey({ name: "receipt_items_unit", columns: [table.organizationId, table.quantityUnitId], foreignColumns: [catalogUnits.organizationId, catalogUnits.id] }),
+  check("receipt_items_quantity", sql`${table.quantity} > 0 and ${table.quantity} < 1000000000000000000 and scale(${table.quantity}) <= 18
+    and ${table.quantityKg} > 0 and ${table.quantityKg} < 1000000000000000000 and scale(${table.quantityKg}) <= 3
+    and ${table.quantityMeasureKg} > 0 and ${table.quantityMeasureKg} < 1000000000000000000 and scale(${table.quantityMeasureKg}) <= 3
+    and ${table.quantityKg} = ${table.quantity} * ${table.quantityMeasureKg}
+    and ${table.previousQuantityKg} >= 0 and scale(${table.previousQuantityKg}) <= 3
+    and ${table.cumulativeQuantityKg} = ${table.previousQuantityKg} + ${table.quantityKg} and ${table.cumulativeQuantityKg} < 1000000000000000000`),
+  check("receipt_items_snapshots", sql`length(btrim(${table.productName})) between 1 and 80 and length(btrim(${table.quantityUnitName})) between 1 and 80
+    and length(btrim(${table.priceUnitName})) between 1 and 80 and ${table.quantityUnitKind} in ('fixed', 'bag')
+    and ${table.unitPrice} >= 0 and ${table.unitPrice} < 1000000000000000000 and scale(${table.unitPrice}) <= 2
+    and ${table.priceMeasureKg} > 0 and ${table.priceMeasureKg} < 1000000000000000000 and scale(${table.priceMeasureKg}) <= 3`),
+  check("receipt_items_value", sql`${table.previouslyRecognized} >= 0 and scale(${table.previouslyRecognized}) <= 2
+    and ${table.recognizedValue} >= 0 and ${table.recognizedValue} < 1000000000000000000 and scale(${table.recognizedValue}) <= 2
+    and ${table.previouslyRecognized} * 100 = div(${table.previousQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg})
+      + case when mod(${table.previousQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg}) * 2 >= ${table.priceMeasureKg} then 1 else 0 end
+    and (${table.previouslyRecognized} + ${table.recognizedValue}) * 100 = div(${table.cumulativeQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg})
+      + case when mod(${table.cumulativeQuantityKg} * ${table.unitPrice} * 100, ${table.priceMeasureKg}) * 2 >= ${table.priceMeasureKg} then 1 else 0 end`),
+]);
+
+export const inventoryMovements = pgTable("inventory_movements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  receiptItemId: uuid("receipt_item_id").notNull(),
+  productId: uuid("product_id").notNull(),
+  warehouseId: uuid("warehouse_id").notNull(),
+  quantityKg: numeric("quantity_kg").notNull(),
+  kind: text("kind", { enum: ["receipt"] }).default("receipt").notNull(),
+  performedByUserId: text("performed_by_user_id").notNull(),
+  performedByMembershipId: text("performed_by_membership_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  unique("movements_receipt_once").on(table.organizationId, table.receiptItemId),
+  foreignKey({ name: "movements_receipt_item", columns: [table.organizationId, table.receiptItemId, table.productId, table.quantityKg], foreignColumns: [goodsReceiptItems.organizationId, goodsReceiptItems.id, goodsReceiptItems.productId, goodsReceiptItems.quantityKg] }),
+  foreignKey({ name: "movements_warehouse", columns: [table.organizationId, table.warehouseId], foreignColumns: [warehouses.organizationId, warehouses.id] }),
+  check("movements_receipt", sql`${table.kind} = 'receipt' and ${table.quantityKg} > 0 and ${table.quantityKg} < 1000000000000000000 and scale(${table.quantityKg}) <= 3`),
+  check("movements_actor", sql`length(btrim(${table.performedByUserId})) > 0 and length(btrim(${table.performedByMembershipId})) > 0`),
+]);
+
+export const supplierPayables = pgTable("supplier_payables", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  receiptId: uuid("receipt_id").notNull(),
+  supplierId: uuid("supplier_id").notNull(),
+  currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
+  amount: numeric("amount").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  unique("payables_receipt_once").on(table.organizationId, table.receiptId),
+  unique("payables_tenant_id").on(table.organizationId, table.id),
+  foreignKey({ name: "payables_receipt", columns: [table.organizationId, table.receiptId, table.supplierId, table.currency, table.amount], foreignColumns: [goodsReceipts.organizationId, goodsReceipts.id, goodsReceipts.supplierId, goodsReceipts.currency, goodsReceipts.total] }),
+  check("payables_amount", sql`${table.amount} >= 0 and ${table.amount} < 1000000000000000000 and scale(${table.amount}) <= 2 and ${table.currency} in ('AFN', 'PKR')`),
 ]);
 
 export const organizationRoleAssignments = pgTable("organization_role_assignments", {

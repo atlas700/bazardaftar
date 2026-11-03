@@ -78,6 +78,13 @@
       "when": 1793711417293,
       "tag": "0010_purchase_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793713689312,
+      "tag": "0011_accepted_receipts",
+      "breakpoints": true
     }
   ]
 }

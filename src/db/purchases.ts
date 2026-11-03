@@ -13,7 +13,7 @@ import { assertStatusTransition, localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
 import type { TenantContext } from "./tenant";
-import { catalogUnits, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, suppliers, warehouses } from "./schema";
+import { catalogUnits, goodsReceiptItems, goodsReceipts, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, suppliers, warehouses } from "./schema";
 
 export type PurchaseState =
   | { status: "idle" | "conflict" }
@@ -59,7 +59,8 @@ const itemSelection = { id: purchaseOrderItems.id, lineNumber: purchaseOrderItem
   productSku: purchaseOrderItems.productSku, quantity: purchaseOrderItems.quantity, quantityUnitName: purchaseOrderItems.quantityUnitName,
   quantityUnitKind: purchaseOrderItems.quantityUnitKind, quantityMeasureKg: purchaseOrderItems.quantityMeasureKg, quantityKg: purchaseOrderItems.quantityKg,
   unitPrice: purchaseOrderItems.unitPrice, priceUnitName: purchaseOrderItems.priceUnitName, priceUnitKind: purchaseOrderItems.priceUnitKind,
-  priceMeasureKg: purchaseOrderItems.priceMeasureKg, lineTotal: purchaseOrderItems.lineTotal };
+  priceMeasureKg: purchaseOrderItems.priceMeasureKg, lineTotal: purchaseOrderItems.lineTotal,
+  receivedQuantityKg: purchaseOrderItems.receivedQuantityKg, recognizedValue: purchaseOrderItems.recognizedValue };
 
 export async function getPurchasesWorkspace() {
   try {
@@ -100,7 +101,17 @@ export async function getPurchase(input: unknown) {
       }).from(purchaseOrders).where(and(eq(purchaseOrders.organizationId, tenant.organizationId), eq(purchaseOrders.id, id.data))).limit(1);
       if (!purchase) notFound();
       const items = await tx.select(itemSelection).from(purchaseOrderItems).where(and(eq(purchaseOrderItems.organizationId, tenant.organizationId), eq(purchaseOrderItems.purchaseOrderId, id.data))).orderBy(asc(purchaseOrderItems.lineNumber));
-      return { ...purchase, items, organizationId: tenant.organizationId, canManage: hasPermission(actor.role, "purchases.manage"), canCancel: hasPermission(actor.role, "transactions.cancel") };
+      const receipts = await tx.select({ id: goodsReceipts.id, total: goodsReceipts.total, acceptedAt: goodsReceipts.acceptedAt,
+        completesPurchase: goodsReceipts.completesPurchase, varianceReason: goodsReceipts.varianceReason }).from(goodsReceipts)
+        .where(and(eq(goodsReceipts.organizationId, tenant.organizationId), eq(goodsReceipts.purchaseOrderId, id.data))).orderBy(asc(goodsReceipts.acceptedAt), asc(goodsReceipts.id));
+      const receiptItems = await tx.select({ id: goodsReceiptItems.id, receiptId: goodsReceiptItems.receiptId, productName: goodsReceiptItems.productName,
+        quantity: goodsReceiptItems.quantity, quantityUnitName: goodsReceiptItems.quantityUnitName, quantityMeasureKg: goodsReceiptItems.quantityMeasureKg,
+        quantityKg: goodsReceiptItems.quantityKg, recognizedValue: goodsReceiptItems.recognizedValue, unitPrice: goodsReceiptItems.unitPrice,
+        priceUnitName: goodsReceiptItems.priceUnitName, priceMeasureKg: goodsReceiptItems.priceMeasureKg }).from(goodsReceiptItems)
+        .where(and(eq(goodsReceiptItems.organizationId, tenant.organizationId), eq(goodsReceiptItems.purchaseOrderId, id.data))).orderBy(asc(goodsReceiptItems.id));
+      return { ...purchase, items, receipts: receipts.map((receipt) => ({ ...receipt, items: receiptItems.filter((item) => item.receiptId === receipt.id) })),
+        organizationId: tenant.organizationId, canManage: hasPermission(actor.role, "purchases.manage"), canCancel: hasPermission(actor.role, "transactions.cancel"),
+        canAccept: hasPermission(actor.role, "receipts.accept"), canApproveVariance: hasPermission(actor.role, "receipts.approve_variance") };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
   } catch (error) { unstable_rethrow(error); throw new Error("Purchases unavailable."); }
 }
