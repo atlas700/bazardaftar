@@ -47,6 +47,7 @@ describe("purchase draft service boundaries", () => {
   it("rejects malformed detail IDs and sanitizes unexpected read failures", async () => {
     await expect(getPurchase("bad")).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     mocks.select.mockImplementation(() => { throw new Error("private SQL password"); });
+    mocks.transaction.mockRejectedValue(new Error("private SQL password"));
     await expect(getPurchasesWorkspace()).rejects.toThrow(/^Purchases unavailable\.$/);
     await expect(getPurchase(id)).rejects.toThrow(/^Purchases unavailable\.$/);
   });

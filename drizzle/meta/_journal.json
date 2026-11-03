@@ -71,6 +71,13 @@
       "when": 1793616057000,
       "tag": "0009_exact_purchase_line_check",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793711417293,
+      "tag": "0010_purchase_lifecycle",
+      "breakpoints": true
     }
   ]
 }
