@@ -297,7 +297,8 @@ only owner cancels under `transactions.cancel` (ADRs 0010/0016).
 Edits require `draft`; ordering permits only `draft → ordered`. Cancellation
 permits `draft / ordered → cancelled`, records explicit current owner identity,
 UTC time, and a trimmed 1–500-character reason. Ordered and cancelled agreements
-cannot be edited; cancellation cannot be undone. Later receipt states are absent.
+cannot be edited; cancellation cannot be undone. Task 20 adds receipt states;
+partially received/received purchases cannot be cancelled through this action.
 Confirmation belongs to the separate cancellation form, including Enter-key
 submission; ordering never submits the cancellation reason form.
 
@@ -316,6 +317,52 @@ Successful changes refresh the register, detail and editor, then redirect to the
 confirmed detail. Errors keep input values and a safe correlation UUID; retry
 the same unchanged action or reload the purchase. A full reload starts a new
 request, so inspect current status/details before resubmitting an uncertain edit.
+
+## Receipt acceptance contract
+
+`receivePurchase` authenticates and transports a purchase UUID, request UUID,
+displayed integer revision, aligned purchase-line/quantity/measure/bag-weight
+columns, explicit final-delivery and owner-approval checkboxes, and an approval
+reason to `acceptReceipt`. Blank quantity rows are omitted; explicit zero is
+invalid. Duplicate scalar fields, missing/misaligned columns, duplicate purchase
+lines, sub-gram conversions, and numeric overflow are rejected. No client tenant,
+actor, price, currency, status, or total is authoritative.
+
+Current `receipts.accept` authority permits owner/admin/manager/warehouse.
+Eligible purchases are `ordered` or `partially_received`. Partial deliveries
+within remaining agreed quantities leave the balance open. Accepting excess or
+explicitly completing a short order requires `receipts.approve_variance`, an
+explicit checkbox, and a trimmed 1–500-character reason from the accepting owner.
+The receipt records that owner's membership/user and UTC acceptance time. There
+is no delegated or asynchronous approval workflow. A receipt must include actual
+positive goods; zero-goods closure and later cancellation/correction are excluded.
+
+The transaction locks the organization, rechecks current provider identity and
+local grant, locks the purchase and its lines, and validates active tenant-owned
+supplier/warehouse/product/stock-unit/quantity-unit/price-unit references. Saved
+purchase measures keep their agreed names/weights; a separately selected receipt
+measure uses its current definition and each received bag records its actual kg.
+Prices and price-weight snapshots always come from the ordered line. Per-line
+debt is rounded cumulative accepted value less previously recognized value;
+sum these differences into one same-currency payable per receipt (including a
+zero-valued payable when the approved price/rounding yields zero).
+
+Receipt, receipt lines, cumulative reconciliation state, inbound stock movements,
+payable and purchase status/revision commit or roll back together. Organization/
+purchase row locks serialize competing receipts. Database checks bound cumulative
+accepted quantities to ordered plus explicitly approved excess and verify exact
+cumulative value; tenant foreign keys and request/movement/payable uniqueness
+prevent mismatched or duplicate references. Stock derives from movements, not
+the purchase-line reconciliation cursor.
+
+The full database UUID is the receipt reference; there is no sequential number.
+The server hashes normalized command contents, including sorted line identities,
+under a unique organization/request UUID. Matching retries remain valid after
+later receipts; changed contents conflict. Current acceptance and variance
+authority are checked even on replay. A fresh request with an old revision
+conflicts. Successful actions refresh purchase routes and redirect to the saved
+receipt anchor. After an uncertain error, retry unchanged details with the same
+request or reload to inspect history before starting a new request.
 
 ## Decision status
 

@@ -8,6 +8,7 @@ import { getPurchase } from "@/db/purchases";
 import { PurchaseNumber, trimPurchaseQuantity } from "../_components/purchase-number";
 import { PurchaseStatus } from "../_components/purchase-status";
 import { PurchaseLifecycle } from "../_components/purchase-lifecycle";
+import { ReceiptHistory } from "../_components/receipt-history";
 
 export const metadata: Metadata = { title: "Purchase details" };
 export default async function PurchasePage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
     <PageHeader title={<bdi dir="auto" className="break-words">{purchase.supplierName}</bdi>}
       description={<T>Supplier agreement</T>} action={<PurchaseStatus status={purchase.status} />} />
     {purchase.canManage && purchase.status === "draft" && <Button variant="outline" asChild><Link href={`/purchases/${purchase.id}/edit`}><T>Edit purchase draft</T></Link></Button>}
+    {purchase.canAccept && (purchase.status === "ordered" || purchase.status === "partially_received") && <Button asChild><Link href={`/purchases/${purchase.id}/receive`}><T>Accept delivery</T></Link></Button>}
     <Panel className="shadow-none">
       <dl className="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="min-w-0"><dt className="text-sm text-ink-muted"><T>Warehouse</T></dt><dd className="mt-2 break-words font-medium"><bdi dir="auto">{purchase.warehouseName}</bdi></dd></div>
@@ -40,10 +42,13 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
           <div className="min-w-0"><dt className="text-ink-muted"><T>Total weight</T></dt><dd className="mt-2"><PurchaseNumber value={item.quantityKg} /> <T>kg</T></dd></div>
           <div className="min-w-0"><dt className="text-ink-muted"><T>Agreed unit price</T></dt><dd className="mt-2 break-words"><PurchaseNumber value={item.unitPrice} currency={purchase.currency} /> / <bdi dir="auto">{item.priceUnitName}</bdi></dd>
             <dd className="mt-1 text-ink-muted"><PurchaseNumber value={item.priceMeasureKg} /> <T>kg per price measure</T></dd></div>
+          <div><dt className="text-ink-muted"><T>Accepted weight</T></dt><dd className="mt-2"><PurchaseNumber value={item.receivedQuantityKg} /> <T>kg</T></dd></div>
+          <div><dt className="text-ink-muted"><T>Recognized supplier debt</T></dt><dd className="mt-2"><PurchaseNumber value={item.recognizedValue} currency={purchase.currency} /></dd></div>
         </dl>
       </li>)}</ol>
     </Panel>
-    {purchase.status !== "cancelled" && (purchase.canManage || purchase.canCancel) && <Panel className="shadow-none"><PurchaseLifecycle key={`${purchase.organizationId}:${purchase.id}:${purchase.revision}`} purchase={purchase} requestId={randomUUID()} /></Panel>}
+    <ReceiptHistory purchase={purchase} />
+    {(purchase.status === "draft" || purchase.status === "ordered") && (purchase.canManage || purchase.canCancel) && <Panel className="shadow-none"><PurchaseLifecycle key={`${purchase.organizationId}:${purchase.id}:${purchase.revision}`} purchase={purchase} requestId={randomUUID()} /></Panel>}
     <p className="text-sm leading-6 text-ink-muted">{purchase.status === "cancelled" ? <T>This purchase is cancelled and stays in history.</T> : <T>Stock and supplier debt change when a delivery is accepted.</T>}</p>
   </div>;
 }

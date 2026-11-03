@@ -2,15 +2,19 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReceiptState } from "@/db/receipts";
-const mocks = vi.hoisted(() => ({ state: { status: "idle" } as ReceiptState, pending: false }));
+const mocks = vi.hoisted(() => ({ state: { status: "idle" } as ReceiptState, pending: false, getPurchase: vi.fn(), getReceiptUnits: vi.fn() }));
+vi.mock("@/db/purchases", () => mocks);
+vi.mock("@/db/receipts", () => mocks);
 vi.mock("./receipt-actions", () => ({ receivePurchase: vi.fn() }));
 vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useActionState: () => [mocks.state, () => {}, mocks.pending] }));
 vi.mock("gt-next", () => ({ useGT: () => (text: string) => text, useLocaleDirection: () => "rtl", T: ({ children }: { children: ReactNode }) => children, Var: ({ children }: { children: ReactNode }) => children }));
 import { ReceiptForm } from "./_components/receipt-form";
+import ReceivePurchasePage from "./[id]/receive/page";
+import { ReceiptHistory } from "./_components/receipt-history";
 const purchase = { id: "purchase", revision: 2, canApproveVariance: true, items: [{ id: "line", productName: "Wheat", quantityKg: "3.000", receivedQuantityKg: "1.000",
   quantityUnitId: "kg", quantityUnitName: "kg", quantityUnitKind: "fixed" as const, quantityMeasureKg: "1.000" }] };
 const units = [{ id: "kg", name: "kg", kind: "fixed" as const, kilogramsPerUnit: "1.000" }];
-beforeEach(() => { mocks.state = { status: "idle" }; mocks.pending = false; });
+beforeEach(() => { vi.clearAllMocks(); mocks.state = { status: "idle" }; mocks.pending = false; mocks.getPurchase.mockResolvedValue({ ...purchase, organizationId: "business", status: "ordered", canAccept: true, supplierName: "Helmand Grain", warehouseName: "Main" }); mocks.getReceiptUnits.mockResolvedValue(units); });
 describe("receipt form", () => {
   it("shows agreed and already received weights with labelled inputs and no new price input", () => {
     const html = renderToStaticMarkup(<ReceiptForm purchase={purchase} units={units} requestId="request" />);
@@ -22,10 +26,10 @@ describe("receipt form", () => {
     const html = renderToStaticMarkup(<ReceiptForm purchase={{ ...purchase, canApproveVariance: false }} units={units} requestId="request" />);
     expect(html).not.toContain('name="approveVariance"'); expect(html).toContain("owner");
   });
-  it("links inline quantity errors and retains form identity", () => {
-    mocks.state = { status: "invalid", fields: ["items.0.quantity"] };
+  it("shows validation feedback and retains form identity", () => {
+    mocks.state = { status: "invalid", fields: ["items"] };
     const html = renderToStaticMarkup(<ReceiptForm purchase={purchase} units={units} requestId="same" />);
-    expect(html).toContain('role="alert"'); expect(html).toContain('aria-invalid="true"'); expect(html).toContain('href="#'); expect(html).toContain('name="requestId" value="same"');
+    expect(html).toContain('role="alert"'); expect(html).toContain("Check the delivery quantities"); expect(html).toContain('name="requestId" value="same"');
   });
   it("disables pending inputs and supplies safe conflict/error recovery", () => {
     mocks.pending = true;
@@ -34,5 +38,16 @@ describe("receipt form", () => {
     expect(renderToStaticMarkup(<ReceiptForm purchase={purchase} units={units} requestId="request" />)).toContain("Reload purchase");
     mocks.state = { status: "error", correlationId: "safe-reference" };
     expect(renderToStaticMarkup(<ReceiptForm purchase={purchase} units={units} requestId="request" />)).toContain("safe-reference");
+  });
+  it("opens eligible receipt entry and redirects ineligible or read-only visits", async () => {
+    expect(renderToStaticMarkup(await ReceivePurchasePage({ params: Promise.resolve({ id: "purchase" }) }))).toContain("Helmand Grain");
+    for (const changed of [{ status: "draft", canAccept: true }, { status: "received", canAccept: true }, { status: "cancelled", canAccept: true }, { status: "ordered", canAccept: false }]) {
+      mocks.getPurchase.mockResolvedValue({ ...purchase, ...changed });
+      await expect(ReceivePurchasePage({ params: Promise.resolve({ id: "purchase" }) })).rejects.toHaveProperty("digest", expect.stringContaining("/purchases/purchase"));
+    }
+  });
+  it("shows receipt references, exact accepted weights, debt and escaped owner reasons", () => {
+    const html = renderToStaticMarkup(<ReceiptHistory purchase={{ currency: "AFN", receipts: [{ id: "receipt", total: "33.33", acceptedAt: new Date("2026-11-03T08:00:00Z"), completesPurchase: true, varianceReason: "Short <delivery>", items: [{ id: "item", receiptId: "receipt", productName: "Wheat", quantity: "1.000000000000000000", quantityUnitName: "kg", quantityMeasureKg: "1.000", quantityKg: "1.000", recognizedValue: "33.33", unitPrice: "100.00", priceUnitName: "pack", priceMeasureKg: "3.000" }] }] }} />);
+    for (const text of ['id="receipt-receipt"', "33.33", "1.000", "Short &lt;delivery&gt;", "Final accepted delivery"]) expect(html).toContain(text);
   });
 });

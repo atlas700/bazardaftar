@@ -219,6 +219,54 @@ verifiable saved setup require a separately reviewed recovery procedure.
   commit together. Derive supplier balances from receipt payables less supplier
   payment allocations; see [ADR 0012](adr/0012-receipt-supplier-payables.md).
 
+## Accepted receipts, stock, and supplier payables
+
+Task 20 adds migration `0011_accepted_receipts.sql` and four tables:
+
+- `goods_receipts`: purchase/supplier/warehouse/currency, request UUID and SHA-256
+  fingerprint, receipt total, final-delivery flag, accepting membership/user/time,
+  and explicit owner variance approval/reason when required.
+- `goods_receipt_items`: stable ordered-line/product references; entered quantity,
+  measure name/kind and actual kg/bag; normalized kg; approved price/price-weight
+  snapshots; previous/cumulative accepted kg and previous/new recognized debt.
+- `inventory_movements`: one unique inbound `receipt` movement per receipt line,
+  product, warehouse, positive gram-precise kg, performer identities and UTC time.
+  This ledger is the stock source of truth; no stock balance field is overwritten.
+- `supplier_payables`: one unique obligation per receipt, retaining its supplier,
+  currency, exact total and UTC recognition time. Zero-value obligations are
+  retained when free goods or cumulative rounding produce zero debt.
+
+Purchase lines add bounded `received_quantity_kg`, `recognized_value`, and
+`approved_extra_kg` reconciliation cursors. Exact quotient/remainder checks enforce
+cumulative half-up value and quantities cannot exceed ordered plus approved extra.
+These cursors serialize acceptance and do not replace receipt or movement history.
+Composite tenant foreign keys bind receipts to their actual agreement, lines to
+their receipt/purchase/product, movements to the exact receipt-line product/kg,
+and payables to the receipt's exact supplier/currency/amount. Receipt request,
+movement source and payable source are unique within the organization.
+
+The service takes the shared organization and purchase/line row locks, rechecks
+current membership/permission and active references, then commits every posting
+and purchase revision/status together. Ordinary partial deliveries remain open;
+excess and final short deliveries require explicit accepting-owner approval under
+ADRs 0006/0016. Receipt UUIDs are full human-visible references and idempotent
+replays survive later receipts. Purchase detail reads its agreement, cumulative
+state and receipt history in the same repeatable-read transaction. Small pilot
+history is read in full; paginate before substantial history.
+
+Apply migration 0011 before this application revision. New tables/default-zero
+cursors preserve existing purchases; the migration orders referenced unique
+constraints before new foreign keys. Do not edit prior migration history. Retain
+receipt-aware reads and disable acceptance if rolling back application code;
+older lifecycle code cannot accurately display new receipt states. Never delete
+posted movements or payables as an application rollback.
+
+Run `src/db/receipts.integration.test.ts` on the existing isolated verification
+database. CI includes it in the disposable PostgreSQL job. The
+[handoff](handoffs/20-accepted-receipts.md) distinguishes local migration, test and
+synthetic browser evidence from live provider/deployment acceptance. Task 21 owns
+inventory balance/history read models; Tasks 25–26 own payments and statements.
+
 ## Staff management
 
 Task 11 adds no tables or migrations. Its staff mutations lock the existing
@@ -427,7 +475,7 @@ without rewriting the already-applied 0008 migration.
 
 Apply migrations 0008–0010 before using the current `/purchases` workflow. Corrections use forward
 migrations; reverting application code retains these additive tables. Task 20
-must recheck posting authority/references and reconcile receipt
+rechecks posting authority/references and reconciles receipt
 quantities/values independently. The pilot register currently loads its small
 history in full; paginate before a large trading history.
 

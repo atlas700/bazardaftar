@@ -31,7 +31,7 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
   twice, and runs the onboarding/authorization, staff, catalogue, product, supplier,
-  warehouse, and purchase integration suites with
+  warehouse, purchase, and receipt integration suites with
   `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
@@ -134,6 +134,22 @@ component LTR/RTL and hydrated browser evidence, including Enter in a cancellati
 reason originally submitting the order action. Separate forms and submit-time
 confirmation fix that native-browser regression. This does not establish live
 Clerk, provider-backed mutations, Pashto terminology acceptance, or deployment.
+
+## Receipt acceptance verification
+
+Task 20 adds input/action/form/route/history checks plus
+`src/db/receipts.integration.test.ts` in the existing isolated PostgreSQL CI job.
+It verifies partial/full and explicitly owner-approved short/excess acceptance,
+all roles, active references, saved measure/price snapshots, exact per-line
+cumulative reconciliation, zero/PKR payables, same/changed durable retries,
+competing requests, revoked queued grants, tenant constraints and rollback at
+receipt, line, movement, payable and status writes. The 100 AFN example recognizes
+33.33/33.34/33.33 across three receipts; a multi-line example checks line-level
+reconciliation before summing the payable. Actual-component synthetic browser
+checks cover confirmation, Radix/reset retention, linked field errors, pending
+controls, business-switch identity and desktop/mobile RTL layout. The
+[handoff](handoffs/20-accepted-receipts.md) records results and limitations; these
+checks do not establish live Clerk, translated terminology, or deployment.
 
 ## Staff management verification
 

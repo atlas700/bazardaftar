@@ -19,7 +19,7 @@ export function PurchaseLifecycle({ purchase, requestId }: { purchase: Purchase;
   const [state, action, pending] = useActionState(changePurchase, { status: "idle" });
   useEffect(() => { if (state.status === "invalid" || state.status === "conflict" || state.status === "error") feedback.current?.focus(); }, [state]);
   const order = purchase.status === "draft" && purchase.canManage;
-  const cancel = purchase.status !== "cancelled" && purchase.canCancel;
+  const cancel = (purchase.status === "draft" || purchase.status === "ordered") && purchase.canCancel;
   if (!order && !cancel) return null;
   const reasonInvalid = state.status === "invalid" && state.fields.includes("reason");
   const identity = <><input type="hidden" name="id" value={purchase.id} /><input type="hidden" name="revision" value={purchase.revision} /><input type="hidden" name="requestId" value={retryId} /></>;
