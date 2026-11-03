@@ -8,8 +8,8 @@ Repository: [atlas700/bazardaftar](https://github.com/atlas700/bazardaftar).
 The npm package name is `bazardaftar`.
 
 The current application supports business onboarding, staff access, products,
-weight units, categories, suppliers, one warehouse, and purchase drafts. The
-approved pilot workflow adds purchase lifecycle management, receiving, supplier
+weight units, categories, suppliers, one warehouse, and purchase drafting,
+editing, ordering, and owner-approved cancellation. The approved pilot workflow adds receiving, supplier
 debt, supplier payments, and reconciliation in the order set
 out in the [build plan](docs/agent-sized-build-plan.md). Those planned capabilities
 are not all implemented. G1 is accepted on retrospective founder evidence under

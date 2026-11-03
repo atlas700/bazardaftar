@@ -271,8 +271,8 @@ provider identity and the exact local grant on that connection. Supplier,
 warehouse, products, product default units, and both selected measures must still
 be active in that tenant. Persist snapshots, round each line half-up, sum those
 rounded lines, and insert the order/items atomically. Only server-owned `draft`
-status is accepted. This task exposes no editing, ordering, cancellation, receipt,
-stock, or payable mutation.
+status is accepted. Creation exposes no receipt, stock, or payable mutation;
+Task 19's lifecycle contract follows below.
 
 The form keeps one request UUID across validation errors, ambiguous saves, and
 same-business server refreshes. A same-tenant retry with the same normalized
@@ -283,6 +283,39 @@ whether the save committed: retain unchanged details and retry, or inspect the
 register before starting another draft. Successful saves refresh `/purchases`
 and redirect to the confirmed detail. Unexpected failures expose only a safe
 correlation UUID. Framework redirects/not-found control flow are preserved.
+
+## Purchase lifecycle contract
+
+`changePurchase` authenticates, accepts an explicit `edit`, `order`, or `cancel`
+action with purchase UUID, request UUID and displayed integer revision, and calls
+`mutatePurchase`. Edits use the same aligned decimal/measure fields as creation,
+plus an optional saved-line UUID per line. Existing line UUIDs must belong to
+that tenant/purchase and appear at most once. Unknown authority, totals and status
+fields are ignored. Owner/admin/manager edit/order under `purchases.manage`;
+only owner cancels under `transactions.cancel` (ADRs 0010/0016).
+
+Edits require `draft`; ordering permits only `draft → ordered`. Cancellation
+permits `draft / ordered → cancelled`, records explicit current owner identity,
+UTC time, and a trimmed 1–500-character reason. Ordered and cancelled agreements
+cannot be edited; cancellation cannot be undone. Later receipt states are absent.
+Confirmation belongs to the separate cancellation form, including Enter-key
+submission; ordering never submits the cancellation reason form.
+
+The transaction takes the shared organization lock, rechecks provider identity
+and the exact current grant on its connection, locks the tenant-owned purchase,
+checks replay/revision/state, then validates and commits atomically. Unchanged
+product/measure selections retain saved names, kinds and weight snapshots;
+new selections use current active references. Ordering rechecks active references
+without repricing the agreement. Cancellation does not require active references.
+The immutable creation request identity remains valid after lifecycle changes.
+
+An identical most recent mutation request replays as success after current
+authorization; a changed payload or stale revision conflicts. After another
+mutation, earlier requests conflict rather than overwriting the newer state.
+Successful changes refresh the register, detail and editor, then redirect to the
+confirmed detail. Errors keep input values and a safe correlation UUID; retry
+the same unchanged action or reload the purchase. A full reload starts a new
+request, so inspect current status/details before resubmitting an uncertain edit.
 
 ## Decision status
 

@@ -9,6 +9,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { changePurchase, createPurchase } from "../actions";
+import { trimPurchaseQuantity } from "./purchase-number";
 
 type Workspace = Pick<Awaited<ReturnType<typeof getPurchasesWorkspace>>, "warehouse" | "suppliers" | "products" | "units">;
 type Purchase = Awaited<ReturnType<typeof getPurchase>>;
@@ -24,7 +25,7 @@ export function PurchaseForm({ workspace, requestId, purchase }: { workspace: Wo
   const nextKey = useRef((purchase?.items.length ?? 1) + 1);
   const [retryId] = useState(requestId);
   const [lines, setLines] = useState<Line[]>(() => purchase ? purchase.items.map((item, index) => ({ key: index + 1, savedItemId: item.id, original: item,
-    productId: item.productId, quantity: item.quantity, quantityUnitId: item.quantityUnitId,
+    productId: item.productId, quantity: trimPurchaseQuantity(item.quantity), quantityUnitId: item.quantityUnitId,
     quantityBagWeightKg: item.quantityUnitKind === "bag" ? item.quantityMeasureKg : "", unitPrice: item.unitPrice, priceUnitId: item.priceUnitId,
     priceBagWeightKg: item.priceUnitKind === "bag" ? item.priceMeasureKg : "" })) : [blankLine(1)]);
   const [supplierId, setSupplierId] = useState(purchase?.supplierId ?? "");
@@ -125,6 +126,8 @@ export function PurchaseForm({ workspace, requestId, purchase }: { workspace: Wo
     {fields}
     {pending && <p role="status" className="text-sm text-ink-muted"><T>Saving purchase draft…</T></p>}
     {state.status === "conflict" && <p role="alert" className="text-sm leading-6 text-destructive">{purchase ? <T>This purchase changed or this request already saved different details. Keep a copy of your changes, then return to the purchase and reload.</T> : <T>This submission already saved different purchase details. Open the purchase register to check it, then start a new draft if needed.</T>}</p>}
-    {state.status === "error" && <p role="alert" className="text-sm leading-6 text-destructive"><T>The save could not be confirmed. Keep these details unchanged and retry, or check the purchase register before starting another draft. Reference: <Var>{state.correlationId}</Var></T></p>}
+    {state.status === "error" && <p role="alert" className="text-sm leading-6 text-destructive">{purchase
+      ? <T>The save could not be confirmed. Keep these details unchanged and retry, or return to the purchase to check it. Reference: <Var>{state.correlationId}</Var></T>
+      : <T>The save could not be confirmed. Keep these details unchanged and retry, or check the purchase register before starting another draft. Reference: <Var>{state.correlationId}</Var></T>}</p>}
   </form>;
 }

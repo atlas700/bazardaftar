@@ -147,13 +147,15 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 19 — purchase order editing, ordering, and cancellation;
+**Next task:** 20 — accept receipts, append stock movements, and create supplier payables;
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
 see its [handoff](handoffs/17-warehouses.md). Task 18 adds tenant-safe purchase draft
 creation, list/detail views, exact price/weight snapshots, and safe retries; see its
 [handoff](handoffs/18-purchase-drafts.md). Drafts do not change stock or debt.
-Purchase lifecycle changes and receipts remain unimplemented.
+Task 19 adds draft editing, ordering, and owner-approved cancellation with revision
+checks and preserved agreement snapshots; see its [handoff](handoffs/19-purchase-lifecycle.md).
+Receipts, stock movements, and supplier payables remain unimplemented.
 Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
 [contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
 on the revised retrospective-evidence basis. Pilot release gates remain open.
@@ -629,6 +631,14 @@ permissions have unit/integration tests.
 received` later; cancellation according to policy) and allow edits only in safe
 states. Write audit events through the shared audit interface if it exists; otherwise
 leave an explicit integration point for Task 27.
+
+Task 19 permits draft edits, `draft → ordered`, and owner-approved
+`draft / ordered → cancelled` under ADRs 0010/0016. Ordered/cancelled purchases
+are read-only; cancelled is terminal. Persist approval identity, UTC times and
+a cancellation reason. Revision guards prevent stale overwrites. Retain unchanged
+selected reference/weight snapshots, use current snapshots for new selections,
+and preserve creation retry identity. Received states and any cancellation with
+posted receipts require later reconciliation work and are not enabled here.
 
 **Do not:** allow editing received quantities through the order or delete historical
 orders.
