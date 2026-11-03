@@ -117,6 +117,24 @@ regression is recorded in the [handoff](handoffs/18-purchase-drafts.md); it does
 not establish live Clerk, translated terminology, deployed routes, or a real
 provider-backed application session. Task 33 retains full E2E scope.
 
+## Purchase lifecycle verification
+
+Task 19 extends the existing purchase suites with draft editing, ordering,
+owner-only cancellation and terminal-state guards; stale/concurrent writes and
+latest-request replays; immutable creation retry identity; preserved name/kind/
+weight snapshots; all-role and cross-tenant denial; transactional replacement
+rollback; active-reference checks; metadata constraints; and queued authority
+revocation. The purchase PostgreSQL suite contains 41 cases. Detail reads use
+a consistent transaction snapshot. Server Action/UI checks cover explicit aligned
+saved-line fields, refreshed routes, current status, inactive references and
+read-only access. No new test framework or dependency is introduced.
+
+The [Task 19 handoff](handoffs/19-purchase-lifecycle.md) records synthetic actual-
+component LTR/RTL and hydrated browser evidence, including Enter in a cancellation
+reason originally submitting the order action. Separate forms and submit-time
+confirmation fix that native-browser regression. This does not establish live
+Clerk, provider-backed mutations, Pashto terminology acceptance, or deployment.
+
 ## Staff management verification
 
 Task 11 adds staff provider/action/UI tests plus unit tests using Drizzle's real

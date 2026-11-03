@@ -425,10 +425,9 @@ from validated rounded lines in the service transaction. The line constraint use
 ratio near a half-cent at the supported bounds. Migration 0009 fixes that check
 without rewriting the already-applied 0008 migration.
 
-Apply both reviewed migrations before using `/purchases`. Corrections use forward
-migrations; reverting application code retains these additive tables. Task 19
-must expand the draft-only status constraint and implement its approved transition
-matrix. Task 20 must recheck posting authority/references and reconcile receipt
+Apply migrations 0008–0010 before using the current `/purchases` workflow. Corrections use forward
+migrations; reverting application code retains these additive tables. Task 20
+must recheck posting authority/references and reconcile receipt
 quantities/values independently. The pilot register currently loads its small
 history in full; paginate before a large trading history.
 
@@ -437,3 +436,28 @@ as the other suites. It covers actual rollback, constraints, exact rounding,
 snapshots, all roles, tenant isolation, inactive references, concurrent idempotent
 retries, changed provider identity, and queued role revocation. CI includes it in
 the existing disposable PostgreSQL job; no live Clerk calls are made.
+
+### Purchase lifecycle
+
+Migration `0010_purchase_lifecycle.sql` expands the status check to `draft`,
+`ordered`, and `cancelled`, and adds a positive revision, update identity/time,
+last mutation UUID/fingerprint, ordering identity/time, and cancellation
+identity/time/reason. Metadata checks reject incomplete approvals. Existing
+drafts start at revision 1; their creation request ID/fingerprint stays immutable.
+The migration preserves existing rows and prior migration history.
+
+Under the same organization lock and fresh provider/role checks, Task 19 edits
+drafts atomically, orders drafts, and permits only an owner to cancel an unreceived
+draft/ordered purchase. Draft line replacement keeps surviving line IDs and
+reference names/weights for unchanged selections; new selections take current
+catalogue values. Active references are rechecked for edits/ordering; cancellation
+preserves history even when references are inactive. Ordered/cancelled lines are
+never edited or removed. No stock/payable writes exist yet.
+
+Each mutation includes the displayed revision. A changed revision conflicts
+before any write. The most recent identical normalized request replays as success;
+changed contents conflict. After a later mutation, old revisions conflict safely.
+Header, lines, metadata and revision commit together. Detail reads use one
+repeatable-read snapshot so an edit cannot mix a new header with old lines.
+Task 27's audit write integration point is explicit on the mutation transaction;
+order/cancellation provenance is already durable.

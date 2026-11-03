@@ -35,6 +35,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 15 suppliers handoff](handoffs/15-suppliers.md)
 - [Task 17 warehouses handoff](handoffs/17-warehouses.md)
 - [Task 18 purchase drafts handoff](handoffs/18-purchase-drafts.md)
+- [Task 19 purchase lifecycle handoff](handoffs/19-purchase-lifecycle.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)

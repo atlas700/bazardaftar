@@ -3,30 +3,35 @@
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { T, Var, useGT } from "gt-next";
 import { Plus, Save } from "lucide-react";
-import type { getPurchasesWorkspace } from "@/db/purchases";
+import type { getPurchase, getPurchasesWorkspace } from "@/db/purchases";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createPurchase } from "../actions";
+import { changePurchase, createPurchase } from "../actions";
+import { trimPurchaseQuantity } from "./purchase-number";
 
 type Workspace = Pick<Awaited<ReturnType<typeof getPurchasesWorkspace>>, "warehouse" | "suppliers" | "products" | "units">;
-type Line = { key: number; productId: string; quantity: string; quantityUnitId: string; quantityBagWeightKg: string; unitPrice: string; priceUnitId: string; priceBagWeightKg: string };
-const blankLine = (key: number): Line => ({ key, productId: "", quantity: "", quantityUnitId: "", quantityBagWeightKg: "", unitPrice: "", priceUnitId: "", priceBagWeightKg: "" });
+type Purchase = Awaited<ReturnType<typeof getPurchase>>;
+type Line = { key: number; savedItemId: string; original?: Purchase["items"][number]; productId: string; quantity: string; quantityUnitId: string; quantityBagWeightKg: string; unitPrice: string; priceUnitId: string; priceBagWeightKg: string };
+const blankLine = (key: number): Line => ({ key, savedItemId: "", productId: "", quantity: "", quantityUnitId: "", quantityBagWeightKg: "", unitPrice: "", priceUnitId: "", priceBagWeightKg: "" });
 
-export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; requestId: string }) {
+export function PurchaseForm({ workspace, requestId, purchase }: { workspace: Workspace; requestId: string; purchase?: Purchase }) {
   const gt = useGT();
   const id = useId();
   const form = useRef<HTMLFormElement>(null);
   const summary = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
-  const nextKey = useRef(2);
+  const nextKey = useRef((purchase?.items.length ?? 1) + 1);
   const [retryId] = useState(requestId);
-  const [lines, setLines] = useState<Line[]>([blankLine(1)]);
-  const [supplierId, setSupplierId] = useState("");
-  const [currency, setCurrency] = useState("AFN");
+  const [lines, setLines] = useState<Line[]>(() => purchase ? purchase.items.map((item, index) => ({ key: index + 1, savedItemId: item.id, original: item,
+    productId: item.productId, quantity: trimPurchaseQuantity(item.quantity), quantityUnitId: item.quantityUnitId,
+    quantityBagWeightKg: item.quantityUnitKind === "bag" ? item.quantityMeasureKg : "", unitPrice: item.unitPrice, priceUnitId: item.priceUnitId,
+    priceBagWeightKg: item.priceUnitKind === "bag" ? item.priceMeasureKg : "" })) : [blankLine(1)]);
+  const [supplierId, setSupplierId] = useState(purchase?.supplierId ?? "");
+  const [currency, setCurrency] = useState<string>(purchase?.currency ?? "AFN");
   const [structureChanged, setStructureChanged] = useState(false);
-  const [state, action, pending] = useActionState(createPurchase, { status: "idle" });
+  const [state, action, pending] = useActionState(purchase ? changePurchase : createPurchase, { status: "idle" });
   const invalid = state.status === "invalid" && !structureChanged ? state.fields : [];
   useEffect(() => {
     const element = form.current;
@@ -38,7 +43,8 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
   useEffect(() => { if (state.status === "invalid") summary.current?.focus(); }, [state]);
   const fieldId = (key: string) => `${id}-${key.replaceAll(".", "-")}`;
   const errors: { key: string; message: string }[] = [];
-  const options = (key: string, label: string, value: string, choices: { id: string; name: string }[], change: (value: string) => void) => {
+  const options = (key: string, label: string, value: string, choices: { id: string; name: string }[], change: (value: string) => void, savedName?: string) => {
+    if (value && savedName && !choices.some((choice) => choice.id === value)) choices = [...choices, { id: value, name: gt("{name} (unavailable)", { name: savedName }) }];
     const message = gt("Choose an active {field} in this business.", { field: label });
     if (invalid.includes(key)) errors.push({ key, message });
     return <Field data-invalid={invalid.includes(key)}><FieldLabel htmlFor={fieldId(key)}>{label}</FieldLabel>
@@ -62,40 +68,50 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
   const update = (key: number, changes: Partial<Line>) => setLines((current) => current.map((line) => line.key === key ? { ...line, ...changes } : line));
   const fields = <fieldset disabled={pending} className="min-w-0 space-y-7 disabled:opacity-60">
     <input type="hidden" name="requestId" value={retryId} />
-    <input type="hidden" name="warehouseId" value={workspace.warehouse?.id ?? ""} />
+    {purchase && <><input type="hidden" name="action" value="edit" /><input type="hidden" name="id" value={purchase.id} /><input type="hidden" name="revision" value={purchase.revision} /></>}
+    <input type="hidden" name="warehouseId" value={purchase?.warehouseId ?? workspace.warehouse?.id ?? ""} />
     <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-      {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers, setSupplierId)}
+      {options("supplierId", gt("Supplier"), supplierId, workspace.suppliers.map((supplier) => supplier.id === purchase?.supplierId ? { ...supplier, name: purchase.supplierName } : supplier), setSupplierId, purchase?.supplierName)}
       {options("currency", gt("Purchase currency"), currency, [{ id: "AFN", name: "AFN" }, { id: "PKR", name: "PKR" }], setCurrency)}
     </div>
-    <div id={fieldId("warehouseId")} tabIndex={-1} className="text-sm"><span className="text-ink-muted"><T>Warehouse:</T> </span><bdi dir="auto">{workspace.warehouse?.name}</bdi>
+    <div id={fieldId("warehouseId")} tabIndex={-1} className="text-sm"><span className="text-ink-muted"><T>Warehouse:</T> </span><bdi dir="auto">{purchase?.warehouseName ?? workspace.warehouse?.name}</bdi>
       {invalid.includes("warehouseId") && <p className="mt-2 text-destructive"><T>The warehouse is unavailable or inactive. Ask an owner or admin to check its setup, then reload.</T></p>}
     </div>
     <div className="space-y-6">{lines.map((line, index) => {
       const prefix = `items.${index}.`;
-      const quantityBag = workspace.units.find((unit) => unit.id === line.quantityUnitId)?.kind === "bag";
-      const priceBag = workspace.units.find((unit) => unit.id === line.priceUnitId)?.kind === "bag";
+      const original = line.original?.productId === line.productId ? line.original : undefined;
+      const measures = (kind: "quantity" | "price") => workspace.units.map((unit) => original && unit.id === original[`${kind}UnitId`]
+        ? { ...unit, name: original[`${kind}UnitName`], kind: original[`${kind}UnitKind`], kilogramsPerUnit: original[`${kind}MeasureKg`] } : unit);
+      const quantityUnits = measures("quantity"), priceUnits = measures("price");
+      const quantityMeasure = quantityUnits.find((unit) => unit.id === line.quantityUnitId);
+      const priceMeasure = priceUnits.find((unit) => unit.id === line.priceUnitId);
+      const quantityBag = (quantityMeasure?.kind ?? (original?.quantityUnitId === line.quantityUnitId ? original.quantityUnitKind : null)) === "bag";
+      const priceBag = (priceMeasure?.kind ?? (original?.priceUnitId === line.priceUnitId ? original.priceUnitKind : null)) === "bag";
       return <fieldset key={line.key} className="min-w-0 space-y-5 border-t border-border/70 pt-5">
         <legend className="pe-3 text-base font-semibold"><T>Purchase line <Var>{index + 1}</Var></T></legend>
+        {purchase && <input type="hidden" name="savedItemId" value={line.savedItemId} />}
         <div className="grid min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {options(`${prefix}productId`, gt("Product"), line.productId, workspace.products, (productId) => {
+          {options(`${prefix}productId`, gt("Product"), line.productId, workspace.products.map((product) => product.id === original?.productId ? { ...product, name: original.productName } : product), (productId) => {
             const unitId = workspace.products.find((product) => product.id === productId)?.unitId ?? "";
             update(line.key, { productId, quantityUnitId: unitId, priceUnitId: unitId, quantityBagWeightKg: "", priceBagWeightKg: "" });
-          })}
+          }, original?.productName)}
           {number(`${prefix}quantity`, gt("Quantity"), line.quantity, gt("Enter a positive quantity that converts to whole grams and fits the purchase limits."), (quantity) => update(line.key, { quantity }))}
-          {options(`${prefix}quantityUnitId`, gt("Quantity measure"), line.quantityUnitId, workspace.units, (quantityUnitId) => update(line.key, { quantityUnitId, quantityBagWeightKg: "" }))}
+          {options(`${prefix}quantityUnitId`, gt("Quantity measure"), line.quantityUnitId, quantityUnits, (quantityUnitId) => update(line.key, { quantityUnitId, quantityBagWeightKg: "" }), original?.quantityUnitName)}
           {quantityBag ? number(`${prefix}quantityBagWeightKg`, gt("Actual bag weight (kg)"), line.quantityBagWeightKg, gt("Enter the actual weight of one bag in kg, with at most three decimal places."), (quantityBagWeightKg) => update(line.key, { quantityBagWeightKg }))
             : <input type="hidden" name="quantityBagWeightKg" value="" />}
           {number(`${prefix}unitPrice`, gt("Agreed unit price"), line.unitPrice, gt("Enter a non-negative price with at most two decimal places that fits the purchase limits."), (unitPrice) => update(line.key, { unitPrice }))}
-          {options(`${prefix}priceUnitId`, gt("Price per measure"), line.priceUnitId, workspace.units, (priceUnitId) => update(line.key, { priceUnitId, priceBagWeightKg: "" }))}
+          {options(`${prefix}priceUnitId`, gt("Price per measure"), line.priceUnitId, priceUnits, (priceUnitId) => update(line.key, { priceUnitId, priceBagWeightKg: "" }), original?.priceUnitName)}
           {priceBag ? number(`${prefix}priceBagWeightKg`, gt("Price bag weight (kg)"), line.priceBagWeightKg, gt("Enter the actual kg weight covered by one bag price, with at most three decimal places."), (priceBagWeightKg) => update(line.key, { priceBagWeightKg }))
             : <input type="hidden" name="priceBagWeightKg" value="" />}
         </div>
+        {purchase && <p className="text-sm leading-6 text-ink-muted"><T>Quantity measure: <Var>{quantityBag ? line.quantityBagWeightKg || "—" : quantityMeasure?.kilogramsPerUnit ?? original?.quantityMeasureKg ?? "—"}</Var> kg. Price measure: <Var>{priceBag ? line.priceBagWeightKg || "—" : priceMeasure?.kilogramsPerUnit ?? original?.priceMeasureKg ?? "—"}</Var> kg.</T></p>}
+        {invalid.includes(`${prefix}savedItemId`) && <p className="text-sm text-destructive"><T>This saved line has changed. Return to the purchase and reload before editing.</T></p>}
         {lines.length > 1 && <Button type="button" variant="ghost" onClick={() => { setStructureChanged(true); setLines((current) => current.filter((item) => item.key !== line.key)); addButton.current?.focus(); }}><T>Remove line <Var>{index + 1}</Var></T></Button>}
       </fieldset>;
     })}</div>
     <div className="flex flex-wrap gap-3 border-t border-border/70 pt-5">
       <Button type="button" ref={addButton} variant="outline" disabled={lines.length >= 100} onClick={() => { const key = nextKey.current++; setStructureChanged(true); setLines((current) => [...current, blankLine(key)]); }}><Plus aria-hidden="true" /><T>Add purchase line</T></Button>
-      <Button type="submit"><Save aria-hidden="true" /><T>Save purchase draft</T></Button>
+      <Button type="submit"><Save aria-hidden="true" />{purchase ? <T>Save changes</T> : <T>Save purchase draft</T>}</Button>
     </div>
     <FieldDescription><T>Choose the measure used for the quantity and the measure used for the price. They can differ. Each line is rounded to two decimals before the purchase total is calculated.</T></FieldDescription>
   </fieldset>;
@@ -109,7 +125,9 @@ export function PurchaseForm({ workspace, requestId }: { workspace: Workspace; r
     </div>}
     {fields}
     {pending && <p role="status" className="text-sm text-ink-muted"><T>Saving purchase draft…</T></p>}
-    {state.status === "conflict" && <p role="alert" className="text-sm leading-6 text-destructive"><T>This submission already saved different purchase details. Open the purchase register to check it, then start a new draft if needed.</T></p>}
-    {state.status === "error" && <p role="alert" className="text-sm leading-6 text-destructive"><T>The save could not be confirmed. Keep these details unchanged and retry, or check the purchase register before starting another draft. Reference: <Var>{state.correlationId}</Var></T></p>}
+    {state.status === "conflict" && <p role="alert" className="text-sm leading-6 text-destructive">{purchase ? <T>This purchase changed or this request already saved different details. Keep a copy of your changes, then return to the purchase and reload.</T> : <T>This submission already saved different purchase details. Open the purchase register to check it, then start a new draft if needed.</T>}</p>}
+    {state.status === "error" && <p role="alert" className="text-sm leading-6 text-destructive">{purchase
+      ? <T>The save could not be confirmed. Keep these details unchanged and retry, or return to the purchase to check it. Reference: <Var>{state.correlationId}</Var></T>
+      : <T>The save could not be confirmed. Keep these details unchanged and retry, or check the purchase register before starting another draft. Reference: <Var>{state.correlationId}</Var></T>}</p>}
   </form>;
 }

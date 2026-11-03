@@ -103,7 +103,20 @@ export const purchaseOrders = pgTable("purchase_orders", {
   warehouseId: uuid("warehouse_id").notNull(),
   warehouseName: text("warehouse_name").notNull(),
   currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
-  status: text("status", { enum: ["draft"] }).default("draft").notNull(),
+  status: text("status", { enum: ["draft", "ordered", "cancelled"] }).default("draft").notNull(),
+  revision: integer("revision").default(1).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  lastMutationId: uuid("last_mutation_id"),
+  lastMutationFingerprint: text("last_mutation_fingerprint"),
+  updatedByUserId: text("updated_by_user_id"),
+  updatedByMembershipId: text("updated_by_membership_id"),
+  orderedAt: timestamp("ordered_at", { withTimezone: true }),
+  orderedByUserId: text("ordered_by_user_id"),
+  orderedByMembershipId: text("ordered_by_membership_id"),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancelledByUserId: text("cancelled_by_user_id"),
+  cancelledByMembershipId: text("cancelled_by_membership_id"),
+  cancellationReason: text("cancellation_reason"),
   total: numeric("total").notNull(),
   createdByUserId: text("created_by_user_id").notNull(),
   createdByMembershipId: text("created_by_membership_id").notNull(),
@@ -114,7 +127,21 @@ export const purchaseOrders = pgTable("purchase_orders", {
   index("purchase_orders_tenant_created").on(table.organizationId, table.createdAt, table.id),
   foreignKey({ name: "purchase_orders_tenant_supplier", columns: [table.organizationId, table.supplierId], foreignColumns: [suppliers.organizationId, suppliers.id] }),
   foreignKey({ name: "purchase_orders_tenant_warehouse", columns: [table.organizationId, table.warehouseId], foreignColumns: [warehouses.organizationId, warehouses.id] }),
-  check("purchase_orders_status", sql`${table.status} = 'draft'`),
+  check("purchase_orders_status", sql`${table.status} in ('draft', 'ordered', 'cancelled')`),
+  check("purchase_orders_revision", sql`${table.revision} >= 1 and (
+    (${table.revision} = 1 and ${table.lastMutationId} is null and ${table.lastMutationFingerprint} is null)
+    or (${table.revision} > 1 and ${table.lastMutationId} is not null and ${table.lastMutationFingerprint} is not null
+      and ${table.lastMutationFingerprint} ~ '^[0-9a-f]{64}$' and ${table.updatedByUserId} is not null
+      and length(btrim(${table.updatedByUserId})) > 0 and ${table.updatedByMembershipId} is not null and length(btrim(${table.updatedByMembershipId})) > 0))`),
+  check("purchase_orders_ordering", sql`(
+    (${table.orderedAt} is null and ${table.orderedByUserId} is null and ${table.orderedByMembershipId} is null and ${table.status} <> 'ordered')
+    or (${table.orderedAt} is not null and ${table.orderedByUserId} is not null and length(btrim(${table.orderedByUserId})) > 0
+      and ${table.orderedByMembershipId} is not null and length(btrim(${table.orderedByMembershipId})) > 0 and ${table.status} <> 'draft'))`),
+  check("purchase_orders_cancellation", sql`(
+    (${table.status} <> 'cancelled' and ${table.cancelledAt} is null and ${table.cancelledByUserId} is null and ${table.cancelledByMembershipId} is null and ${table.cancellationReason} is null)
+    or (${table.status} = 'cancelled' and ${table.cancelledAt} is not null and ${table.cancelledByUserId} is not null
+      and length(btrim(${table.cancelledByUserId})) > 0 and ${table.cancelledByMembershipId} is not null
+      and length(btrim(${table.cancelledByMembershipId})) > 0 and ${table.cancellationReason} is not null and length(btrim(${table.cancellationReason})) between 1 and 500))`),
   check("purchase_orders_currency", sql`${table.currency} in ('AFN', 'PKR')`),
   check("purchase_orders_total", sql`${table.total} >= 0 and ${table.total} < 1000000000000000000 and scale(${table.total}) <= 2`),
   check("purchase_orders_fingerprint", sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$'`),
