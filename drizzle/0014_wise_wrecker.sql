@@ -62,6 +62,7 @@ CREATE TABLE "supplier_payments" (
     and length(btrim("supplier_payments"."recorded_by_user_id")) > 0 and length(btrim("supplier_payments"."recorded_by_membership_id")) > 0)
 );
 --> statement-breakpoint
+ALTER TABLE "supplier_payables" ADD CONSTRAINT "payables_settlement_context" UNIQUE("organization_id","id","supplier_id","currency");--> statement-breakpoint
 ALTER TABLE "supplier_payment_allocations" ADD CONSTRAINT "allocations_payment" FOREIGN KEY ("organization_id","payment_id","supplier_id","currency") REFERENCES "public"."supplier_payments"("organization_id","id","supplier_id","currency") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "supplier_payment_allocations" ADD CONSTRAINT "allocations_payable" FOREIGN KEY ("organization_id","payable_id","supplier_id","currency") REFERENCES "public"."supplier_payables"("organization_id","id","supplier_id","currency") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "supplier_payment_reductions" ADD CONSTRAINT "reductions_allocated_payable" FOREIGN KEY ("organization_id","payment_id","payable_id","supplier_id","currency") REFERENCES "public"."supplier_payment_allocations"("organization_id","payment_id","payable_id","supplier_id","currency") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -70,5 +71,4 @@ ALTER TABLE "supplier_payments" ADD CONSTRAINT "payments_tenant_supplier" FOREIG
 CREATE INDEX "allocations_payable" ON "supplier_payment_allocations" USING btree ("organization_id","payable_id");--> statement-breakpoint
 CREATE INDEX "reductions_payable" ON "supplier_payment_reductions" USING btree ("organization_id","payable_id");--> statement-breakpoint
 CREATE INDEX "payments_supplier_history" ON "supplier_payments" USING btree ("organization_id","supplier_id","currency","created_at","id");--> statement-breakpoint
-CREATE INDEX "payables_supplier_oldest" ON "supplier_payables" USING btree ("organization_id","supplier_id","currency","created_at","id");--> statement-breakpoint
-ALTER TABLE "supplier_payables" ADD CONSTRAINT "payables_settlement_context" UNIQUE("organization_id","id","supplier_id","currency");
+CREATE INDEX "payables_supplier_oldest" ON "supplier_payables" USING btree ("organization_id","supplier_id","currency","created_at","id");
