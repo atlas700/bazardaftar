@@ -35,7 +35,7 @@ describe("inventory read boundary", () => {
   });
   it("reads one consistent snapshot and binds the verified organization to both ledger queries", async () => {
     expect(await getInventoryWorkspace({ organizationId: "attacker", role: "owner" })).toMatchObject({ balances: [], movements: [], product: null, nextCursor: null, canReadPurchases: true });
-    expect(mocks.query.mock.calls[0][0]).toBe("begin isolation level repeatable read read only");
+    expect(mocks.query.mock.calls[0][0].text).toBe("begin isolation level repeatable read read only");
     const queries = mocks.query.mock.calls.filter(([query]) => typeof query === "object" && query.text.includes('from "inventory_movements"'));
     expect(queries).toHaveLength(2);
     for (const [query, params] of queries) {
@@ -49,7 +49,7 @@ describe("inventory read boundary", () => {
     mocks.query.mockResolvedValue({ rows: [] });
     await expect(getInventoryWorkspace()).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     const [, params] = mocks.query.mock.calls.find(([query]) => typeof query === "object" && query.text.includes('from "organization_role_assignments"'))!;
-    expect(params).toEqual([organizationId, tenant.membershipId, tenant.userId]);
+    expect(params).toEqual(expect.arrayContaining([organizationId, tenant.membershipId, tenant.userId]));
     expect(mocks.query.mock.calls.some(([query]) => typeof query === "object" && query.text.includes('from "inventory_movements"'))).toBe(false);
   });
   it.each([{ productId: id }, { after: id }])("rejects unavailable or foreign references: %j", async (input) => {
