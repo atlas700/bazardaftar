@@ -10,6 +10,7 @@ vi.mock("gt-next", () => ({ T: ({ children }: { children: React.ReactNode }) => 
 import PaymentsPage from "./page";
 import NewPaymentPage from "./new/page";
 import RoundingPage from "./rounding/page";
+import { PaymentFilter } from "./_components/payment-filter";
 
 const payableId = "53409e5c-e4d7-4351-a6b3-46ee18c4f532";
 const paymentId = "dd090eb5-5332-4351-9bc7-f662f232139c";
@@ -21,6 +22,11 @@ const workspace = { organizationId: "org", suppliers: [{ id: "supplier", name: "
 beforeEach(() => { vi.resetAllMocks(); mocks.getPaymentsWorkspace.mockResolvedValue(workspace); });
 
 describe("supplier payment screens", () => {
+  it("renders the selected supplier and currency before client hydration", () => {
+    const html = renderToStaticMarkup(<PaymentFilter suppliers={workspace.suppliers} supplierId="supplier" currency="AFN" />);
+    expect(html.match(/<button[^>]*id="payment-supplier"[^>]*>([\s\S]*?)<\/button>/)?.[1]).toContain("Helmand &lt;grain&gt;");
+    expect(html.match(/<button[^>]*id="payment-currency"[^>]*>([\s\S]*?)<\/button>/)?.[1]).toContain("AFN");
+  });
   it("shows cash once with receipt allocations, outstanding debt and separate reduction entry", async () => {
     const html = renderToStaticMarkup(await PaymentsPage());
     for (const text of ["Supplier payments", "Helmand &lt;grain&gt;", "0.79", "62.00", "Cash 14", "Record supplier payment", "/payments/rounding?", "/purchases/purchase#receipt-receipt"]) expect(html).toContain(text);
