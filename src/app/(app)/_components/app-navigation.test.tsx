@@ -50,10 +50,15 @@ describe("workspace navigation", () => {
     }
   });
 
-  it("keeps unavailable indicators visible in mobile navigation and distinguishes sales", () => {
-    const html = renderToStaticMarkup(<AppNavigation role="owner" compact />);
-    expect(html).toContain("Soon");
-    expect(html).toContain("Outside pilot");
+  it("offers supplier payments in both navigation layouts and keeps sales outside the pilot", () => {
+    state.pathname = "/payments/new";
+    for (const compact of [true, false]) {
+      const html = renderToStaticMarkup(<AppNavigation role="owner" compact={compact} />);
+      const paymentLink = html.match(/<a[^>]*href="\/payments"[^>]*>[\s\S]*?<\/a>/)?.[0];
+      expect(paymentLink).toContain('aria-current="page"');
+      expect(paymentLink).not.toContain("Soon");
+      expect(html).toContain("Outside pilot");
+    }
   });
   it("offers inventory as available for every business role in desktop and mobile navigation", () => {
     state.pathname = "/inventory";

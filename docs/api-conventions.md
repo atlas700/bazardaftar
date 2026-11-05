@@ -400,6 +400,38 @@ the same request before starting another adjustment. Success invalidates
 signed kg, adjustment type/reason/reference, performer and UTC time without prices
 or supplier data. See [storage and concurrency rules](database.md#controlled-inventory-adjustments).
 
+## Supplier payments
+
+Task 25 adds native Server Actions `recordSupplierCash` and
+`approveSupplierRounding`, backed by server-only `recordSupplierPayment()` and
+`reduceSupplierPayable()`. Both actions authenticate, reject duplicate scalar
+fields and ignore client tenant/actor/role authority. Zod validates cash, dates,
+rates and bounded references/reasons. Payment entry requires
+`supplier_payments.record`; separate reductions require owner-only
+`supplier_payments.adjust_rounding` plus explicit approval. Current provider and
+membership-bound local authority are rechecked after the organization lock.
+
+Cash commands take request/supplier UUIDs, debt currency, `paidOn` calendar date,
+whole `afnCash`/`pkrCash`, optional `pkrPerAfn`, reference and note. Staff never
+select the receipt allocation: the service selects oldest unpaid same-currency
+receipt payables. Reduction commands take request/payment/payable UUIDs, amount,
+reason and explicit approval, retaining their separate provenance.
+
+Expected states are `success`, `invalid`, `insufficient_balance` and `conflict`.
+An uncertain write or refresh failure returns only a safe correlation ID; retry
+unchanged details with the same request UUID or inspect history before starting a
+new entry. Success refreshes payment and supplier routes and redirects to the
+payment anchor. Separate entry routes give the next entry a new request identity.
+No cash is silently clipped to the balance and no excess becomes supplier credit.
+
+`getPaymentsWorkspace({ supplierId?, currency?, after? })` requires
+`supplier_payments.read`, returns one currency's history and selected supplier's
+outstanding debt, and validates the cursor within the same tenant/supplier/currency
+scope. Reads use a repeatable snapshot and retain database timestamp precision.
+Unexpected reads expose only `Supplier payments unavailable.` See
+[storage rules](database.md#supplier-payments-and-rounding-reductions) and the
+[handoff](handoffs/25-supplier-payments.md).
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).

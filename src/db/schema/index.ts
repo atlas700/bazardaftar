@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, foreignKey, index, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, foreignKey, index, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { businessRoles } from "@/auth/permissions";
 import { supplierTypes } from "@/domain/supplier";
 
@@ -334,8 +334,88 @@ export const supplierPayables = pgTable("supplier_payables", {
 }, (table) => [
   unique("payables_receipt_once").on(table.organizationId, table.receiptId),
   unique("payables_tenant_id").on(table.organizationId, table.id),
+  unique("payables_settlement_context").on(table.organizationId, table.id, table.supplierId, table.currency),
+  index("payables_supplier_oldest").on(table.organizationId, table.supplierId, table.currency, table.createdAt, table.id),
   foreignKey({ name: "payables_receipt", columns: [table.organizationId, table.receiptId, table.supplierId, table.currency, table.amount], foreignColumns: [goodsReceipts.organizationId, goodsReceipts.id, goodsReceipts.supplierId, goodsReceipts.currency, goodsReceipts.total] }),
   check("payables_amount", sql`${table.amount} >= 0 and ${table.amount} < 1000000000000000000 and scale(${table.amount}) <= 2 and ${table.currency} in ('AFN', 'PKR')`),
+]);
+
+export const supplierPayments = pgTable("supplier_payments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  requestId: uuid("request_id").notNull(),
+  requestFingerprint: text("request_fingerprint").notNull(),
+  supplierId: uuid("supplier_id").notNull(),
+  supplierName: text("supplier_name").notNull(),
+  currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
+  paidOn: date("paid_on", { mode: "string" }).notNull(),
+  afnCash: numeric("afn_cash").notNull(),
+  pkrCash: numeric("pkr_cash").notNull(),
+  pkrPerAfn: numeric("pkr_per_afn"),
+  amount: numeric("amount").notNull(),
+  reference: text("reference").notNull(),
+  note: text("note").notNull(),
+  recordedByUserId: text("recorded_by_user_id").notNull(),
+  recordedByMembershipId: text("recorded_by_membership_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  unique("payments_request").on(table.organizationId, table.requestId),
+  unique("payments_settlement_context").on(table.organizationId, table.id, table.supplierId, table.currency),
+  index("payments_supplier_history").on(table.organizationId, table.supplierId, table.currency, table.createdAt, table.id),
+  foreignKey({ name: "payments_tenant_supplier", columns: [table.organizationId, table.supplierId], foreignColumns: [suppliers.organizationId, suppliers.id] }),
+  check("payments_cash", sql`${table.afnCash} >= 0 and ${table.afnCash} < 1000000000000000000 and scale(${table.afnCash}) = 0
+    and ${table.pkrCash} >= 0 and ${table.pkrCash} < 1000000000000000000 and scale(${table.pkrCash}) = 0 and (${table.afnCash} > 0 or ${table.pkrCash} > 0)`),
+  check("payments_rate", sql`(${table.pkrPerAfn} is null and ((${table.currency} = 'AFN' and ${table.pkrCash} = 0) or (${table.currency} = 'PKR' and ${table.afnCash} = 0)))
+    or (${table.pkrPerAfn} is not null and ${table.pkrPerAfn} > 0 and ${table.pkrPerAfn} < 1000000000000000000 and scale(${table.pkrPerAfn}) <= 6)`),
+  check("payments_value", sql`${table.currency} in ('AFN', 'PKR') and ${table.amount} > 0 and ${table.amount} < 1000000000000000000 and scale(${table.amount}) <= 2
+    and ${table.amount} * 100 = case when ${table.currency} = 'AFN'
+      then div((${table.afnCash} * coalesce(${table.pkrPerAfn}, 1) + ${table.pkrCash}) * 100, coalesce(${table.pkrPerAfn}, 1))
+        + case when mod((${table.afnCash} * coalesce(${table.pkrPerAfn}, 1) + ${table.pkrCash}) * 100, coalesce(${table.pkrPerAfn}, 1)) * 2 >= coalesce(${table.pkrPerAfn}, 1) then 1 else 0 end
+      else round((${table.pkrCash} + ${table.afnCash} * coalesce(${table.pkrPerAfn}, 1)) * 100, 0) end`),
+  check("payments_provenance", sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$' and length(btrim(${table.supplierName})) between 1 and 80
+    and length(${table.reference}) <= 100 and length(${table.note}) <= 500
+    and length(btrim(${table.recordedByUserId})) > 0 and length(btrim(${table.recordedByMembershipId})) > 0`),
+]);
+
+export const supplierPaymentAllocations = pgTable("supplier_payment_allocations", {
+  organizationId: uuid("organization_id").notNull(),
+  paymentId: uuid("payment_id").notNull(),
+  payableId: uuid("payable_id").notNull(),
+  supplierId: uuid("supplier_id").notNull(),
+  currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
+  amount: numeric("amount").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.organizationId, table.paymentId, table.payableId] }),
+  unique("allocations_settlement_context").on(table.organizationId, table.paymentId, table.payableId, table.supplierId, table.currency),
+  index("allocations_payable").on(table.organizationId, table.payableId),
+  foreignKey({ name: "allocations_payment", columns: [table.organizationId, table.paymentId, table.supplierId, table.currency], foreignColumns: [supplierPayments.organizationId, supplierPayments.id, supplierPayments.supplierId, supplierPayments.currency] }),
+  foreignKey({ name: "allocations_payable", columns: [table.organizationId, table.payableId, table.supplierId, table.currency], foreignColumns: [supplierPayables.organizationId, supplierPayables.id, supplierPayables.supplierId, supplierPayables.currency] }),
+  check("allocations_amount", sql`${table.amount} > 0 and ${table.amount} < 1000000000000000000 and scale(${table.amount}) <= 2`),
+]);
+
+// This separate append-only source records the owner's approval; reductions are never cash.
+export const supplierPaymentReductions = pgTable("supplier_payment_reductions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull(),
+  requestId: uuid("request_id").notNull(),
+  requestFingerprint: text("request_fingerprint").notNull(),
+  paymentId: uuid("payment_id").notNull(),
+  payableId: uuid("payable_id").notNull(),
+  supplierId: uuid("supplier_id").notNull(),
+  currency: text("currency", { enum: ["AFN", "PKR"] }).notNull(),
+  amount: numeric("amount").notNull(),
+  reason: text("reason").notNull(),
+  approvedByUserId: text("approved_by_user_id").notNull(),
+  approvedByMembershipId: text("approved_by_membership_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  unique("reductions_request").on(table.organizationId, table.requestId),
+  index("reductions_payable").on(table.organizationId, table.payableId),
+  foreignKey({ name: "reductions_allocated_payable", columns: [table.organizationId, table.paymentId, table.payableId, table.supplierId, table.currency],
+    foreignColumns: [supplierPaymentAllocations.organizationId, supplierPaymentAllocations.paymentId, supplierPaymentAllocations.payableId, supplierPaymentAllocations.supplierId, supplierPaymentAllocations.currency] }),
+  check("reductions_amount", sql`${table.amount} > 0 and ${table.amount} <= 0.99 and scale(${table.amount}) <= 2`),
+  check("reductions_provenance", sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$' and length(btrim(${table.reason})) between 1 and 500
+    and length(btrim(${table.approvedByUserId})) > 0 and length(btrim(${table.approvedByMembershipId})) > 0`),
 ]);
 
 export const organizationRoleAssignments = pgTable("organization_role_assignments", {

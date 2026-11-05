@@ -22,6 +22,7 @@ const permissionRoles = {
   "supplier_balances.read": ["owner", "admin", "manager", "accountant", "viewer"],
   "supplier_payments.read": ["owner", "admin", "manager", "accountant", "viewer"],
   "supplier_payments.record": ["owner", "admin", "accountant"],
+  "supplier_payments.adjust_rounding": ["owner"],
   "audit.read": ["owner", "admin", "accountant"],
 } as const satisfies Record<string, readonly BusinessRole[]>;
 

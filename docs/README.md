@@ -39,6 +39,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 20 accepted receipts, stock movements, and supplier payables](handoffs/20-accepted-receipts.md)
 - [Task 21 inventory balances and stock history](handoffs/21-inventory-balances.md)
 - [Task 22 owner-approved inventory adjustments](handoffs/22-inventory-adjustments.md)
+- [Task 25 supplier payments and rounding reductions](handoffs/25-supplier-payments.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)

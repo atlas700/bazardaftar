@@ -1,0 +1,6 @@
+ALTER TABLE "supplier_payments" DROP CONSTRAINT "payments_value";--> statement-breakpoint
+ALTER TABLE "supplier_payments" ADD CONSTRAINT "payments_value" CHECK ("supplier_payments"."currency" in ('AFN', 'PKR') and "supplier_payments"."amount" > 0 and "supplier_payments"."amount" < 1000000000000000000 and scale("supplier_payments"."amount") <= 2
+    and "supplier_payments"."amount" * 100 = case when "supplier_payments"."currency" = 'AFN'
+      then div(("supplier_payments"."afn_cash" * coalesce("supplier_payments"."pkr_per_afn", 1) + "supplier_payments"."pkr_cash") * 100, coalesce("supplier_payments"."pkr_per_afn", 1))
+        + case when mod(("supplier_payments"."afn_cash" * coalesce("supplier_payments"."pkr_per_afn", 1) + "supplier_payments"."pkr_cash") * 100, coalesce("supplier_payments"."pkr_per_afn", 1)) * 2 >= coalesce("supplier_payments"."pkr_per_afn", 1) then 1 else 0 end
+      else round(("supplier_payments"."pkr_cash" + "supplier_payments"."afn_cash" * coalesce("supplier_payments"."pkr_per_afn", 1)) * 100, 0) end);
