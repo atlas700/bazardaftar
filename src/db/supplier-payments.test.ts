@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({ requirePermission: vi.fn(), transaction: vi.fn
 vi.mock("server-only", () => ({}));
 vi.mock("./authorization", () => mocks);
 vi.mock("./index", () => ({ db: mocks }));
-import { recordSupplierPayment, reduceSupplierPayable } from "./supplier-payments";
+import { getPaymentsWorkspace, recordSupplierPayment, reduceSupplierPayable } from "./supplier-payments";
 
 const id = "53409e5c-e4d7-4351-a6b3-46ee18c4f532";
 const payment = { requestId: id, supplierId: id, debtCurrency: "AFN", paidOn: "2026-11-05", afnCash: "62", pkrCash: "0", pkrPerAfn: "", reference: "Cash 14", note: "" };
@@ -39,5 +39,13 @@ describe("supplier payment input boundary", () => {
       await expect(command(null)).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     }
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+  it.each([{ supplierId: "bad" }, { currency: "USD" }, { after: "bad" }, { supplierId: [id] }])("denies malformed payment-history scope: %j", async (query) => {
+    await expect(getPaymentsWorkspace(query)).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+  it("sanitizes unexpected read failures", async () => {
+    mocks.transaction.mockRejectedValue(new Error("private SQL details"));
+    await expect(getPaymentsWorkspace()).rejects.toThrow("Supplier payments unavailable.");
   });
 });

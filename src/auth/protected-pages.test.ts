@@ -15,6 +15,10 @@ vi.mock("@/db/workspace", () => ({ getWorkspaceSummary: async () => {
   await requirePermission("organization.read");
   return { name: "Business", role: "owner" };
 } }));
+vi.mock("@/db/supplier-payments", () => ({ getPaymentsWorkspace: async () => {
+  await requirePermission("supplier_payments.read");
+  return { suppliers: [], supplier: null, currency: "AFN", payments: [], payables: [], after: null, nextCursor: null };
+} }));
 
 import DashboardPage from "../app/(app)/dashboard/page";
 import InventoryPage from "../app/(app)/inventory/page";

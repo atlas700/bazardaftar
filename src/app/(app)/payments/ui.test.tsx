@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getPaymentsWorkspace: vi.fn(), recordSupplierCash: vi.fn(), approveSupplierRounding: vi.fn() }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/db/supplier-payments", () => mocks);
 vi.mock("@/db/authorization", () => ({ requirePermission: vi.fn() }));
 vi.mock("./actions", () => mocks);

@@ -224,4 +224,56 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("supplier settlements again
     await expect(f.as(() => recordSupplierPayment(f.command()))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     expect((await postings(f.organizationId))[0]).toHaveLength(0);
   });
+  it("pages payment history with scoped microsecond cursors and complete debt totals", async () => {
+    const f = await fixture(); await f.payable("100");
+    for (let i = 0; i < 23; i++) await f.as(() => recordSupplierPayment(f.command("1")));
+    await db.update(supplierPayments).set({ createdAt: sql`'2026-11-05T00:00:00.000001Z'::timestamptz` }).where(eq(supplierPayments.organizationId, f.organizationId));
+    const first = await f.workspace();
+    const second = await f.as(() => getPaymentsWorkspace({ supplierId: f.supplier.id, currency: "AFN", after: first.nextCursor }));
+    expect(first.payments).toHaveLength(20); expect(second.payments).toHaveLength(3);
+    expect(new Set([...first.payments, ...second.payments].map((row) => row.id)).size).toBe(23);
+    expect(first.outstanding).toBe("77.00"); expect(second.outstanding).toBe(first.outstanding);
+    expect(first.allocations).toHaveLength(20); expect(second.allocations).toHaveLength(3);
+    await expect(f.as(() => getPaymentsWorkspace({ supplierId: f.supplier.id, currency: "PKR", after: first.nextCursor }))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    const foreign = await fixture();
+    await expect(foreign.as(() => getPaymentsWorkspace({ after: first.nextCursor }))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+  });
+  it("keeps supplier aggregate debt exact beyond an individual payable's bound", async () => {
+    const f = await fixture(); await f.payable("999999999999999999.99"); await f.payable("999999999999999999.99");
+    expect((await f.workspace()).outstanding).toBe("1999999999999999999.98");
+    expect((await f.as(() => recordSupplierPayment(f.command("1")))).status).toBe("success");
+    expect((await f.workspace()).outstanding).toBe("1999999999999999998.98");
+  });
+  it("enforces database cash, rate, precision, provenance and settlement-context constraints", async () => {
+    const a = await fixture(); const b = await fixture(); const payable = await a.payable("10.79"); const foreign = await b.payable("10");
+    const result = await a.as(() => recordSupplierPayment(a.command("1")));
+    if (result.status !== "success") throw new Error("Fixture payment failed.");
+    await a.as(() => reduceSupplierPayable({ requestId: randomUUID(), paymentId: result.paymentId, payableId: payable.id, amount: "0.01", reason: "Supplier agreed", approved: true }));
+    const [payments, allocations, reductions] = await postings(a.organizationId);
+    for (const patch of [{ afnCash: "1.1" }, { afnCash: "-1" }, { amount: "0" }, { amount: "0.001" }, { amount: "2" }, { pkrPerAfn: "0" }, { pkrPerAfn: "2.1234567" }, { requestFingerprint: "bad" }, { recordedByUserId: " " }, { supplierId: b.supplier.id }, { pkrCash: "1", pkrPerAfn: null }]) {
+      await expect(db.insert(supplierPayments).values({ ...payments[0], id: randomUUID(), requestId: randomUUID(), ...patch })).rejects.toThrow();
+    }
+    for (const patch of [{ amount: "0" }, { amount: "0.001" }, { paymentId: randomUUID() }, { payableId: foreign.id }, { supplierId: b.supplier.id }, { currency: "PKR" as const }, { organizationId: b.organizationId }]) {
+      await expect(db.insert(supplierPaymentAllocations).values({ ...allocations[0], ...patch })).rejects.toThrow();
+    }
+    for (const patch of [{ amount: "1" }, { amount: "0" }, { amount: "0.001" }, { reason: " " }, { approvedByUserId: " " }, { requestFingerprint: "bad" }, { payableId: foreign.id }, { paymentId: randomUUID() }, { currency: "PKR" as const }]) {
+      await expect(db.insert(supplierPaymentReductions).values({ ...reductions[0], id: randomUUID(), requestId: randomUUID(), ...patch })).rejects.toThrow();
+    }
+  });
+  it("rolls back a failed owner reduction without changing debt or cash", async () => {
+    const f = await fixture(); const payable = await f.payable("10.79");
+    const result = await f.as(() => recordSupplierPayment(f.command("10")));
+    if (result.status !== "success") throw new Error("Fixture payment failed.");
+    const original = db.transaction.bind(db);
+    const spy = vi.spyOn(db, "transaction").mockImplementation(function <T>(...args: Parameters<typeof db.transaction<T>>) {
+      return original<T>(async (tx) => { const insert = tx.insert.bind(tx);
+        vi.spyOn(tx, "insert").mockImplementation((target) => { if (target === supplierPaymentReductions) throw new Error("Injected failure"); return insert(target); });
+        return args[0](tx);
+      });
+    });
+    try { await expect(f.as(() => reduceSupplierPayable({ requestId: randomUUID(), paymentId: result.paymentId, payableId: payable.id, amount: "0.79", reason: "Agreed", approved: true }))).rejects.toThrow("Injected failure"); }
+    finally { spy.mockRestore(); }
+    expect((await f.workspace()).outstanding).toBe("0.79");
+    expect((await postings(f.organizationId))[2]).toHaveLength(0);
+  });
 });

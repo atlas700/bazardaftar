@@ -13,7 +13,7 @@ const navigationItems = [
   { href: "/suppliers", label: <T>Suppliers</T>, icon: ContactRound, soon: false, permission: "suppliers.read" },
   { href: "/inventory", label: <T>Inventory</T>, icon: Boxes, soon: false, permission: "inventory.read" },
   { href: "/purchases", label: <T>Purchases</T>, icon: ShoppingCart, soon: false, permission: "purchases.read" },
-  { href: "/payments", label: <T>Payments</T>, icon: Banknote, soon: true, permission: "supplier_payments.read" },
+  { href: "/payments", label: <T>Payments</T>, icon: Banknote, soon: false, permission: "supplier_payments.read" },
   { href: "/sales", label: <T>Sales</T>, icon: ShoppingBag, soon: true, permission: "organization.read" },
   { href: "/settings", label: <T>Settings</T>, icon: Settings2, soon: false, permission: "organization.read" },
 ] as const;
