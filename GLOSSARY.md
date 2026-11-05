@@ -1,4 +1,6 @@
-# Afghanistan Agricultural Supply Chain OS
+# BazarDaftar
+
+<a id="afghanistan-agricultural-supply-chain-os"></a>
 
 This glossary defines the business terms used by the pilot's product and
 inventory documentation.
@@ -34,8 +36,13 @@ paid does not move money through an online payment processor. This differs from
 an HTTP request or a database transaction that commits related writes atomically.
 
 **Correction**:
-A recorded change that resolves a stock discrepancy or reverses an operational
-transaction.
+A recorded remedy for an error in business records. In the current pilot, stock
+corrections use stock adjustments; posted transaction reversals remain deferred.
+
+**Stock adjustment**:
+An owner-approved addition to or deduction from recorded stock, with a reason,
+for opening stock, loss, spoilage, or a count correction. It preserves earlier
+stock movements and cannot leave stock negative.
 
 **Receipt variance**:
 The difference between a purchase order's quantity and the quantity actually

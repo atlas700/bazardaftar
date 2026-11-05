@@ -33,6 +33,12 @@
   keys and durable weight/price snapshots. `0009_exact_purchase_line_check.sql`
   enforces exact half-up line totals using quotient/remainder arithmetic, avoiding
   intermediate division rounding near a half-cent boundary.
+  `0010_purchase_lifecycle.sql` adds purchase lifecycle state and provenance;
+  `0011_accepted_receipts.sql` adds receipts, stock movements, and supplier payables.
+  `0012_inventory_read_indexes.sql` supports inventory balances/history queries;
+  `0013_inventory_adjustments.sql` permits owner-approved signed adjustments while
+  preserving receipt provenance. The committed
+  [migration journal](../drizzle/meta/_journal.json) owns the complete ordered list.
 - `DATABASE_URL` is required by application startup and migration tooling. It is
   server-only and must never use a `NEXT_PUBLIC_` prefix.
 - SQL and metadata live in `drizzle/`. Migrations are explicit operations, separate
@@ -87,9 +93,9 @@ Do not regenerate or edit it after application. Do not use `drizzle-kit push`.
 Use `npm.cmd` when forwarding flags in Windows PowerShell; in other shells use
 `npm`. This avoids the PowerShell `npm.ps1` wrapper consuming migration flags.
 
-Verify reviewed migrations on a separate database before development. The retained
-`afcs_task07_verify` receives the ninth and tenth migrations for Task 18. A fresh checkout may
-instead use a newly provisioned empty database. In a
+Verify all committed migrations on a separate database before development. Use
+the retained `afcs_task07_verify` or a newly provisioned empty verification
+database with that name. In a
 dedicated PowerShell terminal, set a process-only override without recording the
 connection string in shell history:
 
@@ -100,13 +106,15 @@ npm run db:migrate
 Remove-Item Env:DATABASE_URL
 ```
 
-Both runs must succeed, with exactly ten migration rows in
-`drizzle.__drizzle_migrations` and eleven public tables (the four foundation tables
-plus `catalog_units`, `product_categories`, `products`, `suppliers`, `warehouses`,
-`purchase_orders`, and `purchase_order_items`) plus the ledger.
-Verify prior migration hashes remain unchanged. Run the isolated onboarding tests
-below for uniqueness, concurrency, settings constraints, and rollback. Stop on any
-failure. Removing
+Both runs must succeed. On a fresh verification database, the ledger rows in
+`drizzle.__drizzle_migrations` must match the committed migration journal, and the
+public application tables must match `src/db/schema/index.ts`. The 5 November
+Task 22 baseline has 14 migrations (`0000`–`0013`) and 15 public application
+tables; the migration ledger is separate. Later reviewed migrations change those
+counts, so verify against the checked-out revision's journal and schema.
+Verify prior migration hashes remain unchanged. Run the isolated integration
+suites listed in the [CI workflow](../.github/workflows/ci.yml), including the
+onboarding command below. Stop on any failure. Removing
 the override restores `.env.local` loading for the development command:
 
 ```powershell
@@ -186,12 +194,14 @@ Remove-Item Env:AFCS_TEST_DATABASE_URL
 ```
 
 The suite checks `current_database()` before writes, uses unique synthetic fixtures,
-and deletes only its grants/settings/mappings/requests afterward. Without the variable, its sixteen tests are
-explicitly skipped; ordinary unit tests need no running database. CI's separate
-`database` job starts PostgreSQL 16 with a fresh `afcs_task07_verify` database,
-applies committed migrations twice, and runs all four integration suites with fixed
-job-local credentials. The service is discarded when the job ends; no repository
-secret or shared application database is used. After the
+and deletes only its grants/settings/mappings/requests afterward. Without the
+variable, the suite is explicitly skipped; ordinary unit tests need no running
+database. CI's separate `database` job starts PostgreSQL 16 with a fresh
+`afcs_task07_verify` database,
+applies committed migrations twice, and runs the integration suites listed in the
+[CI workflow](../.github/workflows/ci.yml) with fixed job-local credentials. The
+service is discarded when the job ends; no repository secret or shared
+application database is used. After the
 26 October local migration, concurrency/rollback tests, and browser smoke checks,
 all three public tables are empty in both local databases.
 
@@ -365,8 +375,10 @@ Convert the combined amount exactly and round once for allocation in the debt's
 currency. Append owner-approved cash rounding reductions separately, with
 provenance and a lifetime cumulative cap of 0.99 in that currency. Serialize
 allocation/cap checks and writes, preserving idempotency and original debt/cash.
-Task 13 implements the custom-weight catalogue described below. Exchange,
-adjustment, and transaction-line snapshot persistence remain in later tasks.
+Task 13 implements the custom-weight catalogue described below. Purchases and
+receipts persist their quantity/weight/price snapshots under Tasks 18–20, and
+Task 22 persists stock adjustments. Exchange-rate snapshots, cash allocation,
+and cash rounding reductions remain Task 25 work.
 
 **Decided — G3 product identity:** each product is one stock identity for the
 pilot; see [ADR 0005](adr/0005-product-stock-identity.md). Grade, origin,
@@ -492,10 +504,11 @@ No mutable balance, payment, payable, or automatic due-date field is stored.
 
 `src/db/suppliers.ts` enforces existing read/manage permissions, parameterized
 tenant scoping, the shared organization lock, and fresh membership/grant checks.
-Deactivation preserves readable records. Future purchasing must validate active
-suppliers within its own transaction. Apply/reapply reviewed migration 0006 before
-using the directory. Run `src/db/suppliers.integration.test.ts` with the same
-isolated verification URL as the other suites; CI includes all six suites.
+Deactivation preserves readable records. Purchase and receipt posting validate
+active suppliers within their own transactions. Apply/reapply reviewed migration
+0006 before using the directory. Run `src/db/suppliers.integration.test.ts` with the same
+isolated verification URL as the other suites; the
+[CI workflow](../.github/workflows/ci.yml) lists the current integration suites.
 
 ## Warehouse setup
 
@@ -527,21 +540,23 @@ snapshots, request UUID/fingerprint, actor membership/user, and UTC creation tim
 Each numbered line retains product name/code, entered quantity and measure,
 actual bag/fixed measure kg, normalized total kg, agreed unit price and separate
 price measure/kg, and rounded line total. Catalogue/contact changes do not rewrite
-these historical values. No stock or supplier debt is stored or posted.
+these historical values. Draft creation itself posts no stock or supplier debt;
+the [accepted receipt](#accepted-receipts-stock-and-supplier-payables) does.
 
 Composite tenant foreign keys protect supplier/warehouse/product/unit/order
 references. Unique `(organization_id, request_id)` and the shared organization
 lock serialize retries; same normalized contents return the saved ID, different
 contents conflict. Header/items commit together. CHECK constraints bound exact
 unscaled numerics, positive weights/quantities, two-place non-negative money,
-supported currency, and server-owned draft state. Header totals are computed
-from validated rounded lines in the service transaction. The line constraint uses
+supported currency, and valid server-owned lifecycle state. Header totals are
+computed from validated rounded lines in the service transaction. The line constraint uses
 `div`/`mod` half-up arithmetic; ordinary numeric division can round an intermediate
 ratio near a half-cent at the supported bounds. Migration 0009 fixes that check
 without rewriting the already-applied 0008 migration.
 
-Apply migrations 0008–0010 before using the current `/purchases` workflow. Corrections use forward
-migrations; reverting application code retains these additive tables. Task 20
+Apply all committed migrations using the workflow above before running the current
+application, including receipt and inventory migrations. Schema corrections use
+forward migrations; reverting application code retains these tables. Task 20
 rechecks posting authority/references and reconciles receipt
 quantities/values independently. The pilot register currently loads its small
 history in full; paginate before a large trading history.
@@ -567,7 +582,8 @@ draft/ordered purchase. Draft line replacement keeps surviving line IDs and
 reference names/weights for unchanged selections; new selections take current
 catalogue values. Active references are rechecked for edits/ordering; cancellation
 preserves history even when references are inactive. Ordered/cancelled lines are
-never edited or removed. No stock/payable writes exist yet.
+never edited or removed. These lifecycle commands do not post stock or payables;
+Task 20's accepted-receipt transaction owns that event.
 
 Each mutation includes the displayed revision. A changed revision conflicts
 before any write. The most recent identical normalized request replays as success;

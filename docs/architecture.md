@@ -15,21 +15,44 @@
   the sign-in page uses `getSession()`.
 - The proxy composes Clerk session handling with General Translation locale
   handling. Route protection stays in each resource, following Clerk 7 guidance.
-- Vitest covers configuration validation, session/page access, verified Clerk
-  membership, tenant context, onboarding, and the fixed permission matrix; opt-in
-  PostgreSQL tests cover bootstrap concurrency, rollback, and grant isolation.
+- Vitest covers configuration, authentication, tenancy, permissions, and the
+  implemented catalogue, purchasing, receiving, and inventory workflows. Opt-in
+  PostgreSQL suites verify their persistence, isolation, rollback, retry, and
+  concurrency rules; see [Testing](testing.md) and the current
+  [CI workflow](../.github/workflows/ci.yml).
 - PostgreSQL persistence uses a server-only Drizzle/`pg` pool under `src/db`, with
   explicit reviewed migrations. The sole business-ownership table is
   `organizations`, mapping a generated local UUID to a unique Clerk organization
   ID. `organization_settings` holds business settings; `organization_onboarding`
   holds one durable setup request and one-time owner membership marker per creator.
   `organization_role_assignments` stores only local business grants, not a
-  membership mirror. Membership lives in Clerk. A general UI-component library is
-  not installed.
+  membership mirror. Membership lives in Clerk. The same schema also holds the
+  implemented catalogue, supplier, warehouse, purchase, receipt, movement, and
+  payable records described in [Database](database.md).
+- Shared workspace components live in `src/components/workspace.tsx` and
+  `src/components/ui/`. Adapted shadcn/ui controls, Radix primitives, and shared
+  tokens follow [ADR 0020](adr/0020-workspace-design-system.md); provenance lives
+  in the [UI component guide](../src/components/ui/README.md).
 - Localization uses General Translation with English and Pashto; its runtime
   translation service remains disabled until terminology and credentials are ready.
 - Future application work follows the App Router and favors Server Components with
   small client-side interactive leaves.
+
+### Current module map
+
+| Capability | Server boundary | Implemented scope |
+| --- | --- | --- |
+| Catalogue | `src/db/catalog.ts` | Units, categories, products, and exact unit snapshots |
+| Business contacts and storage | `src/db/suppliers.ts`, `src/db/warehouses.ts` | Supplier directory and one warehouse per business |
+| Purchases | `src/db/purchases.ts` | Draft creation/editing, ordering, and owner-approved cancellation |
+| Receiving | `src/db/receipts.ts` | Accepted receipt, inbound stock, supplier payable, and purchase reconciliation in one transaction |
+| Inventory | `src/db/inventory.ts` | Ledger-derived kg balances and paginated receipt/adjustment history |
+| Stock corrections | `src/db/inventory-adjustments.ts` | Owner-approved signed movements with replay protection and no negative stock |
+
+Supplier payments/statements, general audit logging, and the operational
+dashboard retain Tasks 25–28's scope. Sales remain deferred. The
+[build plan](agent-sized-build-plan.md#current-gate-status) owns current readiness
+and delivery order; module contracts live in [API conventions](api-conventions.md).
 
 ## Decision status
 
@@ -73,9 +96,9 @@ tracked in [database](database.md), [security](security.md),
   and Clerk membership identity. Missing session, active organization, current
   membership, or local mapping means no tenant. Service failures throw sanitized
   errors. Reads never provision, fall back to another organization, or cache
-  membership across requests. Future business queries/mutations must call this
-  boundary and enforce Task 10's local permissions. Staff management is implemented;
-  purchasing/inventory/payment workflows remain placeholders.
+  membership across requests. Business queries/mutations use this boundary and
+  enforce Task 10's local permissions. Staff, purchasing, receiving, and inventory
+  are implemented; supplier payments and statements remain future work.
 - `requirePermission(permission)` in `src/db/authorization.ts` authenticates,
   verifies current tenant membership, reads only that organization/membership/user
   assignment, and checks the fixed catalogue in `src/auth/permissions.ts`. Missing
@@ -104,8 +127,10 @@ tracked in [database](database.md), [security](security.md),
   shows only their own account ID and Clerk memberships, and reuses organization
   activation. Selecting a business grants no permissions; protected data still
   requires a fresh local authorization check.
-- Financial and inventory business events must be atomic when those modules are
-  introduced.
+- Accepted receipts atomically post receipt lines, movements, payables, purchase
+  quantities, and status. Stock corrections append signed movements in their own
+  authorized transaction. Future supplier-payment postings must preserve the same
+  all-or-nothing boundary; see [Database](database.md).
 - Domain arithmetic does not establish tenant authority, approve a receipt variance,
   prevent duplicate posting, or authorize debt reductions. Each owning service must
   enforce those checks and preserve agreed weight/price/rate snapshots transactionally.
