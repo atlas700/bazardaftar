@@ -161,8 +161,9 @@ routes remain unverified. Full end-to-end infrastructure remains Task 33. Stock
 corrections, transfers, valuation, payments and statements are later work. The
 physical closing-stock/outgoing reconciliation gate remains open.
 
-Next: **Task 22 — controlled inventory adjustments**. Resolve its negative-stock
-policy prerequisite before implementation, retain owner-only correction authority,
+Next: **Task 22 — controlled inventory adjustments**. The 5 November Task 22
+assessment found its negative-stock prerequisite already settled by accepted
+ADR 0007; the previous unresolved note was stale. Retain owner-only correction authority,
 and deliberately extend movement kinds/source constraints and history provenance.
 Do not edit/delete posted ledger rows or turn correction entry into an unapproved
 sales/dispatch workflow. Task 16 remains deferred.

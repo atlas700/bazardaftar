@@ -279,9 +279,9 @@ references, with purchase identifiers/links omitted under ADR 0016.
 Recorded available stock is `SUM(inventory_movements.quantity_kg)` grouped by
 organization/product/warehouse. Quantities are signed ledger values, summed by
 PostgreSQL as exact numeric and returned as decimal strings without a JavaScript
-number conversion or the individual entry's upper bound. Current movement rules
-allow positive accepted-receipt rows only; Task 22 must explicitly extend the
-schema and provenance for corrections. Drafts/orders neither move nor reserve
+number conversion or the individual entry's upper bound. Movement rules allow
+positive accepted receipts and owner-approved signed adjustments under Task 22.
+Drafts/orders neither move nor reserve
 stock. Different bag weights aggregate through saved kg, never by bag counts.
 Products without movements have no balance row. Inactive products/warehouses
 retain balances; current names identify balances, receipt/agreement snapshots
@@ -302,6 +302,37 @@ queries; no balance table, cache, backfill or ledger change is needed. Apply the
 reviewed migration through the normal migration workflow. Application rollback
 can leave these additive indexes in place. A materialized balance remains
 unnecessary for the small invited pilot; profile before adding one.
+
+## Controlled inventory adjustments
+
+Task 22 appends one `adjustment` movement, directly in kg with one-gram precision.
+`loss` and `spoilage` deduct; `opening_stock` adds; `count_correction` may add or
+deduct. Zero and quantities outside the existing per-entry bound are rejected.
+Every command requires explicit owner approval, a 1–500 character reason and an
+optional reference up to 100 characters. The ledger retains product/warehouse
+names, performer membership/user IDs and a UTC timestamp. Nothing edits or deletes
+posted ledger entries or changes supplier payables.
+
+`adjustInventory()` derives `inventory.correct` authority, locks the organization,
+then rechecks current Clerk identity and the local owner grant on the transaction
+connection. Receipts and other mutations share that lock. PostgreSQL compares the
+exact ledger sum plus the proposed delta with zero before insertion; concurrent
+deductions cannot overdraw. Balances larger than one entry's bound remain valid.
+An organization-scoped request UUID and normalized SHA-256 fingerprint make
+unchanged retries return the original movement; changed payloads conflict.
+
+Migration `0013_inventory_adjustments.sql` makes the receipt source nullable and
+adds conditional source/metadata checks, request uniqueness and a tenant/product
+foreign key. Receipt source uniqueness and the composite receipt FK remain intact.
+Existing receipt rows need no backfill. History uses tenant-scoped left joins and
+the adjustment's name snapshots, preserving receipt provenance and pagination.
+Apply/reapply through the reviewed migration workflow. Once adjustments exist,
+application rollback must retain a reader that understands signed adjustments;
+never delete corrections or restore receipt-only constraints to roll back.
+
+The isolated adjustment suite joins the existing PostgreSQL CI job. Physical
+outgoing-stock reconciliation, sales, transfers, returns, supplier payments and
+general audit events remain in their approved later/deferred scopes.
 
 ## Staff management
 

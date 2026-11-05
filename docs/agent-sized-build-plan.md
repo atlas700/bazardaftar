@@ -43,6 +43,8 @@ task readiness and order. Update both when an approved decision changes the scop
   inbound stock movements and receipt-based supplier debt atomically; see its
   [handoff](handoffs/20-accepted-receipts.md). Task 21 adds exact ledger-derived
   balances and paginated stock history; see its [handoff](handoffs/21-inventory-balances.md).
+  Task 22 adds owner-approved signed stock adjustments under ADRs 0007/0010/0016;
+  see its [handoff](handoffs/22-inventory-adjustments.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -154,8 +156,8 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 22 — implement controlled inventory adjustments, resolving its
-negative-stock policy prerequisite before implementation;
+**Next task:** 25 — record and allocate supplier payments under ADRs 0009/0019;
+Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
 see its [handoff](handoffs/17-warehouses.md). Task 18 adds tenant-safe purchase draft
@@ -238,10 +240,10 @@ against G1 research before domain implementation:
 | Receiving | Can receipt quantity differ from order quantity, and who may approve it? |
 | Supplier debt | Accepted receipt creates the supplier payable at the approved purchase price; see [ADR 0012](adr/0012-receipt-supplier-payables.md). |
 | Decimal policy | Resolved by ADR 0019: two-decimal unit prices/amounts, six-decimal rates, exact conversions, half-up purchase lines/payment allocation, and cumulative receipt reconciliation. |
-| Stock policy | Is negative stock ever allowed? Recommended pilot policy: no. |
+| Stock policy | Resolved by ADR 0007: no transaction or authorized correction may leave stock below zero. |
 | Sale timing | Does stock leave at confirmation, dispatch, or delivery? |
 | Credit | Supplier-balance entry with automatic oldest-first receipt allocation within one debt currency; reject overpayments and advances under amended ADR 0009. |
-| Corrections | Which users can adjust stock, cancel transactions, or record returns? |
+| Corrections | Resolved by ADRs 0010/0016: explicit owner approval and owner-only `inventory.correct`; returns remain deferred. |
 | Languages | Which language launches first; which terms must be validated in Dari/Pashto? |
 
 Capture each answer as a dated decision record. If an answer changes after pilot use,
@@ -273,7 +275,7 @@ The scope column also constrains the detailed task descriptions below.
 | 15 | Complete | Suppliers; approved Individual/Business types under ADR 0021; see [handoff](handoffs/15-suppliers.md) |
 | 16 | Deferred | Customers |
 | 17 | Complete | One warehouse per business; owner/admin setup under ADRs 0003/0016; see [handoff](handoffs/17-warehouses.md) |
-| 18–22 | Pilot required | Purchases, accepted receipts/payables, stock, owner-approved corrections |
+| 18–22 | Complete | Purchases, accepted receipts/payables, stock, owner-approved corrections; see handoffs 18–22 |
 | 23–24 | Deferred | Sales drafts and fulfilment |
 | 25–28 | Pilot required | Supplier payments/statements, audit logging, purchasing dashboard |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
@@ -710,6 +712,11 @@ warrants it.
 **Handoff:** state whether a materialized/derived balance table is still unnecessary.
 
 #### 22 — Implement controlled inventory adjustments
+
+**Readiness:** Implemented under accepted ADR 0007 (no negative stock), ADR 0010
+(explicit owner approval), and ADR 0016 (`inventory.correct`, owner only). The
+earlier unresolved-policy note was stale; no new product decision was required.
+See the [handoff](handoffs/22-inventory-adjustments.md).
 
 **Goal:** Record loss, spoilage, count corrections, or opening stock transparently.
 

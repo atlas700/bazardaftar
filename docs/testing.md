@@ -80,6 +80,20 @@ an agent workflow requirement; CI continues to run the existing automated checks
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
 
+## Inventory adjustment verification
+
+Task 22 adds command/action/screen tests and an isolated PostgreSQL suite for
+owner-only correction entry, required reasons/approval, signed whole-gram input,
+exact-zero deductions and below-zero rejection, concurrency, authorized normalized retries,
+changed-payload conflicts, tenant/active references, provider identity changes,
+revocation while waiting, snapshot history and source constraints. Existing
+inventory tests also cover mixed receipt/adjustment history. The separate CI
+database command includes `src/db/inventory-adjustments.integration.test.ts`.
+Default tests skip database suites without `AFCS_TEST_DATABASE_URL`; the suite
+guards `afcs_task07_verify` before writing and cleans only its synthetic tenants.
+Rendered/hydrated fixture evidence and its limits live in the
+[Task 22 handoff](handoffs/22-inventory-adjustments.md).
+
 ## Warehouse verification
 
 Task 17's service/action/UI tests cover existing business-settings permissions,
