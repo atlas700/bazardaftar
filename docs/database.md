@@ -265,7 +265,43 @@ Run `src/db/receipts.integration.test.ts` on the existing isolated verification
 database. CI includes it in the disposable PostgreSQL job. The
 [handoff](handoffs/20-accepted-receipts.md) distinguishes local migration, test and
 synthetic browser evidence from live provider/deployment acceptance. Task 21 owns
-inventory balance/history read models; Tasks 25–26 own payments and statements.
+inventory balance/history read models (now implemented); Tasks 25–26 own payments and statements.
+
+## Inventory balances and stock history
+
+Task 21's `getInventoryWorkspace()` requires `inventory.read` and rechecks the
+verified membership/user's local grant inside a read-only repeatable-read
+transaction. All queries and joins bind the server-derived organization; malformed,
+foreign or unavailable product/cursor references return the same unavailable view.
+No price, supplier or payable data is included. Sales can read stock and receipt
+references, with purchase identifiers/links omitted under ADR 0016.
+
+Recorded available stock is `SUM(inventory_movements.quantity_kg)` grouped by
+organization/product/warehouse. Quantities are signed ledger values, summed by
+PostgreSQL as exact numeric and returned as decimal strings without a JavaScript
+number conversion or the individual entry's upper bound. Current movement rules
+allow positive accepted-receipt rows only; Task 22 must explicitly extend the
+schema and provenance for corrections. Drafts/orders neither move nor reserve
+stock. Different bag weights aggregate through saved kg, never by bag counts.
+Products without movements have no balance row. Inactive products/warehouses
+retain balances; current names identify balances, receipt/agreement snapshots
+identify history. This is recorded stock, not verified physical closing stock;
+the pilot's outgoing-stock reconciliation gate remains open.
+
+History returns 20 movements plus one lookahead, ordered by `(created_at DESC,
+id DESC)`. Optional product filters apply to both balances and history. The cursor
+is the last visible movement UUID; its timestamp is resolved within the same
+tenant/product scope as PostgreSQL text, preserving microseconds. A tuple seek
+avoids offsets and timestamp-tie gaps. Older pages keep full balance totals;
+Latest returns to the newest page. Small pilot balance lists remain in full.
+
+Migration `0012_inventory_read_indexes.sql` adds only `movements_history`
+(`organization_id, created_at DESC, id DESC`) and `movements_product_history`
+(`organization_id, product_id, created_at DESC, id DESC`) for these demonstrated
+queries; no balance table, cache, backfill or ledger change is needed. Apply the
+reviewed migration through the normal migration workflow. Application rollback
+can leave these additive indexes in place. A materialized balance remains
+unnecessary for the small invited pilot; profile before adding one.
 
 ## Staff management
 
