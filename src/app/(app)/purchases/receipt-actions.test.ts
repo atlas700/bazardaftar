@@ -33,6 +33,7 @@ describe("receipt action", () => {
     await expect(receivePurchase({ status: "idle" }, form())).rejects.toHaveProperty("digest", expect.stringContaining("/purchases/purchase#receipt-receipt"));
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/purchases/purchase");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/purchases");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/inventory");
   });
   it("preserves framework denial and sanitizes unexpected errors", async () => {
     mocks.requireSession.mockRejectedValueOnce({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });
