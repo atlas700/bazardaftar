@@ -25,6 +25,7 @@ export async function getInventoryWorkspace(input: unknown = {}) {
       )).limit(1);
       if (!actor || !hasPermission(actor.role, "inventory.read")) notFound();
       const canReadPurchases = hasPermission(actor.role, "purchases.read");
+      const canCorrect = hasPermission(actor.role, "inventory.correct");
       const [product] = productId ? await tx.select({ id: products.id, name: products.name }).from(products)
         .where(and(eq(products.organizationId, tenant.organizationId), eq(products.id, productId))).limit(1) : [];
       if (productId && !product) notFound();
@@ -42,18 +43,20 @@ export async function getInventoryWorkspace(input: unknown = {}) {
         .innerJoin(warehouses, and(eq(warehouses.organizationId, inventoryMovements.organizationId), eq(warehouses.id, inventoryMovements.warehouseId)))
         .where(scope).groupBy(inventoryMovements.productId, products.name, products.isActive, inventoryMovements.warehouseId, warehouses.name, warehouses.isActive)
         .orderBy(asc(products.name), asc(inventoryMovements.productId), asc(inventoryMovements.warehouseId));
-      const rows = await tx.select({ id: inventoryMovements.id, productId: inventoryMovements.productId, productName: goodsReceiptItems.productName,
-        warehouseName: purchaseOrders.warehouseName, quantityKg: inventoryMovements.quantityKg, kind: inventoryMovements.kind,
+      const rows = await tx.select({ id: inventoryMovements.id, productId: inventoryMovements.productId,
+        productName: sql<string>`coalesce(${inventoryMovements.productName}, ${goodsReceiptItems.productName})`,
+        warehouseName: sql<string>`coalesce(${inventoryMovements.warehouseName}, ${purchaseOrders.warehouseName})`, quantityKg: inventoryMovements.quantityKg, kind: inventoryMovements.kind,
+        reasonCode: inventoryMovements.reasonCode, reason: inventoryMovements.reason, reference: inventoryMovements.reference, performedByUserId: inventoryMovements.performedByUserId,
         createdAt: inventoryMovements.createdAt, receiptId: goodsReceiptItems.receiptId,
         purchaseId: canReadPurchases ? goodsReceiptItems.purchaseOrderId : sql<null>`null`,
         quantity: goodsReceiptItems.quantity, quantityUnitName: goodsReceiptItems.quantityUnitName, quantityMeasureKg: goodsReceiptItems.quantityMeasureKg,
       }).from(inventoryMovements)
-        .innerJoin(goodsReceiptItems, and(eq(goodsReceiptItems.organizationId, inventoryMovements.organizationId), eq(goodsReceiptItems.id, inventoryMovements.receiptItemId)))
-        .innerJoin(purchaseOrders, and(eq(purchaseOrders.organizationId, goodsReceiptItems.organizationId), eq(purchaseOrders.id, goodsReceiptItems.purchaseOrderId)))
+        .leftJoin(goodsReceiptItems, and(eq(goodsReceiptItems.organizationId, inventoryMovements.organizationId), eq(goodsReceiptItems.id, inventoryMovements.receiptItemId)))
+        .leftJoin(purchaseOrders, and(eq(purchaseOrders.organizationId, goodsReceiptItems.organizationId), eq(purchaseOrders.id, goodsReceiptItems.purchaseOrderId)))
         .where(and(scope, anchor && after ? sql`(${inventoryMovements.createdAt}, ${inventoryMovements.id}) < (${anchor.createdAt}::timestamptz, ${after}::uuid)` : undefined))
         .orderBy(sql`${inventoryMovements.createdAt} desc nulls last`, sql`${inventoryMovements.id} desc nulls last`).limit(pageSize + 1);
       const movements = rows.slice(0, pageSize);
-      return { balances, movements, product: productId ? product : null, after: after ?? null, canReadPurchases,
+      return { balances, movements, product: productId ? product : null, after: after ?? null, canReadPurchases, canCorrect,
         nextCursor: rows.length > pageSize ? movements[pageSize - 1].id : null };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
   } catch (error) { unstable_rethrow(error); throw new Error("Inventory unavailable."); }

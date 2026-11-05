@@ -13,8 +13,9 @@ import InventoryNotFound from "./not-found";
 
 const balance = { productId: "wheat", productName: "Wheat <grain>", productActive: true, warehouseId: "main", warehouseName: "Main", warehouseActive: true, quantityKg: "92.401" };
 const movement = { id: "movement", productId: "wheat", productName: "Wheat at receipt", warehouseName: "Main at receipt", quantityKg: "48.400", kind: "receipt" as const,
-  createdAt: new Date("2026-11-03T12:00:00Z"), receiptId: "c210141a-fc42-4ddb-b4df-3ff6ab4083d4", purchaseId: "purchase", quantity: "1.000000000000000000", quantityUnitName: "bag", quantityMeasureKg: "48.400" };
-const workspace: InventoryWorkspace = { balances: [balance], movements: [movement], product: null, after: null, canReadPurchases: true, nextCursor: null };
+  createdAt: new Date("2026-11-03T12:00:00Z"), receiptId: "c210141a-fc42-4ddb-b4df-3ff6ab4083d4", purchaseId: "purchase", quantity: "1.000000000000000000", quantityUnitName: "bag", quantityMeasureKg: "48.400",
+  reasonCode: null, reason: null, reference: null, performedByUserId: "user_owner" };
+const workspace: InventoryWorkspace = { balances: [balance], movements: [movement], product: null, after: null, canReadPurchases: true, canCorrect: false, nextCursor: null };
 beforeEach(() => { vi.resetAllMocks(); mocks.getInventoryWorkspace.mockResolvedValue(workspace); });
 
 describe("inventory screen", () => {

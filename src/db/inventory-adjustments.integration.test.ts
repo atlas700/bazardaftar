@@ -49,7 +49,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory adjustments agai
   });
   it("records opening stock and an exact signed correction with provenance and no payable", async () => {
     const f = await fixture();
-    expect((await f.as(() => adjustInventory(f.command()))).status).toBe("success");
+    expect((await f.as(() => adjustInventory({ ...f.command(), organizationId: "attacker", role: "owner", performedByUserId: "spoof" }))).status).toBe("success");
     expect((await f.as(() => adjustInventory(f.command("-0.001", "loss")))).status).toBe("success");
     const result = await f.as(() => getInventoryWorkspace());
     expect(result.balances[0].quantityKg).toBe("9.999");
@@ -58,7 +58,9 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory adjustments agai
     expect(await db.select().from(supplierPayables).where(eq(supplierPayables.organizationId, f.organizationId))).toHaveLength(0);
   });
   it("allows exact zero and rejects even a one-gram overdraft without writing", async () => {
-    const f = await fixture(); await f.as(() => adjustInventory(f.command("1")));
+    const f = await fixture();
+    expect(await f.as(() => adjustInventory(f.command("-0.001", "loss")))).toMatchObject({ status: "insufficient_stock" });
+    await f.as(() => adjustInventory(f.command("1")));
     expect(await f.as(() => adjustInventory(f.command("-1.001", "count_correction")))).toMatchObject({ status: "insufficient_stock" });
     expect((await f.as(() => getInventoryWorkspace())).movements).toHaveLength(1);
     expect((await f.as(() => adjustInventory(f.command("-1", "spoilage")))).status).toBe("success");
@@ -136,10 +138,20 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory adjustments agai
     expect((await f.as(() => getInventoryWorkspace())).movements).toHaveLength(0);
   });
   it("database constraints reject invalid provenance and missing reason metadata", async () => {
-    const f = await fixture(); await f.as(() => adjustInventory(f.command()));
+    const f = await fixture(); const foreign = await fixture(); await f.as(() => adjustInventory(f.command()));
     const [row] = await db.select().from(inventoryMovements).where(eq(inventoryMovements.organizationId, f.organizationId));
-    for (const patch of [{ reason: null }, { receiptItemId: randomUUID() }, { reasonCode: "loss", quantityKg: "1.000" }, { quantityKg: "0.0001" }, { kind: "receipt" as const }]) {
+    const invalidRows: Partial<typeof inventoryMovements.$inferInsert>[] = [{ reason: null }, { reasonCode: null }, { requestId: null },
+      { requestFingerprint: null }, { requestFingerprint: "bad" }, { productName: null }, { warehouseName: null }, { performedByMembershipId: " " },
+      { productId: foreign.product.id }, { warehouseId: foreign.warehouse.id }, { receiptItemId: randomUUID() },
+      { reasonCode: "loss", quantityKg: "1.000" }, { quantityKg: "0.0001" }, { kind: "receipt" }];
+    for (const patch of invalidRows) {
       await expect(db.insert(inventoryMovements).values({ ...row, id: randomUUID(), requestId: randomUUID(), ...patch })).rejects.toThrow();
     }
+  });
+  it("rejects a changed provider identity on the transaction connection", async () => {
+    const f = await fixture();
+    mocks.getActiveOrganizationMembership.mockResolvedValueOnce(f.actor).mockResolvedValueOnce({ ...f.actor, membershipId: "rejoined" });
+    await expect(f.as(() => adjustInventory(f.command()))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    expect(await db.select().from(inventoryMovements).where(eq(inventoryMovements.organizationId, f.organizationId))).toHaveLength(0);
   });
 });
