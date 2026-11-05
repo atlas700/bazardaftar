@@ -109,6 +109,11 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("supplier settlements again
     expect((await postings(f.organizationId)).map((rows) => rows.length)).toEqual([0, 0, 0]);
     await f.as(() => recordSupplierPayment(f.command("100"))); expect((await f.workspace()).outstanding).toBe("0.00");
   });
+  it("retains exact half-cent decisions with large cash and six-decimal rates", async () => {
+    const f = await fixture(); await f.payable("100");
+    expect((await f.as(() => recordSupplierPayment({ ...f.command("1"), pkrCash: "1000000000000", pkrPerAfn: "200000000000000.000001" }))).status).toBe("success");
+    expect((await postings(f.organizationId))[0][0].amount).toBe("1.00");
+  });
   it("serializes competing payments against the supplier's remaining balance", async () => {
     const f = await fixture(); await f.payable("100");
     const results = await Promise.all([f.as(() => recordSupplierPayment(f.command("80"))), f.as(() => recordSupplierPayment(f.command("80")))]);
@@ -184,7 +189,8 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("supplier settlements again
     }
     expect((await postings(a.organizationId))[2]).toHaveLength(0);
   });
-  it.each([supplierPayments, supplierPaymentAllocations])("rolls back cash and allocations on a failed posting to %s", async (table) => {
+  it.each(["payment", "allocation"])("rolls back cash and allocations on a failed %s posting", async (stage) => {
+    const table = stage === "payment" ? supplierPayments : supplierPaymentAllocations;
     const f = await fixture(); await f.payable("100"); const original = db.transaction.bind(db);
     const spy = vi.spyOn(db, "transaction").mockImplementation(function <T>(...args: Parameters<typeof db.transaction<T>>) {
       return original<T>(async (tx) => { const insert = tx.insert.bind(tx);
