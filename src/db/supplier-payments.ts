@@ -23,7 +23,7 @@ export type PaymentState =
 const wholeCash = z.string().max(18).regex(/^\d{1,18}$/).transform((value) => formatDecimal(parseNonNegativeDecimal(value, 0), 0));
 const paymentSchema = z.object({
   requestId: localIdSchema, supplierId: localIdSchema, debtCurrency: currencySchema,
-  paidOn: z.iso.date(), afnCash: wholeCash, pkrCash: wholeCash,
+  paidOn: z.iso.date().refine((value) => value >= "0001-01-01", "Use a calendar year from 0001 to 9999."), afnCash: wholeCash, pkrCash: wholeCash,
   pkrPerAfn: z.string().max(25).optional().transform((value, ctx) => {
     if (!value) return undefined;
     try {

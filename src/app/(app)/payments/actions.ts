@@ -14,7 +14,7 @@ async function postSettlement(data: FormData, reduction: boolean): Promise<Payme
     const keys = reduction ? ["requestId", "paymentId", "payableId", "amount", "reason", "approved"]
       : ["requestId", "supplierId", "debtCurrency", "paidOn", "afnCash", "pkrCash", "pkrPerAfn", "reference", "note"];
     const fields = data instanceof FormData && keys.every((key) => data.getAll(key).length <= 1)
-      ? Object.fromEntries(keys.map((key) => [key, key === "approved" ? data.get(key) === "on" : data.get(key)])) : null;
+      ? Object.fromEntries(keys.map((key) => [key, key === "approved" ? data.get(key) === "on" : ["pkrPerAfn", "reference", "note"].includes(key) ? data.get(key) ?? "" : data.get(key)])) : null;
     result = await (reduction ? reduceSupplierPayable(fields) : recordSupplierPayment(fields));
     if (result.status === "success") {
       stage = "refresh";
