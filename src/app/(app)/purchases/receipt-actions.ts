@@ -30,6 +30,7 @@ export async function receivePurchase(_previous: ReceiptState, formData: FormDat
     if (result.status === "success") {
       stage = "refresh";
       revalidatePath("/purchases");
+      revalidatePath("/inventory");
       revalidatePath(`/purchases/${result.purchaseId}`);
       revalidatePath(`/purchases/${result.purchaseId}/receive`);
     }

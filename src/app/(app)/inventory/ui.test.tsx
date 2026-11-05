@@ -7,6 +7,9 @@ vi.mock("@/db/inventory", () => mocks);
 vi.mock("@/db/authorization", () => mocks);
 vi.mock("gt-next", () => ({ T: ({ children }: { children: React.ReactNode }) => children }));
 import InventoryPage from "./page";
+import InventoryError from "./error";
+import InventoryLoading from "./loading";
+import InventoryNotFound from "./not-found";
 
 const balance = { productId: "wheat", productName: "Wheat <grain>", productActive: true, warehouseId: "main", warehouseName: "Main", warehouseActive: true, quantityKg: "92.401" };
 const movement = { id: "movement", productId: "wheat", productName: "Wheat at receipt", warehouseName: "Main at receipt", quantityKg: "48.400", kind: "receipt" as const,
@@ -32,7 +35,7 @@ describe("inventory screen", () => {
     expect(html).toContain('href="/inventory?productId=wheat&amp;after=cursor#stock-history"');
     expect(html).toContain('href="/inventory?productId=wheat#stock-history"');
     expect(html).toContain("Older movements"); expect(html).toContain("Latest movements"); expect(html).toContain("All products");
-    expect(html).toContain('aria-label="Stock history pages"');
+    expect(html).toContain('<nav aria-labelledby="stock-history-title"');
   });
   it("shows a useful first-run state without offering inaccessible purchase links", async () => {
     mocks.getInventoryWorkspace.mockResolvedValue({ ...workspace, balances: [], movements: [], canReadPurchases: false });
@@ -59,5 +62,15 @@ describe("inventory screen", () => {
     mocks.getInventoryWorkspace.mockResolvedValue({ ...workspace, movements: [], after: "last" });
     const html = renderToStaticMarkup(await InventoryPage());
     expect(html).toContain("No older movements"); expect(html).toContain("Latest movements"); expect(html).not.toContain("Older movements</");
+  });
+  it("shows accessible loading, error retry and unavailable-view recovery", () => {
+    expect(renderToStaticMarkup(<InventoryLoading />)).toContain('role="status"');
+    const retry = vi.fn(); expect(InventoryError({ retry }).props.retry).toBe(retry);
+    expect(renderToStaticMarkup(<InventoryNotFound />)).toContain('href="/inventory"');
+  });
+  it.each(["10", "10.000000000000000000", "1.500000000000000000"])("trims fractional zero padding without changing entered quantity %s", async (quantity) => {
+    mocks.getInventoryWorkspace.mockResolvedValue({ ...workspace, movements: [{ ...movement, quantity }] });
+    const html = renderToStaticMarkup(await InventoryPage());
+    expect(html).toMatch(quantity.startsWith("10") ? />10<\/bdi>/ : />1\.5<\/bdi>/);
   });
 });

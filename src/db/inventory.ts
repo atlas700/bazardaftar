@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { hasPermission } from "@/auth/permissions";
@@ -33,6 +33,7 @@ export async function getInventoryWorkspace(input: unknown = {}) {
       const [anchor] = after ? await tx.select({ createdAt: sql<string>`${inventoryMovements.createdAt}::text` }).from(inventoryMovements)
         .where(and(scope, eq(inventoryMovements.id, after))).limit(1) : [];
       if (after && !anchor) notFound();
+      // shortcut: load the small pilot's product balances in full; paginate when catalogue size warrants it.
       const balances = await tx.select({ productId: inventoryMovements.productId, productName: products.name, productActive: products.isActive,
         warehouseId: inventoryMovements.warehouseId, warehouseName: warehouses.name, warehouseActive: warehouses.isActive,
         quantityKg: sql<string>`sum(${inventoryMovements.quantityKg})::text`,
@@ -50,9 +51,9 @@ export async function getInventoryWorkspace(input: unknown = {}) {
         .innerJoin(goodsReceiptItems, and(eq(goodsReceiptItems.organizationId, inventoryMovements.organizationId), eq(goodsReceiptItems.id, inventoryMovements.receiptItemId)))
         .innerJoin(purchaseOrders, and(eq(purchaseOrders.organizationId, goodsReceiptItems.organizationId), eq(purchaseOrders.id, goodsReceiptItems.purchaseOrderId)))
         .where(and(scope, anchor && after ? sql`(${inventoryMovements.createdAt}, ${inventoryMovements.id}) < (${anchor.createdAt}::timestamptz, ${after}::uuid)` : undefined))
-        .orderBy(desc(inventoryMovements.createdAt), desc(inventoryMovements.id)).limit(pageSize + 1);
+        .orderBy(sql`${inventoryMovements.createdAt} desc nulls last`, sql`${inventoryMovements.id} desc nulls last`).limit(pageSize + 1);
       const movements = rows.slice(0, pageSize);
-      return { balances, movements, product: product ?? null, after: after ?? null, canReadPurchases,
+      return { balances, movements, product: productId ? product : null, after: after ?? null, canReadPurchases,
         nextCursor: rows.length > pageSize ? movements[pageSize - 1].id : null };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
   } catch (error) { unstable_rethrow(error); throw new Error("Inventory unavailable."); }

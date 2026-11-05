@@ -18,7 +18,7 @@ import { catalogUnits, goodsReceiptItems, goodsReceipts, inventoryMovements, org
 type Actor = { userId: string; membershipId: string; clerkOrganizationId: string };
 const context = new AsyncLocalStorage<Actor>();
 const organizationIds: string[] = [];
-async function fixture(lineCount = 1) {
+async function fixture(lineCount = 1, quantity = "1000", unitPrice = "1") {
   const actor = { clerkOrganizationId: `task21_org_${randomUUID()}`, userId: `user_${randomUUID()}`, membershipId: `member_${randomUUID()}` };
   const [organization] = await db.insert(organizations).values({ clerkOrganizationId: actor.clerkOrganizationId }).returning();
   const organizationId = organization.id; organizationIds.push(organizationId);
@@ -32,7 +32,7 @@ async function fixture(lineCount = 1) {
   const [other] = await db.insert(products).values({ organizationId, name: "Rice", unitId: kg.id }).returning();
   const as = <T>(work: () => Promise<T>) => context.run(actor, work);
   const draft = await as(() => createPurchaseDraft({ requestId: randomUUID(), supplierId: supplier.id, warehouseId: warehouse.id, currency: "AFN",
-    items: Array.from({ length: lineCount }, (_, i) => ({ productId: i % 2 ? other.id : product.id, quantity: "1000", quantityUnitId: kg.id, unitPrice: "1", priceUnitId: kg.id })) }));
+    items: Array.from({ length: lineCount }, (_, i) => ({ productId: i % 2 ? other.id : product.id, quantity, quantityUnitId: kg.id, unitPrice, priceUnitId: kg.id })) }));
   if (draft.status !== "success") throw new Error("Fixture draft failed.");
   await as(() => mutatePurchase({ id: draft.purchaseId, revision: 1, requestId: randomUUID(), action: "order" }));
   const purchase = await as(() => getPurchase(draft.purchaseId));
@@ -84,6 +84,12 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory reads against is
     expect(result.balances[0]).toMatchObject({ productName: "Renamed wheat", productActive: false, warehouseName: "Renamed warehouse", warehouseActive: false, quantityKg: "2.000" });
     expect(result.movements[0]).toMatchObject({ productName: "Wheat", warehouseName: "Main", purchaseId: f.purchase.id });
   });
+  it("keeps aggregate stock exact even beyond the per-line quantity bound", async () => {
+    const f = await fixture(3, "999999999999999999.999", "0");
+    await f.receive("999999999999999999.999");
+    const result = await f.as(() => getInventoryWorkspace());
+    expect(result.balances.find((row) => row.productId === f.product.id)?.quantityKg).toBe("1999999999999999999.998");
+  });
   it.each(businessRoles)("allows inventory reads for %s and respects purchase-detail permissions", async (role) => {
     const f = await fixture(); await f.receive("1"); await f.role(role);
     const result = await f.as(() => getInventoryWorkspace());
@@ -119,6 +125,8 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory reads against is
   });
   it("denies revoked grants and missing or mismatched provider identity", async () => {
     const f = await fixture();
+    mocks.requireSession.mockResolvedValueOnce({ userId: "different_user" });
+    await expect(f.as(() => getInventoryWorkspace())).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     await db.delete(organizationRoleAssignments).where(eq(organizationRoleAssignments.organizationId, f.organizationId));
     await expect(f.as(() => getInventoryWorkspace())).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     await expect(getInventoryWorkspace()).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");

@@ -2,6 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { requirePermission } = vi.hoisted(() => ({ requirePermission: vi.fn() }));
 vi.mock("@/db/authorization", () => ({ requirePermission }));
+vi.mock("gt-next", () => ({ T: ({ children }: { children: unknown }) => children }));
+vi.mock("@/db/inventory", () => ({ getInventoryWorkspace: async () => {
+  await requirePermission("inventory.read");
+  return { balances: [], movements: [], product: null, after: null, nextCursor: null, canReadPurchases: false };
+} }));
 vi.mock("@/db/purchases", () => ({ getPurchasesWorkspace: async () => {
   await requirePermission("purchases.read");
   return { purchases: [], canManage: false };
