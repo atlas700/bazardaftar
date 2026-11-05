@@ -18,6 +18,17 @@ const workspace: InventoryWorkspace = { balances: [balance], movements: [movemen
 beforeEach(() => { vi.resetAllMocks(); mocks.getInventoryWorkspace.mockResolvedValue(workspace); });
 
 describe("inventory screen", () => {
+  it("offers adjustments to owners and renders signed correction provenance", async () => {
+    mocks.getInventoryWorkspace.mockResolvedValue({ ...workspace, canCorrect: true, movements: [{ ...movement, kind: "adjustment", quantityKg: "-1.001", receiptId: null,
+      purchaseId: null, quantity: null, quantityUnitName: null, quantityMeasureKg: null, reasonCode: "loss", reason: "Broken bags", reference: "Count 14", performedByUserId: "user_owner" }] });
+    const html = renderToStaticMarkup(await InventoryPage());
+    for (const text of ["-1.001", "Loss", "Broken bags", "Count 14", "user_owner", 'href="/inventory/adjust"']) expect(html).toContain(text);
+    expect(html).not.toContain("+-"); expect(html).not.toContain("Receipt reference");
+  });
+  it("hides adjustment entry from other inventory readers", async () => {
+    mocks.getInventoryWorkspace.mockResolvedValue({ ...workspace, canCorrect: false });
+    expect(renderToStaticMarkup(await InventoryPage())).not.toContain('href="/inventory/adjust"');
+  });
   it("renders exact stock, receipt snapshots and the receipt's full reference", async () => {
     const html = renderToStaticMarkup(await InventoryPage());
     for (const text of ["Recorded stock", "Stock history", "92.401", "48.400", "Wheat &lt;grain&gt;", "Wheat at receipt", "Main at receipt", movement.receiptId]) expect(html).toContain(text);
