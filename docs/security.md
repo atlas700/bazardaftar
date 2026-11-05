@@ -54,11 +54,14 @@ bootstrap, and a server-only guard. Task 10 implements this policy. G1 is accept
 on retrospective founder evidence under ADR 0003's 1 November amendment; remaining
 operational gates stay open. G1 acceptance changes no permission or security boundary.
 
-[ADR 0019](adr/0019-pilot-numeric-settlement-policy.md) approves a future fixed
-`supplier_payments.adjust_rounding` permission for owner only. Task 25 must enforce
+[ADR 0019](adr/0019-pilot-numeric-settlement-policy.md) approves the fixed
+`supplier_payments.adjust_rounding` permission for owner only. Task 25 enforces
 the lifetime 0.99 debt-currency cap per payable atomically, retaining
 actor/reason/provenance. Supplier-level payment entry does not pool or reset caps.
-Current code does not yet implement that permission. Custom weight management
+Payment and reduction writes lock the organization, then recheck current provider
+membership and the local grant on the transaction connection, including on replay.
+Tenant/supplier/currency foreign keys bind cash, allocations and separate reductions.
+Custom weight management
 and payment/rate entry reuse existing `catalog.manage` and
 `supplier_payments.record`; neither permits debt reductions.
 

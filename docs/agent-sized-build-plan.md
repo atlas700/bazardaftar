@@ -45,6 +45,8 @@ task readiness and order. Update both when an approved decision changes the scop
   balances and paginated stock history; see its [handoff](handoffs/21-inventory-balances.md).
   Task 22 adds owner-approved signed stock adjustments under ADRs 0007/0010/0016;
   see its [handoff](handoffs/22-inventory-adjustments.md).
+  Task 25 adds exact supplier cash payments, oldest-first receipt allocations and
+  separately approved rounding reductions; see its [handoff](handoffs/25-supplier-payments.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -87,7 +89,8 @@ acceptance evidence in its handoff. Track these additional states separately:
 `bb9bba9d569f9bb929d80508e4c4925485df61d2`; the
 [quality and PostgreSQL checks](https://github.com/atlas700/bazardaftar/actions/runs/42009750351)
 passed. The original Task 22 handoff remains the dated local-evidence record.
-This delivery update closes no live pilot gate and leaves **Task 25** next.
+This delivery update closes no live pilot gate. Task 25 implementation is recorded
+in its [handoff](handoffs/25-supplier-payments.md); **Task 26** is next.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
@@ -173,10 +176,10 @@ or interview transcripts.
 | G4 authentication | Clerk accepted under [ADR 0002](adr/0002-clerk-authentication.md). On 30 October the founder reports successful real phone-code delivery and completed authentication/login. Exact test context and separate Pilot A–C outcomes were not supplied; see the [readiness record](handoffs/pilot-readiness-decisions.md) | Founder | Pilot authentication until required outcomes and deployment smoke are recorded/reviewed |
 | G4 database | Accepted: [ADR 0013](adr/0013-local-postgresql-foundation.md) approves local PostgreSQL and reviewed migrations; [ADR 0014](adr/0014-clerk-organizations-local-business-roles.md), 25 October, replaces local membership ownership with verified Clerk membership and a local organization mapping | Technical lead/founder | G1 is accepted; task-specific schema checks and other G4 gates remain required |
 | G4 mutation boundary | Accepted: [ADR 0015](adr/0015-server-action-mutation-boundary.md), 26 October; native Server Actions with the [mutation contract](api-conventions.md#mutation-contract) and a narrow first-organization bootstrap exception | Technical lead/founder | Boundary decision resolved; each mutation still needs its task's authorization and recovery checks |
-| G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
+| G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 25 — record and allocate supplier payments under ADRs 0009/0019;
+**Next task:** 26 — implement supplier balances and transaction statements under ADRs 0009/0019;
 Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
@@ -190,7 +193,7 @@ partial/received purchase states in one transaction; see its
 [handoff](handoffs/20-accepted-receipts.md). Task 21 adds recorded inventory
 balances and paginated receipt history with product filters; see its
 [handoff](handoffs/21-inventory-balances.md). Outgoing-stock reconciliation remains
-an open pilot gate. Supplier payment/statement workflows remain unimplemented.
+an open pilot gate. Task 25 implements supplier payments; Task 26 statements remain unimplemented.
 Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
 [contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
 on the revised retrospective-evidence basis. Pilot release gates remain open.
@@ -297,7 +300,8 @@ The scope column also constrains the detailed task descriptions below.
 | 17 | Complete | One warehouse per business; owner/admin setup under ADRs 0003/0016; see [handoff](handoffs/17-warehouses.md) |
 | 18–22 | Complete | Purchases, accepted receipts/payables, stock, owner-approved corrections; see handoffs 18–22 |
 | 23–24 | Deferred | Sales drafts and fulfilment |
-| 25–28 | Pilot required | Supplier payments/statements, audit logging, purchasing dashboard |
+| 25 | Complete | Supplier cash payments, automatic oldest-first allocation and owner-only rounding reductions; see [handoff](handoffs/25-supplier-payments.md) |
+| 26–28 | Pilot required | Supplier statements, audit logging, purchasing dashboard |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
 | 30–35 | Pilot required | Reliability, focused tests, purchase-to-receipt E2E, staging, onboarding |
 

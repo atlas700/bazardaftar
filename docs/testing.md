@@ -51,8 +51,8 @@ an agent workflow requirement; CI continues to run the existing automated checks
   development. The separate CI database job now verifies committed migrations
   against a fresh disposable service; the `quality` job stays database-free.
 - Existing suites cover tenancy, authorization, exact totals, purchase transitions,
-  receipts/payables, inventory reads, and stock adjustments. Supplier-payment
-  coverage belongs to Task 25; Task 32 closes remaining critical pilot gaps.
+  receipts/payables, inventory reads, stock adjustments, supplier payments and
+  owner-approved rounding reductions. Task 32 closes remaining critical pilot gaps.
 - Task 08 tests mock Clerk and the PostgreSQL transport while using Drizzle's real
   query generation. They cover exact organization/user filtering, absent/deleted
   or mismatched membership, stale claims, sanitized failures, the parameterized
@@ -81,6 +81,25 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Browser end-to-end coverage is deferred to Task 33; it must use isolated seeded
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
+
+## Supplier payment verification
+
+Task 25 adds payment-boundary, action, role-matrix and screen cases plus
+`src/db/supplier-payments.integration.test.ts` in the existing isolated PostgreSQL
+job. Its database cases cover receipt-backed oldest-first allocation with timestamp
+ties, both exchange directions and exact half-cent boundaries, separate currencies,
+large aggregate debt, full/partial settlement, overpayment rejection, concurrent
+requests, normalized replay/conflicts, provider/local-role rechecks, every role,
+tenant and settlement-context constraints, rollback, scoped pagination, and separate
+owner reductions with lifetime-cap races. Default runs skip database suites without
+`AFCS_TEST_DATABASE_URL`; the database suite refuses every database name except
+`afcs_task07_verify` and cleans only its synthetic tenants.
+
+Local actual-component browser fixtures check LTR/RTL reflow, labelled fields,
+confirmation, retained values, stable retry IDs, feedback focus and pending controls.
+Their evidence and limitations are recorded in the
+[handoff](handoffs/25-supplier-payments.md). They do not establish live Clerk,
+translated terminology, provider-backed browser mutations or deployment acceptance.
 
 ## Inventory adjustment verification
 

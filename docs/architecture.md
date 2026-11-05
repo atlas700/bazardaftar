@@ -97,8 +97,8 @@ tracked in [database](database.md), [security](security.md),
   membership, or local mapping means no tenant. Service failures throw sanitized
   errors. Reads never provision, fall back to another organization, or cache
   membership across requests. Business queries/mutations use this boundary and
-  enforce Task 10's local permissions. Staff, purchasing, receiving, and inventory
-  are implemented; supplier payments and statements remain future work.
+  enforce Task 10's local permissions. Staff, purchasing, receiving, inventory
+  and supplier payments are implemented; supplier statements remain Task 26 work.
 - `requirePermission(permission)` in `src/db/authorization.ts` authenticates,
   verifies current tenant membership, reads only that organization/membership/user
   assignment, and checks the fixed catalogue in `src/auth/permissions.ts`. Missing

@@ -377,8 +377,8 @@ provenance and a lifetime cumulative cap of 0.99 in that currency. Serialize
 allocation/cap checks and writes, preserving idempotency and original debt/cash.
 Task 13 implements the custom-weight catalogue described below. Purchases and
 receipts persist their quantity/weight/price snapshots under Tasks 18–20, and
-Task 22 persists stock adjustments. Exchange-rate snapshots, cash allocation,
-and cash rounding reductions remain Task 25 work.
+Task 22 persists stock adjustments. Task 25 persists exchange-rate snapshots,
+cash allocations and separate cash rounding reductions.
 
 **Decided — G3 product identity:** each product is one stock identity for the
 pilot; see [ADR 0005](adr/0005-product-stock-identity.md). Grade, origin,
@@ -592,3 +592,40 @@ Header, lines, metadata and revision commit together. Detail reads use one
 repeatable-read snapshot so an edit cannot mix a new header with old lines.
 Task 27's audit write integration point is explicit on the mutation transaction;
 order/cancellation provenance is already durable.
+
+## Supplier payments and rounding reductions
+
+Task 25 adds `supplier_payments`, `supplier_payment_allocations` and
+`supplier_payment_reductions`. Payments retain original whole AFN/PKR cash, one
+debt currency, the supplier-agreed PKR-per-AFN rate, exact converted amount,
+calendar date, supplier-name snapshot, reference/note and verified actor identity.
+Allocations bind the same tenant, supplier and currency to Task 20 receipt payables.
+Separate reductions also bind to an actual payment allocation and retain approval
+reason, actor identities and UTC time. The source rows are append-only through the
+application; no balance field or destructive correction operation is introduced.
+
+Payment and reduction writers acquire the organization lock before rechecking
+provider identity/local authority, then derive current balances on that transaction
+connection. Outstanding debt is payable amount minus its allocations and separate
+reductions. Allocate oldest-first by payable `created_at`, then UUID ascending.
+Keep database microseconds and currencies separate; skip zero-valued payables.
+Convert combined cash once and distribute integer minor units without further
+rounding. Serialize each payable's balance and lifetime 0.99 reduction cap with all
+postings. Matching organization/request UUIDs replay only after current authority
+checks; changed normalized command contents conflict.
+
+Reviewed migrations `0014_wise_wrecker.sql` and
+`0015_exact_cash_settlement_check.sql` add settlement tables, context keys and
+demonstrated history/allocation indexes. The second migration replaces approximate
+intermediate division with an exact quotient/remainder half-up check. Preserve
+both applied migrations and the earlier history. Apply/reapply migrations on the
+isolated verification database before development; Task 25's handoff records
+the evidence. The PostgreSQL CI job includes the payment suite.
+
+`getPaymentsWorkspace()` uses a read-only repeatable-read snapshot, current
+membership/local grant checks, server-derived organization scope, exact aggregate
+debt and scoped 20-row payment-history cursors. Supplier options/open payables
+remain complete lists for the small pilot; paginate before larger histories.
+Inactive suppliers remain eligible to settle existing debt. Account statements
+and complete reconciliation remain Task 26; payment reversals and supplier
+advances/unapplied credit remain deferred.
