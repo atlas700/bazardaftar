@@ -368,8 +368,10 @@ export const supplierPayments = pgTable("supplier_payments", {
   check("payments_rate", sql`(${table.pkrPerAfn} is null and ((${table.currency} = 'AFN' and ${table.pkrCash} = 0) or (${table.currency} = 'PKR' and ${table.afnCash} = 0)))
     or (${table.pkrPerAfn} is not null and ${table.pkrPerAfn} > 0 and ${table.pkrPerAfn} < 1000000000000000000 and scale(${table.pkrPerAfn}) <= 6)`),
   check("payments_value", sql`${table.currency} in ('AFN', 'PKR') and ${table.amount} > 0 and ${table.amount} < 1000000000000000000 and scale(${table.amount}) <= 2
-    and ${table.amount} = case when ${table.currency} = 'AFN' then round(${table.afnCash} + ${table.pkrCash} / coalesce(${table.pkrPerAfn}, 1), 2)
-      else round(${table.pkrCash} + ${table.afnCash} * coalesce(${table.pkrPerAfn}, 1), 2) end`),
+    and ${table.amount} * 100 = case when ${table.currency} = 'AFN'
+      then div((${table.afnCash} * coalesce(${table.pkrPerAfn}, 1) + ${table.pkrCash}) * 100, coalesce(${table.pkrPerAfn}, 1))
+        + case when mod((${table.afnCash} * coalesce(${table.pkrPerAfn}, 1) + ${table.pkrCash}) * 100, coalesce(${table.pkrPerAfn}, 1)) * 2 >= coalesce(${table.pkrPerAfn}, 1) then 1 else 0 end
+      else round((${table.pkrCash} + ${table.afnCash} * coalesce(${table.pkrPerAfn}, 1)) * 100, 0) end`),
   check("payments_provenance", sql`${table.requestFingerprint} ~ '^[0-9a-f]{64}$' and length(btrim(${table.supplierName})) between 1 and 80
     and length(${table.reference}) <= 100 and length(${table.note}) <= 500
     and length(btrim(${table.recordedByUserId})) > 0 and length(btrim(${table.recordedByMembershipId})) > 0`),
