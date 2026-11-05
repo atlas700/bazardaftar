@@ -31,7 +31,7 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
   twice, and runs the onboarding/authorization, staff, catalogue, product, supplier,
-  warehouse, purchase, and receipt integration suites with
+  warehouse, purchase, receipt, and inventory integration suites with
   `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
@@ -150,6 +150,20 @@ checks cover confirmation, Radix/reset retention, linked field errors, pending
 controls, business-switch identity and desktop/mobile RTL layout. The
 [handoff](handoffs/20-accepted-receipts.md) records results and limitations; these
 checks do not establish live Clerk, translated terminology, or deployment.
+
+## Inventory verification
+
+Task 21 adds service and screen cases plus `src/db/inventory.integration.test.ts`
+to the existing disposable PostgreSQL CI job. Coverage includes exact mixed-bag/
+gram aggregates, totals beyond per-line bounds, inactive records and saved history
+names, every role's stock/purchase access, tenant/product/cursor isolation, empty
+and revoked access, and timestamp-tie pagination retaining PostgreSQL microseconds.
+Balances remain complete when history pages change. Screen/navigation tests cover
+exact large decimal display, escaped names, receipt links, product/paging scope,
+sales permissions, loading/error/unavailable recovery, and available navigation.
+Receipt-action tests require inventory invalidation after accepted delivery.
+The [handoff](handoffs/21-inventory-balances.md) records local evidence separately
+from remote CI and live provider/deployment acceptance.
 
 ## Staff management verification
 

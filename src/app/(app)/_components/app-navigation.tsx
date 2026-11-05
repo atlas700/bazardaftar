@@ -11,7 +11,7 @@ const navigationItems = [
   { href: "/dashboard", label: <T>Overview</T>, icon: LayoutGrid, soon: false, permission: "organization.read" },
   { href: "/products", label: <T>Products</T>, icon: Package, soon: false, permission: "catalog.read" },
   { href: "/suppliers", label: <T>Suppliers</T>, icon: ContactRound, soon: false, permission: "suppliers.read" },
-  { href: "/inventory", label: <T>Inventory</T>, icon: Boxes, soon: true, permission: "inventory.read" },
+  { href: "/inventory", label: <T>Inventory</T>, icon: Boxes, soon: false, permission: "inventory.read" },
   { href: "/purchases", label: <T>Purchases</T>, icon: ShoppingCart, soon: false, permission: "purchases.read" },
   { href: "/payments", label: <T>Payments</T>, icon: Banknote, soon: true, permission: "supplier_payments.read" },
   { href: "/sales", label: <T>Sales</T>, icon: ShoppingBag, soon: true, permission: "organization.read" },

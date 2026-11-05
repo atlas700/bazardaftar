@@ -10,8 +10,9 @@ The npm package name is `bazardaftar`.
 The current application supports business onboarding, staff access, products,
 weight units, categories, suppliers, one warehouse, and purchase drafting,
 editing, ordering, owner-approved cancellation, and accepted deliveries that
-atomically record stock movements and supplier debt. The remaining pilot workflow
-adds inventory balances/history, supplier payments, and reconciliation in the order set
+atomically record stock movements and supplier debt. Inventory shows exact recorded
+stock by product/warehouse and paginated receipt movement history. The remaining pilot workflow
+adds stock corrections, supplier payments, and reconciliation in the order set
 out in the [build plan](docs/agent-sized-build-plan.md). Those planned capabilities
 are not all implemented. G1 is accepted on retrospective founder evidence under
 [ADR 0003](docs/adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026);

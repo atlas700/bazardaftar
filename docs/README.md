@@ -37,6 +37,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 18 purchase drafts handoff](handoffs/18-purchase-drafts.md)
 - [Task 19 purchase lifecycle handoff](handoffs/19-purchase-lifecycle.md)
 - [Task 20 accepted receipts, stock movements, and supplier payables](handoffs/20-accepted-receipts.md)
+- [Task 21 inventory balances and stock history](handoffs/21-inventory-balances.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)

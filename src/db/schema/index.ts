@@ -294,6 +294,8 @@ export const inventoryMovements = pgTable("inventory_movements", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   unique("movements_receipt_once").on(table.organizationId, table.receiptItemId),
+  index("movements_history").on(table.organizationId, table.createdAt.desc(), table.id.desc()),
+  index("movements_product_history").on(table.organizationId, table.productId, table.createdAt.desc(), table.id.desc()),
   foreignKey({ name: "movements_receipt_item", columns: [table.organizationId, table.receiptItemId, table.productId, table.quantityKg], foreignColumns: [goodsReceiptItems.organizationId, goodsReceiptItems.id, goodsReceiptItems.productId, goodsReceiptItems.quantityKg] }),
   foreignKey({ name: "movements_warehouse", columns: [table.organizationId, table.warehouseId], foreignColumns: [warehouses.organizationId, warehouses.id] }),
   check("movements_receipt", sql`${table.kind} = 'receipt' and ${table.quantityKg} > 0 and ${table.quantityKg} < 1000000000000000000 and scale(${table.quantityKg}) <= 3`),

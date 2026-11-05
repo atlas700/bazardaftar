@@ -364,6 +364,24 @@ conflicts. Successful actions refresh purchase routes and redirect to the saved
 receipt anchor. After an uncertain error, retry unchanged details with the same
 request or reload to inspect history before starting a new request.
 
+## Inventory reads
+
+`getInventoryWorkspace({ productId?, after? })` is a server-only read for
+`inventory.read`, with validated UUID filters and a membership-bound grant
+recheck on a read-only repeatable-read connection. Tenant identity always comes
+from verified context. It returns exact decimal kg balances and 20 newest-first
+movement rows, plus a next cursor when older rows exist. The cursor UUID must
+belong to the same tenant/product scope; its database timestamp retains full
+microsecond precision. Malformed and unavailable references share the unavailable
+response; database errors expose only `Inventory unavailable.`
+
+`/inventory` renders balances/history and product-scoped links from this service.
+Stock reads include receipt references and saved quantity/weight snapshots,
+without prices or supplier balances. Purchase identifiers/links require
+`purchases.read`. Successful receipt actions invalidate `/inventory` alongside
+purchase routes. The recorded-stock calculation and its physical-stock limitation
+are specified in [the database guide](database.md#inventory-balances-and-stock-history).
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).

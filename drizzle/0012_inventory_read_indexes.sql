@@ -1,0 +1,2 @@
+CREATE INDEX "movements_history" ON "inventory_movements" USING btree ("organization_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "movements_product_history" ON "inventory_movements" USING btree ("organization_id","product_id","created_at" DESC NULLS LAST,"id" DESC NULLS LAST);

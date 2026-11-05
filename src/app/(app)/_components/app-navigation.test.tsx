@@ -55,4 +55,13 @@ describe("workspace navigation", () => {
     expect(html).toContain("Soon");
     expect(html).toContain("Outside pilot");
   });
+  it("offers inventory as available for every business role in desktop and mobile navigation", () => {
+    state.pathname = "/inventory";
+    for (const role of businessRoles) for (const compact of [true, false]) {
+      const html = renderToStaticMarkup(<AppNavigation role={role} compact={compact} />);
+      const inventoryLink = html.match(/<a[^>]*href="\/inventory"[^>]*>[\s\S]*?<\/a>/)?.[0];
+      expect(inventoryLink).toContain('aria-current="page"');
+      expect(inventoryLink).not.toContain("Soon");
+    }
+  });
 });

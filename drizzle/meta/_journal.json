@@ -85,6 +85,13 @@
       "when": 1793713689312,
       "tag": "0011_accepted_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793870914102,
+      "tag": "0012_inventory_read_indexes",
+      "breakpoints": true
     }
   ]
 }

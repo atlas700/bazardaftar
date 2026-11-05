@@ -18,7 +18,7 @@ Sales, customer payments, multiple warehouses, returns, lot/grade tracking, and
 offline mode are deferred. Accepted ADRs govern product policy; this plan governs
 task readiness and order. Update both when an approved decision changes the scope.
 
-## Current repository baseline (3 November 2026)
+## Current repository baseline (5 November 2026)
 
 - The application shell, localization plumbing, Clerk authentication, environment
   validation, Vitest tests, and CI are implemented (Tasks 01–06).
@@ -41,7 +41,9 @@ task readiness and order. Update both when an approved decision changes the scop
   Tasks 15/17 add suppliers and one warehouse; Tasks 18–19 add purchase drafts,
   editing, ordering and owner cancellation. Task 20 adds accepted receipts,
   inbound stock movements and receipt-based supplier debt atomically; see its
-  [handoff](handoffs/20-accepted-receipts.md). Task 16 remains deferred.
+  [handoff](handoffs/20-accepted-receipts.md). Task 21 adds exact ledger-derived
+  balances and paginated stock history; see its [handoff](handoffs/21-inventory-balances.md).
+  Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
   presentation and shared shadcn/ui controls for existing screens. It implements
@@ -52,7 +54,7 @@ task readiness and order. Update both when an approved decision changes the scop
   documentation/policy updates; the remaining evidence gates stay open.
 - CI maintenance adds a separate disposable PostgreSQL 16 verification job for
   committed migrations and the onboarding, staff, catalogue, product, supplier,
-  warehouse, purchase and receipt integration suites under
+  warehouse, purchase, receipt and inventory integration suites under
   [ADR 0013's amendment](adr/0013-local-postgresql-foundation.md#amendment--disposable-ci-verification-28-october-2026).
   This does not advance Task 32 or close G1, pilot sign-in, or deployment gates.
 - Preserve unrelated worktree changes.
@@ -152,7 +154,8 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. ADR 0019 approves a future owner-only rounding-reduction permission for Task 25 | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 21 — add inventory balances and stock history read models;
+**Next task:** 22 — implement controlled inventory adjustments, resolving its
+negative-stock policy prerequisite before implementation;
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
 see its [handoff](handoffs/17-warehouses.md). Task 18 adds tenant-safe purchase draft
@@ -162,8 +165,10 @@ Task 19 adds draft editing, ordering, and owner-approved cancellation with revis
 checks and preserved agreement snapshots; see its [handoff](handoffs/19-purchase-lifecycle.md).
 Task 20 adds accepted receipts, inbound stock movements, receipt payables, and
 partial/received purchase states in one transaction; see its
-[handoff](handoffs/20-accepted-receipts.md). Inventory balance/history screens and
-supplier payment/statement workflows remain unimplemented.
+[handoff](handoffs/20-accepted-receipts.md). Task 21 adds recorded inventory
+balances and paginated receipt history with product filters; see its
+[handoff](handoffs/21-inventory-balances.md). Outgoing-stock reconciliation remains
+an open pilot gate. Supplier payment/statement workflows remain unimplemented.
 Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
 [contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
 on the revised retrospective-evidence basis. Pilot release gates remain open.
