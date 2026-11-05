@@ -13,7 +13,7 @@ beforeEach(() => { vi.resetAllMocks(); mocks.requirePermission.mockResolvedValue
 
 describe("supplier payment input boundary", () => {
   it.each([null, {}, { ...payment, requestId: "bad" }, { ...payment, supplierId: "bad" },
-    { ...payment, debtCurrency: "USD" }, { ...payment, paidOn: "2026-02-30" }, { ...payment, paidOn: "2026-1-1" },
+    { ...payment, debtCurrency: "USD" }, { ...payment, paidOn: "2026-02-30" }, { ...payment, paidOn: "2026-1-1" }, { ...payment, paidOn: "0000-01-01" },
     { ...payment, reference: "x".repeat(101) }, { ...payment, note: "x".repeat(501) },
     ...["-1", "1.0", "1e3", "NaN", "1000000000000000000"].map((afnCash) => ({ ...payment, afnCash })),
     { ...payment, afnCash: "0" }, { ...payment, pkrCash: "1" },

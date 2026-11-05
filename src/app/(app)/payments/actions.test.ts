@@ -30,6 +30,11 @@ describe("supplier settlement actions", () => {
     data.append("reason", "duplicate"); await approveSupplierRounding({ status: "idle" }, data);
     expect(mocks.reduceSupplierPayable).toHaveBeenLastCalledWith(null);
   });
+  it("accepts omitted optional cash-entry fields as empty strings", async () => {
+    const data = form(); for (const name of ["pkrPerAfn", "reference", "note"]) data.delete(name);
+    await recordSupplierCash({ status: "idle" }, data);
+    expect(mocks.recordSupplierPayment).toHaveBeenLastCalledWith({ ...Object.fromEntries(data), pkrPerAfn: "", reference: "", note: "" });
+  });
   it.each([false, true])("refreshes financial entry points and redirects after success (reduction: %s)", async (reduction) => {
     const service = reduction ? mocks.reduceSupplierPayable : mocks.recordSupplierPayment;
     service.mockResolvedValue({ status: "success", supplierId: "supplier", currency: "AFN", paymentId: "payment" });
