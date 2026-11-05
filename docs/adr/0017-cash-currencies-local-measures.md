@@ -3,6 +3,12 @@
 - **Date:** 2026-10-27
 - **Status:** Accepted; amended by ADR 0019
 
+**Current gate note — 5 November 2026:** G1 was accepted on 1 November under
+[ADR 0003's amendment](0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026).
+The open-G1 statements below describe earlier decision/amendment dates. Numeric
+and settlement policy follows ADR 0019 and amended ADR 0009; the
+[build plan](../agent-sized-build-plan.md#current-gate-status) owns current readiness.
+
 **Amended by [ADR 0019](0019-pilot-numeric-settlement-policy.md):** the completed
 interview approves kg/gram stock, custom weight measures, two-decimal unit prices,
 cumulative receipt rounding, and mixed AFN/PKR cash settlement at recorded rates.

@@ -31,8 +31,8 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - CI runs those same commands on every push and pull request.
 - A separate CI job starts disposable PostgreSQL 16, applies committed migrations
   twice, and runs the onboarding/authorization, staff, catalogue, product, supplier,
-  warehouse, purchase, receipt, and inventory integration suites with
-  `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
+  warehouse, purchase, receipt, inventory, and stock-adjustment integration suites
+  with `AFCS_TEST_DATABASE_URL`. It uses fixed, job-local credentials and no live services.
 - CI also runs `npm audit --omit=dev --audit-level=high` after installation. Run it
   locally for dependency or CI changes and before deployment.
 
@@ -41,8 +41,8 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Vitest is the unit-test runner. `npm run test` uses `vitest run` for a
   non-interactive one-shot run and fails if no test files are discovered.
 - Configuration and authentication tests cover missing/malformed keys, origin
-  validation, sanitized session lookup, guard denial/acceptance, all six protected
-  pages, and the sign-in page. Auth unit tests mock Clerk; they do not establish
+  validation, sanitized session lookup, protected-page guard denial/acceptance,
+  and the sign-in page. Auth unit tests mock Clerk; they do not establish
   real credential delivery, session revocation, or production-cookie behavior.
 - `vitest.config.mts` resolves the same `@/` source alias used by application code.
 - Database unit tests cover URL validation, lazy pool creation, development reload
@@ -50,8 +50,9 @@ an agent workflow requirement; CI continues to run the existing automated checks
   separately verifies its baseline migration on a fresh local database and then
   development. The separate CI database job now verifies committed migrations
   against a fresh disposable service; the `quality` job stays database-free.
-- Later tasks add focused tests for tenancy, authorization, exact totals, status
-  transitions, inventory, and payments as those behaviors are introduced.
+- Existing suites cover tenancy, authorization, exact totals, purchase transitions,
+  receipts/payables, inventory reads, and stock adjustments. Supplier-payment
+  coverage belongs to Task 25; Task 32 closes remaining critical pilot gaps.
 - Task 08 tests mock Clerk and the PostgreSQL transport while using Drizzle's real
   query generation. They cover exact organization/user filtering, absent/deleted
   or mismatched membership, stale claims, sanitized failures, the parameterized
@@ -72,8 +73,9 @@ an agent workflow requirement; CI continues to run the existing automated checks
   framework or CI browser suite; those retain Task 33's scope.
 - Task 10 adds permission-default tests, current tenant/role guard tests with
   parameterized real Drizzle queries, and per-page permission checks. The isolated
-  PostgreSQL suite now has fifteen tests: it also verifies explicit legacy setup resume, one-time owner
-  bootstrap, concurrent membership claims, rollback, non-restoration after role
+  PostgreSQL suite had fifteen tests at Task 10 delivery: it also verifies explicit
+  legacy setup resume, one-time owner bootstrap, concurrent membership claims,
+  rollback, non-restoration after role
   deletion/downgrade/rejoin, constraints, and actual grant query isolation. The
   guard preserves sign-in/framework exceptions and sanitizes service failures.
 - Browser end-to-end coverage is deferred to Task 33; it must use isolated seeded
@@ -138,8 +140,8 @@ owner-only cancellation and terminal-state guards; stale/concurrent writes and
 latest-request replays; immutable creation retry identity; preserved name/kind/
 weight snapshots; all-role and cross-tenant denial; transactional replacement
 rollback; active-reference checks; metadata constraints; and queued authority
-revocation. The purchase PostgreSQL suite contains 41 cases. Detail reads use
-a consistent transaction snapshot. Server Action/UI checks cover explicit aligned
+revocation. The purchase PostgreSQL suite contained 41 cases at Task 19 delivery.
+Detail reads use a consistent transaction snapshot. Server Action/UI checks cover explicit aligned
 saved-line fields, refreshed routes, current status, inactive references and
 read-only access. No new test framework or dependency is introduced.
 

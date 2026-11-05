@@ -69,6 +69,26 @@ task readiness and order. Update both when an approved decision changes the scop
   closes G1 on that revised basis; the original 20-recorded-interview/five-observation
   checklist is not fulfilled. See the [acceptance handoff](handoffs/g1-research-acceptance.md).
 
+### Delivery evidence and status
+
+The delivery-order table's **Complete** label records implemented scope and
+acceptance evidence in its handoff. Track these additional states separately:
+
+- **Ready for review:** the accepted change is committed, pushed, and linked to
+  an open pull request under the [GitHub delivery rules](github-rules.md).
+- **Merged:** GitHub records the change merged into its target branch.
+- **CI passed:** checks succeeded for a named commit; this establishes neither
+  live provider acceptance nor deployment readiness.
+- **Pilot verified:** the relevant live sign-in, terminology, reconciliation,
+  deployment, and recovery evidence has been recorded and reviewed.
+
+**Task 22 delivery, checked 5 November 2026:**
+[PR #42](https://github.com/atlas700/bazardaftar/pull/42) is merged. Its head was
+`bb9bba9d569f9bb929d80508e4c4925485df61d2`; the
+[quality and PostgreSQL checks](https://github.com/atlas700/bazardaftar/actions/runs/42009750351)
+passed. The original Task 22 handoff remains the dated local-evidence record.
+This delivery update closes no live pilot gate and leaves **Task 25** next.
+
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
 - use App Router and prefer Server Components;

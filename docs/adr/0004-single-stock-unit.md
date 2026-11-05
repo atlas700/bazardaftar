@@ -3,6 +3,12 @@
 - **Date:** 2026-10-19
 - **Status:** Accepted
 
+**Current gate note — 5 November 2026:** G1 was accepted on 1 November under
+[ADR 0003's amendment](0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026).
+References below to open research describe the earlier decision/amendment dates.
+The [build plan](../agent-sized-build-plan.md#current-gate-status) owns current readiness;
+the measure amendments below remain applicable.
+
 **Amended 27 October 2026 by [ADR 0017](0017-cash-currencies-local-measures.md):**
 retain one stock unit per product, but accept equivalent local weight measures
 and fractional quantities with actual bag sizes. The conversion exclusions below

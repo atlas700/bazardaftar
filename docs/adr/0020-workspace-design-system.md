@@ -3,6 +3,12 @@
 - Status: Accepted
 - Date: 31 October 2026
 
+**Current gate note — 5 November 2026:** G1 was accepted on 1 November under
+[ADR 0003's amendment](0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026).
+The G1/Task 15 statements below describe the redesign's 31 October context. Its
+design contract remains applicable; the
+[build plan](../agent-sized-build-plan.md#current-gate-status) owns current delivery readiness.
+
 ## Context
 
 The founder explicitly requested a comprehensive visual redesign of the current

@@ -59,10 +59,14 @@
    development method. The fallback destination is `/dashboard`; direct access to
    another protected page preserves Clerk's return destination. An authenticated
    account without an active verified local business goes to `/onboarding`.
-4. Complete first-business setup, then select **Open workspace**. Confirm the six
-   placeholder pages are accessible with that verified active local tenant. Select
-   **Sign out** in desktop or mobile navigation, then revisit a protected URL and
-   verify it redirects to `/sign-in`. Try a fresh private window as well.
+4. Complete first-business setup, then select **Open workspace**. With an owner
+   account, confirm access to products, suppliers, warehouse/catalogue settings,
+   purchases, inventory, and the owner-only stock adjustment entry. Repeat the
+   relevant allowed/denied paths with the intended staff roles. Supplier payments
+   and sales remain unavailable, and the overview has no operational metrics yet;
+   use the [build plan](agent-sized-build-plan.md#pilot-delivery-order) for current
+   scope. Select **Sign out** in desktop or mobile navigation, then revisit a
+   protected URL and verify it redirects to `/sign-in`. Try a fresh private window as well.
 5. Repeat an anonymous protected request with Pashto selected; verify the sign-in
    flow preserves the locale preference and the document remains RTL.
 

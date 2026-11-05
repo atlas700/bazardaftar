@@ -18,6 +18,10 @@ clearly distinguish evidence from assumptions.
 
 ## Current state
 
+[ADR 0020](0020-workspace-design-system.md) records the accepted workspace design
+system, shared controls/tokens, RTL/accessibility requirements, and separation of
+synthetic UI checks from live provider evidence.
+
 [ADR 0021](0021-supplier-contact-records.md) records Task 15's approved Individual/
 Business supplier classification, contact limits, deactivation, and descriptive
 payment terms. It introduces no balance or financial policy.

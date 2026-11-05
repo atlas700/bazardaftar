@@ -1,3 +1,7 @@
+# BazarDaftar
+
+BazarDaftar is a Pashto-first business workspace for grain and mixed-goods wholesalers in Afghanistan.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
@@ -8,98 +12,25 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Project rules
+## Task guidance
 
-### Required coding workflow
+<a id="project-rules"></a><a id="required-coding-workflow"></a>
+<a id="quality-checks"></a><a id="feature-completion-and-review"></a>
+<a id="agent-skills"></a><a id="design-and-styling-skills"></a>
+<a id="issue-tracker"></a><a id="triage-labels"></a><a id="domain-docs"></a>
 
-Before implementing a feature or change, use the `find-skills` skill to search
-for a task-specific skill. If a relevant skill is found, use it; otherwise,
-continue with the default workflow below.
+Read the linked instructions when their task applies; follow their links for
+area-specific rules rather than loading every document.
 
-Before selecting an implementation task, check the build plan's current gate
-status and pilot delivery order against accepted ADRs. Record approved policy
-changes and update the affected task scope together; preserve open evidence gates.
-
-Before creating, updating, refactoring, fixing, reviewing, or designing any
-project code, use the Ponytail plugin's `ponytail:ponytail` skill at its default
-**full** intensity. Follow its simplicity ladder and preserve its safety,
-validation, error-handling, and accessibility boundaries. This requirement
-supplements, rather than replaces, the relevant project rules below.
-
-When writing, changing, or reviewing code that uses a library, framework, SDK,
-API, CLI, or cloud service, use the `context7-mcp` skill first to fetch the
-current official documentation. Follow the documented, current syntax rather
-than relying on remembered examples.
-
-Read the relevant rule file before changing code in that area:
-
-- [Next.js](docs/nextjs.md)
-- [React](docs/react.md)
-- [TypeScript](docs/typescript.md)
-- [Tailwind CSS](docs/tailwindcss.md)
-- [PostgreSQL and Drizzle ORM](docs/postgresql-drizzle-orm.md)
-- [Project Build Plan](docs/agent-sized-build-plan.md)
-- [Github Rules](docs/github-rules.md)
-
-### Quality checks
-
-After implementation, complete the [pre-validation code review](docs/testing.md#pre-validation-code-review)
-before the final lint, typecheck, test, and build pass. Earlier checks during
-development remain encouraged.
-
-Run only the checks affected by the change while working:
-
-- Run `npm run lint` after changing application TypeScript, JavaScript, or ESLint configuration.
-- Run `npm run typecheck` after changing TypeScript, type declarations, or TypeScript configuration.
-- Run `npm run test` after changing behavior covered by tests or test configuration.
-- Run `npm run build` after changing application, Next.js, dependency, or build configuration, and before handing off an application change.
-
-For application, dependency, CI, or quality-configuration changes, run all four
-commands before handoff. Documentation-only changes do not require these commands
-unless they change the documented commands or their configuration.
-
-For dependency or CI changes, also run `npm audit --omit=dev --audit-level=high`.
-See [Testing](docs/testing.md) for the dependency gate and exception policy.
-
-### Feature completion and review
-
-Do not call an implementation feature complete until its handoff note records the
-completed acceptance checks, changed files, review findings and their disposition,
-verification evidence, limitations, and next task. Then follow the
-[GitHub review delivery workflow](docs/github-rules.md)
-to commit the work on its feature branch, push it to GitHub, and request review.
-
-## Agent skills
-
-### Design and styling skills
-
-Before creating, updating, refactoring, or reviewing app design or styling,
-read and apply **both** project-local skills:
-
-- [design-taste-frontend](.agents/skills/design-taste-frontend/SKILL.md) from
-  [Taste Skill](https://github.com/Leonxlnx/taste-skill) for visual direction and
-  design review. For workspace pages, follow its
-  [app-screen workflow](.agents/skills/design-taste-frontend/references/app-screens.md).
-- [ui-ux-pro-max](.agents/skills/ui-ux-pro-max/SKILL.md) for UI/UX guidance and
-  the relevant focused domain or stack search; use its design-system search
-  when establishing a new visual direction.
-
-This applies to page and component layouts, CSS and Tailwind classes, typography,
-colors, spacing, themes, icons, animation, and responsive or interaction styling,
-including small style-only edits. Match the surrounding design for focused edits.
-Preserve the accepted [workspace design system](docs/adr/0020-workspace-design-system.md),
-shared components and tokens, Pashto/RTL support, and accessibility requirements;
-these take precedence over conflicting generic skill recommendations. Apply
-these skills alongside the other task-relevant skills and required checks.
-
-### Issue tracker
-
-Issues are tracked in this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Uses the default five triage labels. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Uses the single-context layout. See `docs/agents/domain.md`.
+- **Planning, implementation, code review, or validation:** read the
+  [development workflow](docs/agents/development.md) and
+  [task-specific skill requirements](docs/agents/skills.md).
+- **App design or styling, including small style edits:** also read the
+  [design and styling requirements](docs/agents/skills.md#design-and-styling).
+- **Agent instruction documents:** use the
+  [writing-for-agents skill](.agents/skills/writing-for-agents/SKILL.md).
+- **Commits, pushes, or pull requests:** follow the
+  [GitHub rules](docs/github-rules.md).
+- **Issue tracking or triage:** see the [issue tracker](docs/agents/issue-tracker.md)
+  and [triage labels](docs/agents/triage-labels.md).
+- **Domain documentation:** follow the [single-context layout](docs/agents/domain.md).

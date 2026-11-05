@@ -54,9 +54,17 @@ need founder or pilot evidence are labelled **Open**.
 - [Completed numeric policy interview](handoffs/pilot-numeric-policy.md)
 - [Pilot-plan and quality maintenance handoff](handoffs/pilot-plan-and-quality.md)
 - [Pre-validation review workflow handoff](handoffs/pre-validation-review.md)
+- [Design skill installation and provenance handoff](handoffs/design-skills.md)
+- [Documentation consistency and agent-guidance delivery](handoffs/documentation-consistency.md)
 
 ## Existing project guidance
 
+- [Project agent instructions](../AGENTS.md)
+- [Development workflow](agents/development.md)
+- [Task-specific skill requirements](agents/skills.md)
+- [Domain documentation conventions](agents/domain.md)
+- [Business glossary](../GLOSSARY.md)
+- [GitHub delivery rules](github-rules.md)
 - [Agent-sized build plan](agent-sized-build-plan.md)
 - [Next.js rules](nextjs.md)
 - [React rules](react.md)
@@ -66,6 +74,13 @@ need founder or pilot evidence are labelled **Open**.
 
 ## Documentation rules
 
+- Keep contributor rules in `AGENTS.md` and its linked guidance, module navigation
+  in `architecture.md`, current readiness/order in the build plan, accepted policy
+  in ADRs, and dated delivery evidence in handoffs. Link to the owning source
+  instead of repeating current status or historical test/migration counts.
+- Preserve existing document paths, heading links, task IDs, applied migrations,
+  and dated handoff evidence. Add an explicit dated clarification when an old
+  decision's context could be mistaken for current status.
 - Update a decision record before implementing a choice that changes product
   policy, data modelling, authentication, authorization, or deployment.
 - Check the [build plan's gate status and pilot delivery order](agent-sized-build-plan.md#current-gate-status)
