@@ -24,7 +24,7 @@ export default async function RoundingPage({ searchParams }: Props = {}) {
   const allowance = formatDecimal(BigInt(99) - parseNonNegativeDecimal(payable.reductions, 2), 2);
   if (allowance === "0.00") notFound();
   return <div className="space-y-7">
-    <PageHeader title={<T>Approve rounding reduction</T>} description={<T>Keep the original cash and receipt amount. Record the supplier's agreement to reduce this specific receipt's remaining debt.</T>}
+    <PageHeader title={<T>Approve rounding reduction</T>} description={<T>Keep the original cash and receipt amount. Record the supplier’s agreement to reduce this specific receipt’s remaining debt.</T>}
       action={<Button asChild variant="outline"><Link href={`/payments?supplierId=${data.supplier.id}&currency=${data.currency}`}><T>Back to supplier payments</T></Link></Button>} />
     <Panel className="max-w-3xl space-y-6">
       <div className="space-y-2 text-sm leading-6 [overflow-wrap:anywhere]">

@@ -51,7 +51,7 @@ export function SettlementForm(props: Props) {
         {labels.filter((field) => invalid(field.name)).map((field) => <a key={field.name} href={`#${id}-${field.name}`} className="flex min-h-11 items-center underline underline-offset-2">{field.label}</a>)}
         {state.fields.some((field) => ["references", "requestId", "supplierId", "debtCurrency", "paymentId", "payableId"].includes(field)) && <p><T>Reopen this entry from supplier payments to check its supplier, currency and receipt.</T></p>}
       </>}
-      {state.status === "insufficient_balance" && <p><T>The payment exceeds this supplier's outstanding debt in the selected currency, or the balance is zero. Check the balance and record only cash actually retained.</T></p>}
+      {state.status === "insufficient_balance" && <p><T>The payment exceeds this supplier’s outstanding debt in the selected currency, or the balance is zero. Check the balance and record only cash actually retained.</T></p>}
       {state.status === "conflict" && <p><T>This request was already used with different details. Check recorded payments before starting a new entry.</T></p>}
       {state.status === "error" && <p><T>Recording could not be confirmed. Retry with the same details or check recorded payments before starting again. Reference: <Var>{state.correlationId}</Var></T></p>}
       <a href="/payments" className="inline-flex min-h-11 items-center text-primary underline"><T>Check recorded payments</T></a>
@@ -71,7 +71,7 @@ export function SettlementForm(props: Props) {
       })}
       {!cash && <><label className="flex min-h-11 items-start gap-3 text-sm leading-6"><input id={`${id}-approved`} type="checkbox" name="approved" required checked={values.approved}
         onChange={(event) => setValues((v) => ({ ...v, approved: event.target.checked }))} aria-invalid={invalid("approved")} aria-describedby={invalid("approved") ? `${id}-approved-error` : undefined}
-        className="mt-1 size-5 accent-primary" /><span><T>As owner, I approve this reduction and have recorded the supplier's agreement.</T></span></label>
+        className="mt-1 size-5 accent-primary" /><span><T>As owner, I approve this reduction and have recorded the supplier’s agreement.</T></span></label>
         {invalid("approved") && <FieldError id={`${id}-approved-error`}><T>Explicit owner approval is required.</T></FieldError>}</>}
       {cash && <p className="text-sm leading-6 text-ink-muted"><T>The combined cash is converted once and allocated to the oldest unpaid receipts. Any fractional balance stays outstanding until the owner approves a separate reduction.</T></p>}
       <Button type="submit">{pending ? <T>Recording…</T> : cash ? <T>Record supplier payment</T> : <T>Approve rounding reduction</T>}</Button>

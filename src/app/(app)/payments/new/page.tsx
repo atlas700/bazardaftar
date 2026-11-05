@@ -18,7 +18,7 @@ export default async function NewPaymentPage({ searchParams }: Props = {}) {
   if (!data.canRecord) notFound();
   const paidOn = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kabul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   return <div className="space-y-7">
-    <PageHeader title={<T>Record supplier payment</T>} description={<T>Enter cash actually paid. Allocation to the supplier's oldest unpaid receipts is automatic.</T>}
+    <PageHeader title={<T>Record supplier payment</T>} description={<T>Enter cash actually paid. Allocation to the supplier’s oldest unpaid receipts is automatic.</T>}
       action={<Button asChild variant="outline"><Link href="/payments"><T>Back to supplier payments</T></Link></Button>} />
     <Panel className="max-w-3xl space-y-6">
       {!data.supplier ? <><p className="text-sm leading-6 text-ink-muted"><T>Select a supplier and debt currency before entering cash.</T></p>
