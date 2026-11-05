@@ -284,21 +284,42 @@ export const goodsReceiptItems = pgTable("goods_receipt_items", {
 export const inventoryMovements = pgTable("inventory_movements", {
   id: uuid("id").defaultRandom().primaryKey(),
   organizationId: uuid("organization_id").notNull().references(() => organizations.id),
-  receiptItemId: uuid("receipt_item_id").notNull(),
+  receiptItemId: uuid("receipt_item_id"),
   productId: uuid("product_id").notNull(),
   warehouseId: uuid("warehouse_id").notNull(),
   quantityKg: numeric("quantity_kg").notNull(),
-  kind: text("kind", { enum: ["receipt"] }).default("receipt").notNull(),
+  kind: text("kind", { enum: ["receipt", "adjustment"] }).default("receipt").notNull(),
+  requestId: uuid("request_id"),
+  requestFingerprint: text("request_fingerprint"),
+  reasonCode: text("reason_code", { enum: ["loss", "spoilage", "count_correction", "opening_stock"] }),
+  reason: text("reason"),
+  reference: text("reference"),
+  productName: text("product_name"),
+  warehouseName: text("warehouse_name"),
   performedByUserId: text("performed_by_user_id").notNull(),
   performedByMembershipId: text("performed_by_membership_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   unique("movements_receipt_once").on(table.organizationId, table.receiptItemId),
+  unique("movements_request_once").on(table.organizationId, table.requestId),
   index("movements_history").on(table.organizationId, table.createdAt.desc(), table.id.desc()),
   index("movements_product_history").on(table.organizationId, table.productId, table.createdAt.desc(), table.id.desc()),
   foreignKey({ name: "movements_receipt_item", columns: [table.organizationId, table.receiptItemId, table.productId, table.quantityKg], foreignColumns: [goodsReceiptItems.organizationId, goodsReceiptItems.id, goodsReceiptItems.productId, goodsReceiptItems.quantityKg] }),
   foreignKey({ name: "movements_warehouse", columns: [table.organizationId, table.warehouseId], foreignColumns: [warehouses.organizationId, warehouses.id] }),
-  check("movements_receipt", sql`${table.kind} = 'receipt' and ${table.quantityKg} > 0 and ${table.quantityKg} < 1000000000000000000 and scale(${table.quantityKg}) <= 3`),
+  foreignKey({ name: "movements_product", columns: [table.organizationId, table.productId], foreignColumns: [products.organizationId, products.id] }),
+  check("movements_quantity", sql`${table.quantityKg} <> 0 and abs(${table.quantityKg}) < 1000000000000000000 and scale(${table.quantityKg}) <= 3`),
+  check("movements_source", sql`(${table.kind} = 'receipt' and ${table.receiptItemId} is not null and ${table.quantityKg} > 0
+    and ${table.requestId} is null and ${table.requestFingerprint} is null and ${table.reasonCode} is null and ${table.reason} is null
+    and ${table.reference} is null and ${table.productName} is null and ${table.warehouseName} is null)
+    or (${table.kind} = 'adjustment' and ${table.receiptItemId} is null and ${table.requestId} is not null
+    and ${table.requestFingerprint} is not null and ${table.requestFingerprint} ~ '^[0-9a-f]{64}$'
+    and ${table.reasonCode} is not null and ${table.reasonCode} in ('loss', 'spoilage', 'count_correction', 'opening_stock')
+    and ${table.reason} is not null and length(btrim(${table.reason})) between 1 and 500
+    and ${table.reference} is not null and length(${table.reference}) <= 100
+    and ${table.productName} is not null and length(btrim(${table.productName})) > 0
+    and ${table.warehouseName} is not null and length(btrim(${table.warehouseName})) > 0
+    and (${table.reasonCode} = 'count_correction' or (${table.reasonCode} = 'opening_stock' and ${table.quantityKg} > 0)
+      or (${table.reasonCode} in ('loss', 'spoilage') and ${table.quantityKg} < 0)))`),
   check("movements_actor", sql`length(btrim(${table.performedByUserId})) > 0 and length(btrim(${table.performedByMembershipId})) > 0`),
 ]);
 

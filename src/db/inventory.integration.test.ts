@@ -11,6 +11,7 @@ vi.mock("@/auth/organizations", () => mocks);
 vi.mock("@/env", () => ({ env: { databaseUrl: process.env.AFCS_TEST_DATABASE_URL ?? "postgresql://unused:unused@127.0.0.1:1/unused", nodeEnvironment: "test" } }));
 import { db } from "./index";
 import { getInventoryWorkspace } from "./inventory";
+import { adjustInventory } from "./inventory-adjustments";
 import { createPurchaseDraft, getPurchase, mutatePurchase } from "./purchases";
 import { acceptReceipt } from "./receipts";
 import { catalogUnits, goodsReceiptItems, goodsReceipts, inventoryMovements, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, supplierPayables, suppliers, warehouses } from "./schema";
@@ -122,6 +123,16 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory reads against is
   it("returns a readable empty history for a tenant product without movements", async () => {
     const f = await fixture();
     expect(await f.as(() => getInventoryWorkspace({ productId: f.other.id }))).toMatchObject({ product: { id: f.other.id, name: "Rice" }, balances: [], movements: [], nextCursor: null });
+  });
+  it("includes receipts and signed adjustments in the same exact stock history", async () => {
+    const f = await fixture(); await f.receive("2");
+    const result = await f.as(() => adjustInventory({ requestId: randomUUID(), productId: f.product.id, warehouseId: f.warehouse.id,
+      quantityKg: "-0.001", reasonCode: "count_correction", reason: "Physical count", reference: "", approved: true }));
+    expect(result.status).toBe("success");
+    const inventory = await f.as(() => getInventoryWorkspace());
+    expect(inventory.balances[0].quantityKg).toBe("1.999");
+    expect(inventory.movements.map((m) => m.kind)).toEqual(["adjustment", "receipt"]);
+    expect(inventory.movements[1]).toMatchObject({ receiptId: expect.any(String), quantity: "2.000000000000000000", purchaseId: f.purchase.id });
   });
   it("denies revoked grants and missing or mismatched provider identity", async () => {
     const f = await fixture();

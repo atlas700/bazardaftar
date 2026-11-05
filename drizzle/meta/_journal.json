@@ -92,6 +92,13 @@
       "when": 1793870914102,
       "tag": "0012_inventory_read_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793872983207,
+      "tag": "0013_inventory_adjustments",
+      "breakpoints": true
     }
   ]
 }

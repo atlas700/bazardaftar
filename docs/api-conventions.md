@@ -382,6 +382,24 @@ without prices or supplier balances. Purchase identifiers/links require
 purchase routes. The recorded-stock calculation and its physical-stock limitation
 are specified in [the database guide](database.md#inventory-balances-and-stock-history).
 
+## Inventory adjustments
+
+`recordAdjustment` is a native Server Action backed by server-only
+`adjustInventory()`. Both authenticate; the service requires owner-only
+`inventory.correct`, validates all input with Zod and rechecks authority after
+the organization lock. The command accepts request/product/warehouse UUIDs,
+signed `quantityKg`, `reasonCode`, reason, optional reference and explicit approval.
+Client tenant/actor/role fields grant no authority. Duplicate form scalar fields
+are rejected. `/inventory/adjust` loads active tenant-owned product/warehouse
+options and keeps retry identity stable within the verified business.
+
+Expected outcomes are `success`, `invalid`, `insufficient_stock` and `conflict`.
+Uncertain failures return a safe correlation ID; retry unchanged details with
+the same request before starting another adjustment. Success invalidates
+`/inventory` and redirects to the product's movement anchor. Stock history shows
+signed kg, adjustment type/reason/reference, performer and UTC time without prices
+or supplier data. See [storage and concurrency rules](database.md#controlled-inventory-adjustments).
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).
