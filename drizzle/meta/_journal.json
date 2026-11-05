@@ -99,6 +99,13 @@
       "when": 1793872983207,
       "tag": "0013_inventory_adjustments",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793882145367,
+      "tag": "0014_wise_wrecker",
+      "breakpoints": true
     }
   ]
 }
