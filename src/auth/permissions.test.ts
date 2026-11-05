@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { businessRoles, hasPermission } from "./permissions";
 
 describe("ADR 0016 role defaults", () => {
+  it("grants the approved rounding-reduction permission only to owners", () => {
+    expect(businessRoles.filter((role) => Reflect.apply(hasPermission, undefined, [role, "supplier_payments.adjust_rounding"]))).toEqual(["owner"]);
+  });
   it.each(["ownership.manage", "receipts.approve_variance", "inventory.correct", "transactions.cancel"] as const)(
     "reserves %s for owners, including when the caller is an admin", (permission) => {
       expect(businessRoles.filter((role) => hasPermission(role, permission))).toEqual(["owner"]);
