@@ -39,7 +39,7 @@ export default async function StatementPage({ params, searchParams }: Props) {
     <Panel aria-labelledby="statement-heading" className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="statement-heading" className="text-base font-semibold"><T>Account postings</T> · <bdi dir="ltr">{data.currency}</bdi></h2>
-        <nav aria-labelledby="statement-currency" className="flex flex-wrap gap-2"><span id="statement-currency" className="sr-only"><T>Statement currency</T></span>{data.balances.map((row) => <Button key={row.currency} asChild variant="outline">
+        <nav aria-labelledby="statement-currency" className="flex flex-wrap gap-2"><span id="statement-currency" className="sr-only"><T>Statement currency</T></span>{data.balances.map((row) => <Button key={row.currency} asChild variant={row.currency === data.currency ? "secondary" : "outline"}>
           <Link href={`${base}?currency=${row.currency}`} aria-current={row.currency === data.currency ? "page" : undefined}><bdi dir="ltr">{row.currency}</bdi></Link>
         </Button>)}</nav>
       </div>

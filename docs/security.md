@@ -61,6 +61,11 @@ actor/reason/provenance. Supplier-level payment entry does not pool or reset cap
 Payment and reduction writes lock the organization, then recheck current provider
 membership and the local grant on the transaction connection, including on replay.
 Tenant/supplier/currency foreign keys bind cash, allocations and separate reductions.
+Task 26 account reads require `supplier_balances.read`, recheck current provider
+identity and the local membership-bound grant inside their read transaction, and
+bind all statement sources/cursor anchors to the verified tenant and supplier.
+Warehouse/sales roles receive no financial account access. Historical payment
+deep links retain `supplier_payments.read` and tenant/supplier/currency validation.
 Custom weight management
 and payment/rate entry reuse existing `catalog.manage` and
 `supplier_payments.record`; neither permits debt reductions.

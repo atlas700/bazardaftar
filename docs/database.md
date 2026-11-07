@@ -408,8 +408,8 @@ cover several payables; its allocation rows must sum to the single rounded
 converted cash value. Derive supplier balances from the payables, allocations,
 and payable-specific owner reductions. Reject overpayments and unapplied credit;
 serialize supplier-total, per-payable, and lifetime-cap checks with all writes.
-Task 26 must count payment cash once regardless of allocation-row count. These
-are future schema/service requirements; no payment tables are implemented yet.
+Tasks 25–26 implement these tables and reads. Task 26 counts each payment once
+regardless of allocation-row count; its statement credits use allocated values.
 
 **Decided — G3 correction authority:** stock corrections and transaction
 cancellations require wholesaler-owner approval; any future return requires the
@@ -626,6 +626,35 @@ the evidence. The PostgreSQL CI job includes the payment suite.
 membership/local grant checks, server-derived organization scope, exact aggregate
 debt and scoped 20-row payment-history cursors. Supplier options/open payables
 remain complete lists for the small pilot; paginate before larger histories.
-Inactive suppliers remain eligible to settle existing debt. Account statements
-and complete reconciliation remain Task 26; payment reversals and supplier
+Inactive suppliers remain eligible to settle existing debt. Task 26 implements
+account statements and reconciliation; payment reversals and supplier
 advances/unapplied credit remain deferred.
+
+## Supplier balances and statements
+
+Task 26's `getSupplierAccount()` reads the existing receipt payables, payment
+allocations and separate owner reductions; it adds no table or migration. For each
+currency, outstanding debt equals recognized receipt debt minus allocations minus
+approved reductions. PostgreSQL `numeric` sums return fixed two-decimal strings,
+including totals larger than one obligation's input bound. Fully settled and
+zero-value receipts and inactive suppliers remain visible.
+
+A read-only repeatable-read transaction rechecks current provider identity and
+the membership-bound `supplier_balances.read` grant, scopes every source to the
+verified organization and supplier, and reads balances, postings and allocation
+details from one snapshot. One payment contributes one event with its allocation
+sum; receipt joins never multiply its cash. Allocation details are batched for
+payments on the current page.
+
+Statements order by posting timestamp, then event kind (receipt, payment,
+reduction), then UUID, newest first. Running balances are calculated across the
+whole selected-currency account before the 20-row page boundary. Cursors contain
+`kind:UUID`; their anchor must exist in that tenant/supplier/currency, and the
+database timestamp retains microseconds. A new request reads a fresh snapshot.
+Payment calendar dates are displayed separately from posting order. Payment terms
+remain free text; no structured due dates or overdue rules are inferred.
+
+The same account totals can support Task 28's supplier metrics and later approved
+reconciliation reports. They do not establish stock valuation or a general ledger.
+Large-history profiling and additional indexes remain demand driven; current
+reads use existing tenant/supplier and allocation indexes.

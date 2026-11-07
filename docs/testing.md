@@ -101,6 +101,23 @@ Their evidence and limitations are recorded in the
 [handoff](handoffs/25-supplier-payments.md). They do not establish live Clerk,
 translated terminology, provider-backed browser mutations or deployment acceptance.
 
+## Supplier statement verification
+
+Task 26 adds account-boundary, screen, navigation and protected-page cases plus
+`src/db/supplier-statements.integration.test.ts` to the isolated PostgreSQL job.
+Cases cover empty, unpaid, partially/fully settled and multi-receipt accounts;
+separate currencies and recorded conversion; noncash reductions; inactive and
+zero-value history; aggregates above one obligation's bound; cross-tenant/supplier/
+currency cursors; event-kind and microsecond pagination; every business role; and
+direct links to older payments. Running balances and full-account totals survive
+page boundaries. Existing credential-safe isolated database rules still apply.
+
+Local actual-component fixtures check the statement's populated, empty, inactive,
+read-only, older-page, alternate-currency, long-content, loading, error and
+unavailable states at desktop/mobile widths in LTR/RTL. Native disclosure keyboard
+use and navigation targets are checked separately. See the
+[handoff](handoffs/26-supplier-statements.md) for dated results and provider limits.
+
 ## Inventory adjustment verification
 
 Task 22 adds command/action/screen tests and an isolated PostgreSQL suite for

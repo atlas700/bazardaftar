@@ -432,6 +432,28 @@ Unexpected reads expose only `Supplier payments unavailable.` See
 [storage rules](database.md#supplier-payments-and-rounding-reductions) and the
 [handoff](handoffs/25-supplier-payments.md).
 
+## Supplier account statements
+
+`getSupplierAccount(input)` is a server-only read under `supplier_balances.read`.
+Input is a supplier UUID, optional AFN/PKR currency (default AFN), and optional
+`after` cursor in `receipt:UUID`, `payment:UUID` or `reduction:UUID` form. Repeated
+scalar query parameters, malformed cursors and foreign resource/anchor references
+are denied with `notFound()`; client tenant/role fields supply no authority.
+
+The result contains the supplier, both currency totals, 20 selected-currency
+posting rows with full-account running balances, allocation trace rows, and the
+next cursor. Original cash, recorded rate, payment calendar date and owner reduction
+reason/actor stay distinct. Reads recheck current membership and local permission
+on a read-only repeatable-read transaction; unexpected failures expose only
+`Supplier account unavailable.`
+
+`/suppliers/[id]/statement?currency=AFN` is linked from authorized supplier details
+and payments. Changing currency resets pagination. Payment links use
+`/payments?supplierId=UUID&currency=AFN&paymentId=UUID#payment-UUID` so older payments
+remain reachable outside the newest page. `getPaymentsWorkspace()` validates and
+scopes that optional payment UUID; `paymentId` and `after` are mutually exclusive.
+See the [Task 26 handoff](handoffs/26-supplier-statements.md).
+
 ## Decision status
 
 **Accepted — G4 mutation boundary:** [ADR 0015](adr/0015-server-action-mutation-boundary.md).

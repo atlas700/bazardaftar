@@ -18,7 +18,7 @@ Sales, customer payments, multiple warehouses, returns, lot/grade tracking, and
 offline mode are deferred. Accepted ADRs govern product policy; this plan governs
 task readiness and order. Update both when an approved decision changes the scope.
 
-## Current repository baseline (5 November 2026)
+## Current repository baseline (7 November 2026)
 
 - The application shell, localization plumbing, Clerk authentication, environment
   validation, Vitest tests, and CI are implemented (Tasks 01–06).
@@ -47,6 +47,8 @@ task readiness and order. Update both when an approved decision changes the scop
   see its [handoff](handoffs/22-inventory-adjustments.md).
   Task 25 adds exact supplier cash payments, oldest-first receipt allocations and
   separately approved rounding reductions; see its [handoff](handoffs/25-supplier-payments.md).
+  Task 26 adds read-only per-currency supplier balances and paginated account
+  statements; see its [handoff](handoffs/26-supplier-statements.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -90,7 +92,10 @@ acceptance evidence in its handoff. Track these additional states separately:
 [quality and PostgreSQL checks](https://github.com/atlas700/bazardaftar/actions/runs/42009750351)
 passed. The original Task 22 handoff remains the dated local-evidence record.
 This delivery update closes no live pilot gate. Task 25 implementation is recorded
-in its [handoff](handoffs/25-supplier-payments.md); **Task 26** is next.
+in its [handoff](handoffs/25-supplier-payments.md) and merged in
+[PR #44](https://github.com/atlas700/bazardaftar/pull/44) on 5 November with passing
+CI. Task 26 implementation and local evidence are recorded in its
+[handoff](handoffs/26-supplier-statements.md); **Task 27** is next.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
@@ -179,7 +184,7 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 26 — implement supplier balances and transaction statements under ADRs 0009/0019;
+**Next task:** 27 — add append-only audit logging for sensitive pilot operations;
 Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
@@ -193,7 +198,8 @@ partial/received purchase states in one transaction; see its
 [handoff](handoffs/20-accepted-receipts.md). Task 21 adds recorded inventory
 balances and paginated receipt history with product filters; see its
 [handoff](handoffs/21-inventory-balances.md). Outgoing-stock reconciliation remains
-an open pilot gate. Task 25 implements supplier payments; Task 26 statements remain unimplemented.
+an open pilot gate. Task 25 implements supplier payments; Task 26 adds supplier
+account balances and statements. Neither closes the live pilot gates.
 Task 15 implements suppliers; see its [handoff](handoffs/15-suppliers.md) and
 [contact policy](adr/0021-supplier-contact-records.md). **G1 is accepted by founder decision**
 on the revised retrospective-evidence basis. Pilot release gates remain open.
@@ -301,7 +307,8 @@ The scope column also constrains the detailed task descriptions below.
 | 18–22 | Complete | Purchases, accepted receipts/payables, stock, owner-approved corrections; see handoffs 18–22 |
 | 23–24 | Deferred | Sales drafts and fulfilment |
 | 25 | Complete | Supplier cash payments, automatic oldest-first allocation and owner-only rounding reductions; see [handoff](handoffs/25-supplier-payments.md) |
-| 26–28 | Pilot required | Supplier statements, audit logging, purchasing dashboard |
+| 26 | Complete | Read-only supplier balances and paginated statements; see [handoff](handoffs/26-supplier-statements.md) |
+| 27–28 | Pilot required | Audit logging, purchasing dashboard |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
 | 30–35 | Pilot required | Reliability, focused tests, purchase-to-receipt E2E, staging, onboarding |
 
