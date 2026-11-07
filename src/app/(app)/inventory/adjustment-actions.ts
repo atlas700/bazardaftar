@@ -1,8 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { adjustInventory, type AdjustmentState } from "@/db/inventory-adjustments";
 
@@ -21,10 +21,7 @@ export async function recordAdjustment(_previous: AdjustmentState, formData: For
     result = await adjustInventory(adjustmentFields(formData));
     if (result.status === "success") { stage = "refresh"; revalidatePath("/inventory"); }
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "inventory_adjustment_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("inventory_adjustment_failed", stage, error);
   }
   if (result.status === "success") redirect(`/inventory?productId=${result.productId}#movement-${result.movementId}`);
   return result;

@@ -40,7 +40,7 @@ describe("product Server Action", () => {
     mocks.revalidatePath.mockImplementation(() => { throw new Error("private SQL password"); });
     const form = new FormData(); form.set("operation", "deactivate-product"); form.set("id", "product");
     expect(await updateProduct({ status: "idle" }, form)).toEqual({ status: "error", correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/) });
-    expect(log).toHaveBeenCalledWith(expect.objectContaining({ stage: "refresh" }));
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ stage: "refresh" });
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|SQL|password|product"/);
   });
   it("rejects unrelated operations and malformed transport without skipping service authorization", async () => {

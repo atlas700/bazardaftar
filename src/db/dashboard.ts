@@ -1,7 +1,8 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { hasPermission } from "@/auth/permissions";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
 import { requirePermission } from "./authorization";
@@ -83,7 +84,7 @@ export async function getDashboard() {
         from (${sql.join(sources, sql` union all `)}) events order by posted_at desc, kind desc, id desc limit 6`)).rows : [];
       return { capabilities, purchases, stock, balances, transactions };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
-  } catch (error) { unstable_rethrow(error); throw new Error("Dashboard unavailable."); }
+  } catch (error) { throw safeServerError("Dashboard unavailable.", error); }
 }
 
 export type Dashboard = Awaited<ReturnType<typeof getDashboard>>;

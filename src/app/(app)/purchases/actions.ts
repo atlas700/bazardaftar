@@ -1,8 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { createPurchaseDraft, mutatePurchase, type PurchaseState } from "@/db/purchases";
 
@@ -29,10 +29,7 @@ export async function createPurchase(_previous: PurchaseState, formData: FormDat
     result = await createPurchaseDraft(draft ? { requestId: formData.get("requestId"), ...draft } : null);
     if (result.status === "success") { stage = "refresh"; revalidatePath("/purchases"); }
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "purchase_draft_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("purchase_draft_failed", stage, error);
   }
   if (result.status === "success") redirect(`/purchases/${result.purchaseId}`);
   return result;
@@ -57,10 +54,7 @@ export async function changePurchase(_previous: PurchaseState, formData: FormDat
       revalidatePath(`/purchases/${result.purchaseId}/edit`);
     }
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "purchase_mutation_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("purchase_mutation_failed", stage, error);
   }
   if (result.status === "success") redirect(`/purchases/${result.purchaseId}`);
   return result;

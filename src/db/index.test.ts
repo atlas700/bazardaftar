@@ -62,8 +62,8 @@ describe("database client", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const db = await loadDatabase();
     expect(() => db.$client.emit("error", new Error(configuration.databaseUrl))).not.toThrow();
-    expect(log).toHaveBeenCalledExactlyOnceWith(
-      "Database pool connection failed. Check database availability.",
-    );
+    expect(log).toHaveBeenCalledOnce();
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ event: "database_pool_failed", stage: "pool", correlationId: expect.any(String) });
+    expect(JSON.stringify(log.mock.calls)).not.toContain(configuration.databaseUrl);
   });
 });

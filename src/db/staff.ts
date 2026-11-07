@@ -1,8 +1,9 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { businessRoles, hasPermission } from "@/auth/permissions";
 import { addStaff, getStaffInvitations, getStaffMemberships, inviteStaff, removeStaff, revokeStaffInvitation } from "@/auth/staff";
@@ -42,8 +43,7 @@ export async function getStaffWorkspace() {
       ...member, role: assignments.find((row) => row.membershipId === member.membershipId && row.userId === member.userId)?.role ?? null,
     })), invitations };
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Staff access unavailable.");
+    throw safeServerError("Staff access unavailable.", error);
   }
 }
 

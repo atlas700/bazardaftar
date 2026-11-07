@@ -1,12 +1,11 @@
 "use server";
 
-import { unstable_rethrow } from "next/navigation";
+import { actionFailure } from "@/diagnostics/server";
 import { z } from "zod";
 import { getOrCreateCreatorOrganization } from "@/auth/onboarding";
 import { requireSession } from "@/auth/server";
 import { completeOnboarding, pinOnboardingOrganization, reserveOnboarding } from "@/db/onboarding";
 import type { OnboardingState } from "./_lib/state";
-import { logOnboardingFailure } from "./_lib/failure";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -52,8 +51,6 @@ export async function createFirstOrganization(_previous: OnboardingState, formDa
     if (!await completeOnboarding(pinned, membership)) return { status: "denied" };
     return { status: "success", clerkOrganizationId };
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = logOnboardingFailure(stage);
-    return { status: "error", correlationId };
+    return actionFailure("organization_onboarding_failed", stage, error);
   }
 }

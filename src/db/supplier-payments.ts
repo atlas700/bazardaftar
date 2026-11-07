@@ -1,8 +1,9 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { createHash } from "node:crypto";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasPermission, type Permission } from "@/auth/permissions";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
@@ -184,7 +185,7 @@ export async function getPaymentsWorkspace(input: unknown = {}) {
         canRecord: hasPermission(actor.role, "supplier_payments.record"), canReduce: hasPermission(actor.role, "supplier_payments.adjust_rounding"),
         after: after ?? null, paymentId: paymentId ?? null, nextCursor: rows.length > 20 ? payments[19].id : null };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
-  } catch (error) { unstable_rethrow(error); throw new Error("Supplier payments unavailable."); }
+  } catch (error) { throw safeServerError("Supplier payments unavailable.", error); }
 }
 
 export type PaymentsWorkspace = Awaited<ReturnType<typeof getPaymentsWorkspace>>;

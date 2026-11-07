@@ -60,11 +60,12 @@ describe("onboarding routing", () => {
     expect(renderToStaticMarkup(await OnboardingPage())).toContain('data-timezone="Europe/London"');
   });
 
-  it("sanitizes database failures while preserving a safe correlated diagnostic", async () => {
+  it("sanitizes database failures for the instrumented page boundary", async () => {
     const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.getOnboardingRequest.mockRejectedValue(new Error("Private SQL and user data"));
-    await expect(OnboardingPage()).rejects.toThrow(/^Business setup unavailable\. Reference: [0-9a-f-]{36}$/);
-    expect(diagnostic).toHaveBeenCalledWith({ event: "organization_onboarding_failed", stage: "load-saved-setup", correlationId: expect.any(String) });
+    await expect(OnboardingPage()).rejects.toThrow(/^Business setup unavailable\.$/);
+    // Next's onRequestError logs the render digest and request reference once.
+    expect(diagnostic).not.toHaveBeenCalled();
     expect(JSON.stringify(diagnostic.mock.calls)).not.toContain("Private");
   });
 });

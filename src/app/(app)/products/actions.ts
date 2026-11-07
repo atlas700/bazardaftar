@@ -1,8 +1,7 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { unstable_rethrow } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { manageCatalog, type CatalogState } from "@/db/catalog";
 import { NO_CATEGORY_VALUE } from "./no-category";
@@ -24,9 +23,6 @@ export async function updateProduct(_previous: CatalogState, formData: FormData)
     }
     return result;
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "product_management_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("product_management_failed", stage, error);
   }
 }

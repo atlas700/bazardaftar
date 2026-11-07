@@ -1,4 +1,5 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { eq } from "drizzle-orm";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
@@ -28,7 +29,7 @@ export async function getTenantContext(): Promise<TenantContext | null> {
       organizationId: organization.id,
       membershipId: membership.membershipId,
     };
-  } catch {
-    throw new Error("Unable to resolve organization context.");
+  } catch (error) {
+    throw safeServerError("Unable to resolve organization context.", error);
   }
 }

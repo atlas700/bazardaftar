@@ -35,3 +35,4 @@ describe("staff access entry", () => {
     await expect(StaffAccessPage()).rejects.toThrow(/^Staff access unavailable\.$/);
   });
 });
+vi.mock("server-only", () => ({}));

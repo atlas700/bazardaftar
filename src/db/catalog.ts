@@ -1,4 +1,5 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { randomUUID } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
@@ -64,8 +65,7 @@ export async function getCatalogWorkspace() {
     if (!actor || !hasPermission(actor.role, "catalog.read")) notFound();
     return { units, categories, canManage: hasPermission(actor.role, "catalog.manage") };
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Catalogue unavailable.");
+    throw safeServerError("Catalogue unavailable.", error);
   }
 }
 
@@ -167,8 +167,7 @@ export async function getProducts() {
       .leftJoin(productCategories, and(eq(products.categoryId, productCategories.id), eq(products.organizationId, productCategories.organizationId)))
       .where(eq(products.organizationId, tenant.organizationId)).orderBy(asc(products.name));
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Products unavailable.");
+    throw safeServerError("Products unavailable.", error);
   }
 }
 
@@ -184,8 +183,7 @@ export async function getProduct(input: unknown) {
     if (!product) notFound();
     return product;
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Products unavailable.");
+    throw safeServerError("Products unavailable.", error);
   }
 }
 

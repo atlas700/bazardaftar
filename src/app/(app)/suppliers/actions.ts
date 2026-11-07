@@ -1,8 +1,7 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { unstable_rethrow } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { manageSupplier, type SupplierState } from "@/db/suppliers";
 
@@ -24,9 +23,6 @@ export async function updateSupplier(_previous: SupplierState, formData: FormDat
     }
     return result;
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "supplier_management_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("supplier_management_failed", stage, error);
   }
 }

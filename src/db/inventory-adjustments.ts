@@ -1,8 +1,9 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { createHash } from "node:crypto";
 import { and, asc, eq, sql } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasPermission } from "@/auth/permissions";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
@@ -42,7 +43,7 @@ export async function getAdjustmentOptions() {
     const [warehouse] = await db.select({ id: warehouses.id, name: warehouses.name }).from(warehouses)
       .where(and(eq(warehouses.organizationId, tenant.organizationId), eq(warehouses.isActive, true))).limit(1);
     return { organizationId: tenant.organizationId, products: productRows, warehouse: warehouse ?? null };
-  } catch (error) { unstable_rethrow(error); throw new Error("Adjustment options unavailable."); }
+  } catch (error) { throw safeServerError("Adjustment options unavailable.", error); }
 }
 
 export async function adjustInventory(input: unknown): Promise<AdjustmentState> {

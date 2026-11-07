@@ -1,8 +1,9 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { createHash } from "node:crypto";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasPermission, type Permission } from "@/auth/permissions";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
@@ -81,7 +82,7 @@ export async function getPurchasesWorkspace() {
       canManage ? db.select({ id: products.id, name: products.name, unitId: products.unitId }).from(products).innerJoin(catalogUnits, and(eq(products.organizationId, catalogUnits.organizationId), eq(products.unitId, catalogUnits.id))).where(and(eq(products.organizationId, tenant.organizationId), eq(products.isActive, true), eq(catalogUnits.isActive, true))).orderBy(asc(products.name)) : [],
     ]);
     return { organizationId: tenant.organizationId, canManage, purchases, suppliers: supplierOptions, warehouse: warehouseOptions[0] ?? null, units: unitOptions, products: productOptions };
-  } catch (error) { unstable_rethrow(error); throw new Error("Purchases unavailable."); }
+  } catch (error) { throw safeServerError("Purchases unavailable.", error); }
 }
 
 export async function getPurchase(input: unknown) {
@@ -114,7 +115,7 @@ export async function getPurchase(input: unknown) {
         organizationId: tenant.organizationId, canManage: hasPermission(actor.role, "purchases.manage"), canCancel: hasPermission(actor.role, "transactions.cancel"),
         canAccept: hasPermission(actor.role, "receipts.accept"), canApproveVariance: hasPermission(actor.role, "receipts.approve_variance") };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
-  } catch (error) { unstable_rethrow(error); throw new Error("Purchases unavailable."); }
+  } catch (error) { throw safeServerError("Purchases unavailable.", error); }
 }
 
 export async function createPurchaseDraft(input: unknown): Promise<PurchaseState> {

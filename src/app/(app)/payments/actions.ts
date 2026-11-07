@@ -1,8 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { recordSupplierPayment, reduceSupplierPayable, type PaymentState } from "@/db/supplier-payments";
 
@@ -21,10 +21,7 @@ async function postSettlement(data: FormData, reduction: boolean): Promise<Payme
       for (const path of ["/payments", "/payments/new", "/payments/rounding", "/suppliers", `/suppliers/${result.supplierId}`]) revalidatePath(path);
     }
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "supplier_settlement_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("supplier_settlement_failed", stage, error);
   }
   if (result.status === "success") redirect(`/payments?supplierId=${result.supplierId}&currency=${result.currency}#payment-${result.paymentId}`);
   return result;

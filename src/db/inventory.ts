@@ -1,7 +1,8 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, asc, eq, sql } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasPermission } from "@/auth/permissions";
 import { localIdSchema } from "@/domain/validation";
@@ -59,7 +60,7 @@ export async function getInventoryWorkspace(input: unknown = {}) {
       return { balances, movements, product: productId ? product : null, after: after ?? null, canReadPurchases, canCorrect,
         nextCursor: rows.length > pageSize ? movements[pageSize - 1].id : null };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
-  } catch (error) { unstable_rethrow(error); throw new Error("Inventory unavailable."); }
+  } catch (error) { throw safeServerError("Inventory unavailable.", error); }
 }
 
 export type InventoryWorkspace = Awaited<ReturnType<typeof getInventoryWorkspace>>;

@@ -1,12 +1,17 @@
 import "server-only";
 import { auth } from "@clerk/nextjs/server";
+import { safeServerError } from "@/diagnostics/server";
 
 export async function getSession() {
-  const { isAuthenticated, userId } = await auth();
-  return isAuthenticated ? { userId } : null;
+  try {
+    const { isAuthenticated, userId } = await auth();
+    return isAuthenticated ? { userId } : null;
+  } catch (error) { throw safeServerError("Authentication unavailable.", error); }
 }
 
 export async function requireSession() {
-  const { userId } = await auth.protect();
-  return { userId };
+  try {
+    const { userId } = await auth.protect();
+    return { userId };
+  } catch (error) { throw safeServerError("Authentication unavailable.", error); }
 }

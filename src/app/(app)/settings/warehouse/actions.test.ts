@@ -32,7 +32,7 @@ describe("warehouse Server Action", () => {
     mocks.revalidatePath.mockImplementation(() => { throw new Error("private SQL password"); });
     const form = new FormData(); form.set("operation", "create-warehouse");
     expect(await updateWarehouse({ status: "idle" }, form)).toEqual({ status: "error", correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/) });
-    expect(log).toHaveBeenCalledWith(expect.objectContaining({ stage: "refresh" }));
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ stage: "refresh" });
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|SQL|password/);
   });
   it("validates foreign operations and malformed transport through the guarded service", async () => {

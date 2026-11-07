@@ -1,4 +1,5 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, eq } from "drizzle-orm";
 import { notFound, unstable_rethrow } from "next/navigation";
@@ -42,8 +43,7 @@ export async function getWarehouseWorkspace() {
     if (!actor || !hasPermission(actor.role, "organization.read")) notFound();
     return { organizationId: tenant.organizationId, warehouse: warehouse ?? null, canManage: hasPermission(actor.role, "organization.manage") };
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Warehouse unavailable.");
+    throw safeServerError("Warehouse unavailable.", error);
   }
 }
 
@@ -56,8 +56,7 @@ export async function getActiveWarehouse(): Promise<Warehouse | null> {
     )).limit(1);
     return warehouse ?? null;
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Warehouse unavailable.");
+    throw safeServerError("Warehouse unavailable.", error);
   }
 }
 
