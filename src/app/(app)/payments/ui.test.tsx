@@ -22,6 +22,12 @@ const workspace = { organizationId: "org", suppliers: [{ id: "supplier", name: "
 beforeEach(() => { vi.resetAllMocks(); mocks.getPaymentsWorkspace.mockResolvedValue(workspace); });
 
 describe("supplier payment screens", () => {
+  it("passes a statement's pinned payment link and offers a return to all payments", async () => {
+    mocks.getPaymentsWorkspace.mockResolvedValue({ ...workspace, paymentId });
+    const html = renderToStaticMarkup(await PaymentsPage({ searchParams: Promise.resolve({ supplierId: "supplier", currency: "AFN", paymentId }) }));
+    expect(mocks.getPaymentsWorkspace).toHaveBeenCalledWith({ supplierId: "supplier", currency: "AFN", after: undefined, paymentId });
+    expect(html).toContain("Latest payments"); expect(html).toContain("/suppliers/supplier/statement?currency=AFN");
+  });
   it("renders the selected supplier and currency before client hydration", () => {
     const html = renderToStaticMarkup(<PaymentFilter suppliers={workspace.suppliers} supplierId="supplier" currency="AFN" />);
     expect(html.match(/<button[^>]*id="payment-supplier"[^>]*>([\s\S]*?)<\/button>/)?.[1]).toContain("Helmand &lt;grain&gt;");

@@ -25,6 +25,12 @@ beforeEach(() => {
 afterEach(() => { vi.resetAllMocks(); mocks.pending = false; });
 
 describe("supplier pages and form", () => {
+  it("shows statement navigation only with supplier balance access", async () => {
+    mocks.getSuppliersWorkspace.mockResolvedValue({ suppliers: [supplier], canManage: false, canReadBalances: true });
+    expect(renderToStaticMarkup(await SupplierPage({ params: Promise.resolve({ id: supplier.id }) }))).toContain(`/suppliers/${supplier.id}/statement`);
+    mocks.getSuppliersWorkspace.mockResolvedValue({ suppliers: [supplier], canManage: false, canReadBalances: false });
+    expect(renderToStaticMarkup(await SupplierPage({ params: Promise.resolve({ id: supplier.id }) }))).not.toContain("/statement");
+  });
   it("passes Next.js 16.4's retry callback to the recovery control", () => {
     const retry = vi.fn();
     expect(SuppliersError({ retry }).props.retry).toBe(retry);

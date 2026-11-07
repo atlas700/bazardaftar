@@ -46,7 +46,7 @@ export async function getSuppliersWorkspace() {
       )).limit(1),
     ]);
     if (!actor || !hasPermission(actor.role, "suppliers.read")) notFound();
-    return { suppliers: records, canManage: hasPermission(actor.role, "suppliers.manage") };
+    return { suppliers: records, canManage: hasPermission(actor.role, "suppliers.manage"), canReadBalances: hasPermission(actor.role, "supplier_balances.read") };
   } catch (error) {
     unstable_rethrow(error);
     throw new Error("Suppliers unavailable.");

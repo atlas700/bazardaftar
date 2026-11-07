@@ -48,10 +48,11 @@
 | Receiving | `src/db/receipts.ts` | Accepted receipt, inbound stock, supplier payable, and purchase reconciliation in one transaction |
 | Inventory | `src/db/inventory.ts` | Ledger-derived kg balances and paginated receipt/adjustment history |
 | Stock corrections | `src/db/inventory-adjustments.ts` | Owner-approved signed movements with replay protection and no negative stock |
+| Supplier settlements | `src/db/supplier-payments.ts` | Exact cash entry, oldest-first receipt allocations and owner reductions |
+| Supplier accounts | `src/db/supplier-statements.ts` | Separate-currency balances and consistent paginated posting history |
 
-Supplier payments/statements, general audit logging, and the operational
-dashboard retain Tasks 25–28's scope. Sales remain deferred. The
-[build plan](agent-sized-build-plan.md#current-gate-status) owns current readiness
+General audit logging and the operational dashboard remain Tasks 27–28. Sales
+remain deferred. The [build plan](agent-sized-build-plan.md#current-gate-status) owns current readiness
 and delivery order; module contracts live in [API conventions](api-conventions.md).
 
 ## Decision status
@@ -98,7 +99,7 @@ tracked in [database](database.md), [security](security.md),
   errors. Reads never provision, fall back to another organization, or cache
   membership across requests. Business queries/mutations use this boundary and
   enforce Task 10's local permissions. Staff, purchasing, receiving, inventory
-  and supplier payments are implemented; supplier statements remain Task 26 work.
+  and supplier payments/statements are implemented.
 - `requirePermission(permission)` in `src/db/authorization.ts` authenticates,
   verifies current tenant membership, reads only that organization/membership/user
   assignment, and checks the fixed catalogue in `src/auth/permissions.ts`. Missing

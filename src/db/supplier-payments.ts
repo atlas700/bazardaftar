@@ -45,7 +45,8 @@ const reductionSchema = z.object({
   }),
   reason: z.string().trim().min(1).max(500), approved: z.literal(true),
 });
-const workspaceSchema = z.object({ supplierId: localIdSchema.optional(), currency: currencySchema.default("AFN"), after: localIdSchema.optional() });
+const workspaceSchema = z.object({ supplierId: localIdSchema.optional(), currency: currencySchema.default("AFN"), after: localIdSchema.optional(), paymentId: localIdSchema.optional() })
+  .refine((value) => !(value.after && value.paymentId));
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 async function recheckAuthority(tx: Transaction, tenant: TenantContext, permission: Permission, lock: boolean) {
@@ -145,7 +146,7 @@ export async function getPaymentsWorkspace(input: unknown = {}) {
     const tenant = await requirePermission("supplier_payments.read");
     const parsed = workspaceSchema.safeParse(input);
     if (!parsed.success) notFound();
-    const { supplierId, currency, after } = parsed.data;
+    const { supplierId, currency, after, paymentId } = parsed.data;
     return await db.transaction(async (tx) => {
       const actor = await recheckAuthority(tx, tenant, "supplier_payments.read", false);
       // shortcut: supplier options and open payables fit the pilot; paginate before large trading histories.
@@ -161,8 +162,9 @@ export async function getPaymentsWorkspace(input: unknown = {}) {
       const [anchor] = after ? await tx.select({ createdAt: sql<string>`${supplierPayments.createdAt}::text` }).from(supplierPayments)
         .where(and(scope, eq(supplierPayments.id, after))).limit(1) : [];
       if (after && !anchor) notFound();
-      const rows = await tx.select().from(supplierPayments).where(and(scope, anchor && after ? sql`(${supplierPayments.createdAt}, ${supplierPayments.id}) < (${anchor.createdAt}::timestamptz, ${after}::uuid)` : undefined))
+      const rows = await tx.select().from(supplierPayments).where(and(scope, paymentId ? eq(supplierPayments.id, paymentId) : undefined, anchor && after ? sql`(${supplierPayments.createdAt}, ${supplierPayments.id}) < (${anchor.createdAt}::timestamptz, ${after}::uuid)` : undefined))
         .orderBy(sql`${supplierPayments.createdAt} desc`, sql`${supplierPayments.id} desc`).limit(21);
+      if (paymentId && !rows.length) notFound();
       const payments = rows.slice(0, 20);
       const ids = payments.map((row) => row.id);
       const allocations = ids.length ? await tx.select({ paymentId: supplierPaymentAllocations.paymentId, payableId: supplierPaymentAllocations.payableId,
@@ -176,7 +178,7 @@ export async function getPaymentsWorkspace(input: unknown = {}) {
         .orderBy(asc(supplierPaymentReductions.createdAt), asc(supplierPaymentReductions.id)) : [];
       return { organizationId: tenant.organizationId, suppliers: supplierRows, supplier, currency, outstanding, payables, payments, allocations, reductions,
         canRecord: hasPermission(actor.role, "supplier_payments.record"), canReduce: hasPermission(actor.role, "supplier_payments.adjust_rounding"),
-        after: after ?? null, nextCursor: rows.length > 20 ? payments[19].id : null };
+        after: after ?? null, paymentId: paymentId ?? null, nextCursor: rows.length > 20 ? payments[19].id : null };
     }, { isolationLevel: "repeatable read", accessMode: "read only" });
   } catch (error) { unstable_rethrow(error); throw new Error("Supplier payments unavailable."); }
 }

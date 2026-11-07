@@ -19,6 +19,10 @@ vi.mock("@/db/supplier-payments", () => ({ getPaymentsWorkspace: async () => {
   await requirePermission("supplier_payments.read");
   return { suppliers: [], supplier: null, currency: "AFN", payments: [], payables: [], after: null, nextCursor: null };
 } }));
+vi.mock("@/db/supplier-statements", () => ({ getSupplierAccount: async () => {
+  await requirePermission("supplier_balances.read");
+  return { supplier: { id: "supplier", name: "Grain supplier", isActive: true }, currency: "AFN", balances: [], entries: [], allocations: [] };
+} }));
 
 import DashboardPage from "../app/(app)/dashboard/page";
 import InventoryPage from "../app/(app)/inventory/page";
@@ -26,6 +30,7 @@ import PurchasesPage from "../app/(app)/purchases/page";
 import SalesPage from "../app/(app)/sales/page";
 import PaymentsPage from "../app/(app)/payments/page";
 import SettingsPage from "../app/(app)/settings/page";
+import StatementPage from "../app/(app)/suppliers/[id]/statement/page";
 
 afterEach(() => vi.resetAllMocks());
 
@@ -36,6 +41,7 @@ describe.each([
   ["sales", SalesPage, "organization.read"],
   ["payments", PaymentsPage, "supplier_payments.read"],
   ["settings", SettingsPage, "organization.read"],
+  ["supplier statement", () => StatementPage({ params: Promise.resolve({ id: "supplier" }) }), "supplier_balances.read"],
 ])("protected %s page", (_name, Page, permission) => {
   it("does not render when the permission guard denies access", async () => {
     const denied = new Error("Access denied");

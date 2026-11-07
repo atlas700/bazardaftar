@@ -15,9 +15,11 @@ stock by product/warehouse and paginated receipt/adjustment history. Owners can
 record opening stock, loss, spoilage and count corrections without allowing
 negative stock. Supplier payments record whole AFN/PKR cash with exact conversion,
 automatic oldest-first allocation and separate owner-approved rounding reductions.
-The remaining pilot workflow adds supplier statements and reconciliation in the order set
-out in the [build plan](docs/agent-sized-build-plan.md). Those planned capabilities
-are not all implemented. G1 is accepted on retrospective founder evidence under
+Supplier account statements reconcile receipt debt, allocations and reductions,
+with separate AFN/PKR balances and paginated posting history. Audit logging, the
+purchasing dashboard and operational delivery remain in the
+[build plan](docs/agent-sized-build-plan.md). G1 is accepted on retrospective
+founder evidence under
 [ADR 0003](docs/adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026);
 remaining pilot-release gates stay open.
 
