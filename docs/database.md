@@ -658,3 +658,35 @@ The same account totals can support Task 28's supplier metrics and later approve
 reconciliation reports. They do not establish stock valuation or a general ledger.
 Large-history profiling and additional indexes remain demand driven; current
 reads use existing tenant/supplier and allocation indexes.
+
+## Append-only business audit
+
+`0016_append_only_audit.sql` adds `audit_logs` with a tenant foreign key, generated
+UUID, verified actor user/membership, action/entity type and ID, outcome,
+request/correlation UUID, bounded JSONB before/after summaries and UTC timestamp.
+Checks constrain metadata, supported actions/outcomes and snapshot object size.
+The organization/request index supports scoped correlation and provider-intent
+reconciliation; no speculative history/search indexes are added.
+
+The server-only writer takes the caller's transaction rather than opening another
+one for local events. Receipt acceptance, payable creation and purchase status
+events share one request UUID and commit with stock/debt posting. Payment and
+reduction events reference their immutable source rows. Existing replay guards
+run after authorization and before the audit inserts. Newly inserted seed units
+are audited; conflict-only seeds and unchanged local roles emit no event.
+Onboarding audits only newly inserted settings/grants, preserving existing roles
+and one-time bootstrap markers without fabricating an owner promotion.
+
+The writer supplies `clock_timestamp()` for occurrence time: transaction-start
+`now()` would place a staff completion before its separately committed request.
+The append-only trigger rejects UPDATE/DELETE/TRUNCATE, including empty statements.
+The organization FK has no deletion cascade and actor/entity IDs deliberately do
+not depend on mutable membership/source rows. No history is backfilled or deleted.
+See [retention, permissions and provider reconciliation](security.md#business-audit-trail).
+
+The isolated PostgreSQL suite includes audit constraints, immutability, safe
+snapshots, real mutation integration, rollback and retry cases. Every suite cleans
+only its tracked synthetic tenants. Its guarded test-only helper temporarily
+disables the audit trigger under an exclusive table lock within a transaction;
+commit restores it and rollback also restores it. This is not a production cleanup
+mechanism. Repeat migration application is required as for earlier tasks.

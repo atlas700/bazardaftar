@@ -49,7 +49,7 @@ describe("staff mutation boundary", () => {
   it.each(["role", "deactivate"])("blocks %s of the last active owner", async (operation) => {
     expect(await manageStaff({ operation, membershipId: "member_a", role: "viewer" })).toEqual({ status: "last-owner" });
     expect(mocks.removeStaff).not.toHaveBeenCalled();
-    expect(mocks.query.mock.calls.some(([query, values]) => query.text?.startsWith("insert") && values.includes("completed"))).toBe(false);
+    expect(mocks.query.mock.calls.some(([query]) => query.text?.startsWith("insert"))).toBe(false);
   });
   it("does not count stale owners or assignments bound to a different user", async () => {
     grants.push([organizationId, "member_gone", "user_gone", "owner", "2026-10-27"]);

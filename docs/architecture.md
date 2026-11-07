@@ -50,8 +50,10 @@
 | Stock corrections | `src/db/inventory-adjustments.ts` | Owner-approved signed movements with replay protection and no negative stock |
 | Supplier settlements | `src/db/supplier-payments.ts` | Exact cash entry, oldest-first receipt allocations and owner reductions |
 | Supplier accounts | `src/db/supplier-statements.ts` | Separate-currency balances and consistent paginated posting history |
+| Business audit trail | `src/db/audit.ts` | Bounded operational snapshots, atomic local events and durable staff provider intents |
 
-General audit logging and the operational dashboard remain Tasks 27–28. Sales
+The operational dashboard remains Task 28. Audit events reference source records;
+they are not a replacement stock or financial ledger. Sales
 remain deferred. The [build plan](agent-sized-build-plan.md#current-gate-status) owns current readiness
 and delivery order; module contracts live in [API conventions](api-conventions.md).
 

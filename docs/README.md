@@ -41,6 +41,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 22 owner-approved inventory adjustments](handoffs/22-inventory-adjustments.md)
 - [Task 25 supplier payments and rounding reductions](handoffs/25-supplier-payments.md)
 - [Task 26 supplier balances and statements](handoffs/26-supplier-statements.md)
+- [Task 27 append-only audit logging](handoffs/27-audit-logging.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)

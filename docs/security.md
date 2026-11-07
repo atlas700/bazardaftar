@@ -100,8 +100,59 @@ Clerk Admin promotion is introduced. See [Task 11 recovery](handoffs/11-staff-ma
 
 The first mutation must meet the safe error and correlation requirements in the
 [mutation contract](api-conventions.md#mutation-contract), approved by
-[ADR 0015](adr/0015-server-action-mutation-boundary.md). General request logging,
-rate limiting, and formal audit logging retain their later build-plan scope.
+[ADR 0015](adr/0015-server-action-mutation-boundary.md). General request logging
+and rate limiting retain their later build-plan scope.
+
+## Business audit trail
+
+Task 27's server-only writer persists the verified organization, user and membership,
+source entity/action, UTC occurrence time, request UUID, outcome and bounded summary
+snapshots. Local staff grants, onboarding, master data, purchase lifecycle,
+receipts/payables, adjustments, payments and rounding reductions require audit
+inserts in their own mutation transaction. Failures roll back local changes.
+Financial/stock replays and seed/role/provider no-ops append no duplicate completion.
+Existing records are not backfilled with invented historical actors or events.
+
+Snapshots use a per-entity allowlist of operational IDs, states, exact decimal
+strings, catalogue/product/warehouse names and bounded counts. Supplier names,
+phones, locations, email addresses, identifiers for display, free-text notes,
+payment terms, reasons/references, sessions, tokens, passwords and nested payloads
+are excluded. Changes to private fields retain field names, not private values.
+Approval reasons remain in their permission-protected source records. Audit IDs
+and actor identities are still sensitive tenant data.
+
+**Access:** `audit.read` remains limited to owner, admin and accountant under
+ADR 0016. No application audit reader, route, export or browser payload is exposed
+by this task. Any later reader must check current provider membership and that local
+grant, scope every query/cursor to the verified organization and return safe fields.
+Until then, founder-controlled database inspection is an operational procedure;
+never give staff database credentials as a substitute for authorization.
+
+**Retention:** retain pilot audit entries without automatic expiry. There is no
+application edit/delete/purge command. An approved retention/archive and access
+procedure is required before any future removal; the 30-day backup target is not
+an audit deletion policy. General diagnostic-log retention remains an open
+operational decision. Restore and privileged maintenance remain founder-controlled.
+
+`0016_append_only_audit.sql` rejects UPDATE, DELETE and TRUNCATE and grants none
+of those operations to PUBLIC. This protects ordinary writes, not against a database
+owner/superuser who can disable triggers or change schema. Task 34 must provision
+an appropriately restricted runtime role separately from migration/maintenance
+authority. The test-only cleanup helper verifies the isolated database and tracked
+synthetic tenants, exclusively locks the table and restores its trigger in the
+same transaction; it has no application caller.
+
+**Staff provider boundary:** commit request evidence immediately before each
+validated Clerk side effect, then commit completion evidence after provider success.
+Staff uses `FOR NO KEY UPDATE`: it still serializes every app mutation but permits
+the independent intent insert's tenant foreign-key check. An unmatched request can
+mean provider failure, an ambiguous timeout, a process interruption, or remote
+success followed by local rollback. Reconcile its tenant/action/target/time and
+correlation UUID against Clerk before retrying; never relabel or delete history.
+For an invitation whose creation response was lost, the request targets the
+organization; reconciliation may require its protected provider invitation list.
+The completion records the returned invitation ID. No automatic reconciliation,
+provider webhook ingestion or audit of direct Clerk Dashboard changes is claimed.
 
 ## Dependency advisories
 
