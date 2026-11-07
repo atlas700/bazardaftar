@@ -22,6 +22,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Read the linked instructions when their task applies; follow their links for
 area-specific rules rather than loading every document.
 
+- **All project work:** follow the
+  [working agreement](docs/agents/working-agreement.md).
 - **Planning, implementation, code review, or validation:** read the
   [development workflow](docs/agents/development.md) and
   [task-specific skill requirements](docs/agents/skills.md).
