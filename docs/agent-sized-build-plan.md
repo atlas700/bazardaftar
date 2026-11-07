@@ -54,6 +54,8 @@ task readiness and order. Update both when an approved decision changes the scop
   [handoff](handoffs/27-audit-logging.md).
   Task 28 adds the permission-scoped purchasing dashboard, exact stock and
   separate-currency supplier balances; see its [handoff](handoffs/28-pilot-dashboard.md).
+  Task 30 adds safe error references, request correlation and redacted structured
+  failure logs; see its [handoff](handoffs/30-safe-diagnostics.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -104,7 +106,10 @@ CI. Task 26 implementation and local evidence are recorded in its
 [PR #45](https://github.com/atlas700/bazardaftar/pull/45) on 7 November with passing
 quality/database CI. Task 27 implementation and local evidence are recorded in its
 [handoff](handoffs/27-audit-logging.md). Task 28 implementation and local evidence
-are recorded in its [handoff](handoffs/28-pilot-dashboard.md); **Task 30** is next.
+are recorded in its [handoff](handoffs/28-pilot-dashboard.md); it merged in
+[PR #48](https://github.com/atlas700/bazardaftar/pull/48) on 7 November.
+Task 30's implementation and local checks are recorded in its
+[handoff](handoffs/30-safe-diagnostics.md); **Task 31** is next.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -194,8 +199,8 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 30 — user-facing errors, request IDs and structured server logs;
-Task 28 implements the trusted purchasing/stock/supplier dashboard.
+**Next task:** 31 — rate limits and mutation abuse controls;
+Task 30 implements safe user-facing failures and correlated server diagnostics.
 Task 29 reports and CSV exports remain deferred until pilot evidence requires them.
 Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
@@ -323,7 +328,8 @@ The scope column also constrains the detailed task descriptions below.
 | 27 | Complete | Append-only audit trail, atomic local events and durable provider intents; see [handoff](handoffs/27-audit-logging.md) |
 | 28 | Complete | Permission-scoped purchasing/stock/supplier dashboard; see [handoff](handoffs/28-pilot-dashboard.md) |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
-| 30–35 | Pilot required | Reliability, focused tests, purchase-to-receipt E2E, staging, onboarding |
+| 30 | Complete | Safe failures, request references and redacted structured logs; see [handoff](handoffs/30-safe-diagnostics.md) |
+| 31–35 | Pilot required | Abuse controls, focused tests, purchase-to-receipt E2E, staging, onboarding |
 
 ### Foundation
 
@@ -945,6 +951,9 @@ correctly escaped, and tested.
 **Handoff:** state report limits and whether async generation is needed later.
 
 #### 30 — Add user-facing errors, request IDs, and structured server logs
+
+**Status:** Implemented 7 November 2026; see the [handoff](handoffs/30-safe-diagnostics.md)
+for acceptance, local checks and live-evidence limits.
 
 **Goal:** Make pilot failures diagnosable without exposing internals.
 

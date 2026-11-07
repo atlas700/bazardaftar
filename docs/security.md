@@ -10,6 +10,11 @@
   repository.
 - User-facing errors must not expose stack traces, SQL, secrets, or personal data.
 
+Task 30's [failure diagnostics contract](api-conventions.md#failure-diagnostics-contract)
+defines safe action/render references and redacted JSON events. Operators view
+server stderr; the [log operations and redaction guide](handoffs/30-safe-diagnostics.md#log-operations-and-redaction)
+defines included fields, excluded private data, lookup steps and deployment limits.
+
 ## Decision status
 
 **Decided — G4 authentication:** Clerk is the approved managed identity and secure

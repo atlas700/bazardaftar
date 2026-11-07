@@ -40,7 +40,31 @@
 
 The first mutation must include the error/correlation behavior above. Task 27's
 business audit trail records successful local changes in the mutation transaction;
-general request logging and rate limiting retain their later build-plan scope.
+Task 30 supplies shared failure diagnostics below. Rate limiting remains Task 31.
+
+## Failure diagnostics contract
+
+Actions return the existing `{ status: "error", correlationId }` shape through
+server-only `actionFailure(event, stage, error)`. It preserves Next.js control
+flow before logging. Validation and ordinary conflict/permission outcomes retain
+their domain states and do not produce unexpected-failure logs.
+
+Clerk's locale callback overwrites `x-bazardaftar-request-id` with a fresh UUID,
+forwards it upstream through GT's request-header overrides, and returns it in the
+response. IDs carry no authority and are separate from financial idempotency UUIDs.
+Missing request context and background pool failures receive a fresh diagnostic
+UUID. No successful-request payload is logged.
+
+`safeServerError()` retains only a broad allowlisted failure category across
+sanitizing auth/database boundaries, discarding the raw error and its cause.
+Next's `onRequestError` records unhandled server failures with a validated numeric
+digest and the request UUID. Route error screens show that digest; it can repeat
+across requests, so use the occurrence time and logged UUID to distinguish them.
+Never display `error.message`, a raw digest or stack. Client-only errors without
+a safe server digest still have retry UI and no invented server reference.
+
+The JSON log fields, local log sink, redactions and operational limits are in the
+[Task 30 handoff](handoffs/30-safe-diagnostics.md#log-operations-and-redaction).
 
 ## Business audit contract
 

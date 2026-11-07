@@ -98,6 +98,18 @@ Focus, source navigation and the error retry callback are checked separately.
 See the [handoff](handoffs/28-pilot-dashboard.md) for evidence and limitations;
 synthetic rendering does not establish live Clerk or deployed acceptance.
 
+## Failure diagnostics verification
+
+Task 30 adds diagnostic redaction/category/reference tests, concurrent request
+reference isolation, real GT request-header forwarding with mocked Clerk, the
+Next server-error hook, safe feedback and standalone root-error recovery. Existing
+action tests retain validation, failure and ambiguous-refresh recovery assertions;
+invalid onboarding input produces no unexpected-failure log. Auth tests retain
+redirects and verify sanitized provider failures. The PostgreSQL suites continue
+to verify the same business and isolation rules through the changed error wrappers.
+See the [handoff](handoffs/30-safe-diagnostics.md) for test-first and local rendered
+evidence; mocked providers and synthetic fixtures do not prove a deployed incident.
+
 ## Business audit verification
 
 Task 27 adds the database-free writer/redaction suite and

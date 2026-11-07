@@ -52,6 +52,7 @@
 | Supplier accounts | `src/db/supplier-statements.ts` | Separate-currency balances and consistent paginated posting history |
 | Business audit trail | `src/db/audit.ts` | Bounded operational snapshots, atomic local events and durable staff provider intents |
 | Pilot dashboard | `src/db/dashboard.ts` | Permission-scoped purchase/receipt counts, recorded stock, separate-currency debt and bounded recent source transactions |
+| Failure diagnostics | `src/diagnostics/server.ts`, `src/instrumentation.ts` | Redacted JSON failures, request correlation and safe action/render support references |
 
 The operational dashboard reads source records in one read-only snapshot.
 Audit events reference source records;

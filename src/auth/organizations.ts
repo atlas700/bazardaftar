@@ -1,4 +1,5 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { auth, clerkClient } from "@clerk/nextjs/server";
@@ -33,6 +34,6 @@ export async function getActiveOrganizationMembership(): Promise<ActiveOrganizat
   } catch (error) {
     unstable_rethrow(error);
     if (isClerkAPIResponseError(error) && error.status === 404) return null;
-    throw new Error("Unable to verify organization membership.");
+    throw safeServerError("Unable to verify organization membership.", error);
   }
 }
