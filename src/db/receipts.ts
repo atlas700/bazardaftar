@@ -1,8 +1,9 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { createHash } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasPermission } from "@/auth/permissions";
 import { getActiveOrganizationMembership } from "@/auth/organizations";
@@ -43,7 +44,7 @@ export async function getReceiptUnits() {
     const tenant = await requirePermission("receipts.accept");
     return await db.select({ id: catalogUnits.id, name: catalogUnits.name, kind: catalogUnits.kind, kilogramsPerUnit: catalogUnits.kilogramsPerUnit })
       .from(catalogUnits).where(and(eq(catalogUnits.organizationId, tenant.organizationId), eq(catalogUnits.isActive, true))).orderBy(asc(catalogUnits.name));
-  } catch (error) { unstable_rethrow(error); throw new Error("Receipt measures unavailable."); }
+  } catch (error) { throw safeServerError("Receipt measures unavailable.", error); }
 }
 
 export async function acceptReceipt(input: unknown): Promise<ReceiptState> {

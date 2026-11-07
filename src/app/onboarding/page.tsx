@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { unstable_rethrow } from "next/navigation";
+import { safeServerError } from "@/diagnostics/server";
 import { T } from "gt-next";
 import { getLocale } from "gt-next/server";
 import { SignOut } from "@/auth/components";
@@ -8,7 +8,6 @@ import { requireSession } from "@/auth/server";
 import { getOnboardingRequest } from "@/db/onboarding";
 import { LocalePicker } from "../_components/locale-picker";
 import { OnboardingForm } from "./_components/onboarding-form";
-import { logOnboardingFailure } from "./_lib/failure";
 import { Brand } from "@/components/workspace";
 
 export const metadata: Metadata = { title: "Set up your business" };
@@ -20,9 +19,7 @@ export default async function OnboardingPage() {
   try {
     request = await getOnboardingRequest(userId);
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = logOnboardingFailure("load-saved-setup");
-    throw new Error(`Business setup unavailable. Reference: ${correlationId}`);
+    throw safeServerError("Business setup unavailable.", error);
   }
   const initialValues = request ? {
     name: request.name,

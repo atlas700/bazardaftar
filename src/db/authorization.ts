@@ -1,7 +1,8 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, eq } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { hasPermission, type Permission } from "@/auth/permissions";
 import { requireSession } from "@/auth/server";
 import { db } from "./index";
@@ -23,7 +24,6 @@ export async function requirePermission(permission: Permission): Promise<TenantC
     if (!assignment || !hasPermission(assignment.role, permission)) notFound();
     return tenant;
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Business access unavailable.");
+    throw safeServerError("Business access unavailable.", error);
   }
 }

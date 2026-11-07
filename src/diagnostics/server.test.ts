@@ -59,4 +59,25 @@ describe("safe server diagnostics", () => {
     expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ correlationId: reference, failureKind: "unknown" });
     expect(mocks.headers).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [{ code: "57014" }, "timeout"], [{ code: "ETIMEDOUT" }, "timeout"],
+    [{ cause: { code: "40001" } }, "database"], [{ clerkError: true }, "provider"],
+    [{ code: "private-code", status: 500, data: "private-payload" }, "unknown"],
+  ])("records only an allowlisted failure category", (error, kind) => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    logFailure("server_request_failed", "action", error, { requestId: "private-id", digest: "private-digest" });
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ failureKind: kind });
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|payload|digest/);
+  });
+
+  it("does not share request references between concurrent actions", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const secondId = "27249b3a-0ec8-4301-b981-f35ab215d48d";
+    mocks.headers.mockResolvedValueOnce(new Headers({ "x-bazardaftar-request-id": requestId }))
+      .mockResolvedValueOnce(new Headers({ "x-bazardaftar-request-id": secondId }));
+    const results = await Promise.all([actionFailure("purchase_draft_failed", "draft-creation", null), actionFailure("purchase_draft_failed", "draft-creation", null)]);
+    expect(results.map((result) => result.correlationId)).toEqual([requestId, secondId]);
+    expect(log.mock.calls.map(([entry]) => JSON.parse(entry).correlationId)).toEqual([requestId, secondId]);
+  });
 });

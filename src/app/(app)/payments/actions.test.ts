@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({ requireSession: vi.fn(), recordSupplierPayment: vi.fn(), reduceSupplierPayable: vi.fn(), revalidatePath: vi.fn() }));
 vi.mock("@/auth/server", () => mocks);
 vi.mock("@/db/supplier-payments", () => mocks);

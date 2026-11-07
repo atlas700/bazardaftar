@@ -1,4 +1,5 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, asc, eq } from "drizzle-orm";
 import { notFound, unstable_rethrow } from "next/navigation";
@@ -49,8 +50,7 @@ export async function getSuppliersWorkspace() {
     if (!actor || !hasPermission(actor.role, "suppliers.read")) notFound();
     return { suppliers: records, canManage: hasPermission(actor.role, "suppliers.manage"), canReadBalances: hasPermission(actor.role, "supplier_balances.read") };
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Suppliers unavailable.");
+    throw safeServerError("Suppliers unavailable.", error);
   }
 }
 
@@ -64,8 +64,7 @@ export async function getSupplier(input: unknown) {
     if (!supplier) notFound();
     return supplier;
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Suppliers unavailable.");
+    throw safeServerError("Suppliers unavailable.", error);
   }
 }
 

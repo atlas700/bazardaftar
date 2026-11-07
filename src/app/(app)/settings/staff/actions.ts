@@ -1,8 +1,7 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { unstable_rethrow } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { manageStaff, type StaffState } from "@/db/staff";
 
@@ -22,9 +21,6 @@ export async function updateStaff(_previous: StaffState, formData: FormData): Pr
     }
     return result;
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "staff_management_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("staff_management_failed", stage, error);
   }
 }

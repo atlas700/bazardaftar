@@ -3,6 +3,7 @@ import { AlertCircle, LoaderCircle } from "lucide-react";
 import { T } from "gt-next";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/workspace";
+import { errorReference } from "@/diagnostics/failure";
 
 export function LoadingState({ children }: { children: ReactNode }) {
   return <div role="status" className="space-y-6">
@@ -13,10 +14,16 @@ export function LoadingState({ children }: { children: ReactNode }) {
   </div>;
 }
 
-export function ErrorState({ children, retry }: { children: ReactNode; retry: () => void }) {
+export function ErrorReference({ error }: { error?: unknown }) {
+  const reference = errorReference(error);
+  return reference ? <p className="text-sm text-ink-muted"><T>Reference:</T> <bdi dir="ltr">{reference}</bdi></p> : null;
+}
+
+export function ErrorState({ children, retry, error }: { children: ReactNode; retry: () => void; error?: unknown }) {
   return <Panel className="flex flex-col items-start gap-5">
     <span className="grid size-11 place-items-center rounded-xl bg-destructive/5 text-destructive"><AlertCircle className="size-5" aria-hidden="true" /></span>
     <p role="alert" className="max-w-lg text-sm leading-7">{children}</p>
+    <ErrorReference error={error} />
     <Button type="button" variant="outline" onClick={retry}><T>Try again</T></Button>
   </Panel>;
 }

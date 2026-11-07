@@ -55,8 +55,10 @@ describe("first organization action", () => {
     ["timezone", "not-a-timezone"], ["timezone", ""],
     ["baseCurrency", "USD"], ["locale", "unknown"],
   ])("rejects invalid %s before side effects", async (field, value) => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await createFirstOrganization({ status: "idle" }, form({ [field]: value }))).toEqual({ status: "invalid", fields: [field] });
     expect(mocks.reserveOnboarding).not.toHaveBeenCalled();
+    expect(diagnostic).not.toHaveBeenCalled();
   });
 
   it("rejects a file instead of a business name", async () => {
@@ -100,7 +102,8 @@ describe("first organization action", () => {
     mocks[method].mockRejectedValue(new Error("Private SQL, credentials, business name and provider payload"));
     const result = await createFirstOrganization({ status: "idle" }, form());
     expect(result).toEqual({ status: "error", correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/) });
-    expect(diagnostic).toHaveBeenCalledExactlyOnceWith({ event: "organization_onboarding_failed", stage, correlationId: expect.any(String) });
+    expect(diagnostic).toHaveBeenCalledOnce();
+    expect(JSON.parse(diagnostic.mock.calls[0][0])).toMatchObject({ event: "organization_onboarding_failed", stage, correlationId: result.status === "error" ? result.correlationId : "missing" });
     expect(JSON.stringify(result)).not.toContain("Private");
     expect(JSON.stringify(diagnostic.mock.calls)).not.toContain("Private");
   });

@@ -35,8 +35,17 @@ describe("authentication session boundary", () => {
   });
 
   it("preserves denial for expired, signed-out, or revoked sessions", async () => {
-    const denied = new Error("Clerk sign-in redirect");
+    const denied = { digest: "NEXT_REDIRECT;replace;/sign-in;307;" };
     clerk.auth.protect.mockRejectedValue(denied);
     await expect(requireSession()).rejects.toBe(denied);
+  });
+
+  it.each(["getSession", "requireSession"])("sanitizes unexpected %s provider failures", async (method) => {
+    const failure = new Error("private token provider payload");
+    clerk.auth.mockRejectedValue(failure);
+    clerk.auth.protect.mockRejectedValue(failure);
+    const result = method === "getSession" ? getSession() : requireSession();
+    await expect(result).rejects.toThrow(/^Authentication unavailable\.$/);
+    await expect(result).rejects.not.toHaveProperty("cause");
   });
 });

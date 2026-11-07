@@ -37,3 +37,4 @@ describe("inventory adjustment action", () => {
     expect(JSON.stringify(log.mock.calls)).not.toContain("password"); log.mockRestore();
   });
 });
+vi.mock("server-only", () => ({}));

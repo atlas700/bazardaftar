@@ -15,7 +15,7 @@ describe("safe route recovery", () => {
   it("connects Try again to the server-data retry callback", () => {
     const retry = vi.fn();
     const view = ErrorState({ children: "Unavailable", retry });
-    view.props.children[2].props.onClick();
+    view.props.children[3].props.onClick();
     expect(retry).toHaveBeenCalledOnce();
   });
   it.each([ProductsError, CatalogError, StaffError])("forwards retry through workspace error views", (Page) => {

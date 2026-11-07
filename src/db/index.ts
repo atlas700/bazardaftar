@@ -3,11 +3,12 @@ import "server-only";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { env } from "@/env";
+import { logFailure } from "@/diagnostics/server";
 
 function createPool() {
   const pool = new Pool({ connectionString: env.databaseUrl });
-  pool.on("error", () => {
-    console.error("Database pool connection failed. Check database availability.");
+  pool.on("error", (error) => {
+    logFailure("database_pool_failed", "pool", error);
   });
   return pool;
 }

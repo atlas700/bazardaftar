@@ -1,8 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { actionFailure } from "@/diagnostics/server";
 import { revalidatePath } from "next/cache";
-import { redirect, unstable_rethrow } from "next/navigation";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/auth/server";
 import { acceptReceipt, type ReceiptState } from "@/db/receipts";
 
@@ -35,10 +35,7 @@ export async function receivePurchase(_previous: ReceiptState, formData: FormDat
       revalidatePath(`/purchases/${result.purchaseId}/receive`);
     }
   } catch (error) {
-    unstable_rethrow(error);
-    const correlationId = randomUUID();
-    console.error({ event: "receipt_acceptance_failed", stage, correlationId });
-    return { status: "error", correlationId };
+    return actionFailure("receipt_acceptance_failed", stage, error);
   }
   if (result.status === "success") redirect(`/purchases/${result.purchaseId}#receipt-${result.receiptId}`);
   return result;

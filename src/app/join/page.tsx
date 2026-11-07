@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { unstable_rethrow } from "next/navigation";
+import { safeServerError } from "@/diagnostics/server";
 import { T } from "gt-next";
 import { SignOut } from "@/auth/components";
 import { OrganizationActivation } from "@/auth/organization-activation";
@@ -17,8 +17,7 @@ export default async function StaffAccessPage() {
   try {
     memberships = await getStaffAccessOrganizations(userId);
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Staff access unavailable.");
+    throw safeServerError("Staff access unavailable.", error);
   }
   return (
     <main className="mx-auto min-h-dvh max-w-2xl space-y-7 px-4 py-10 sm:px-6">

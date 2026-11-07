@@ -1,7 +1,8 @@
 import "server-only";
+import { safeServerError } from "@/diagnostics/server";
 
 import { and, eq } from "drizzle-orm";
-import { notFound, unstable_rethrow } from "next/navigation";
+import { notFound } from "next/navigation";
 import { hasPermission } from "@/auth/permissions";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
@@ -21,7 +22,6 @@ export async function getWorkspaceSummary() {
     if (!workspace || !hasPermission(workspace.role, "organization.read")) notFound();
     return workspace;
   } catch (error) {
-    unstable_rethrow(error);
-    throw new Error("Workspace unavailable.");
+    throw safeServerError("Workspace unavailable.", error);
   }
 }

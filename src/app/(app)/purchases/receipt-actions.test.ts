@@ -45,3 +45,4 @@ describe("receipt action", () => {
     expect(JSON.stringify(log.mock.calls)).not.toContain("secret"); log.mockRestore();
   });
 });
+vi.mock("server-only", () => ({}));
