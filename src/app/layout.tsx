@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { GTProvider } from "gt-next";
 import { getLocale, getLocaleDirection } from "gt-next/server";
 import { AuthProvider } from "@/auth/components";
+import { themeScript } from "@/lib/theme";
 import "@/env";
 import "./globals.css";
 
@@ -26,7 +27,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f5f7",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -38,7 +43,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       dir={direction}
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
       <GTProvider>
         <body className="min-h-full bg-page font-sans text-ink">
           <AuthProvider

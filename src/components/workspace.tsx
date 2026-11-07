@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return <span className="flex items-center gap-3">
-    <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-ink text-white shadow-sm"><Sprout className="size-6" aria-hidden="true" /></span>
+    <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-ink text-surface shadow-sm"><Sprout className="size-6" aria-hidden="true" /></span>
     <span className="text-start"><span className="block text-base font-semibold tracking-tight">BazarDaftar</span>
       {!compact && <span className="block text-xs font-normal tracking-normal text-ink-muted"><T>Trading workspace</T></span>}
     </span>

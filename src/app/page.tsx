@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Package, Scale, Users } from "lucide-react";
 import { getSession } from "@/auth/server";
 import { SignOut } from "@/auth/components";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function Home() {
   const session = await getSession();
@@ -13,7 +14,7 @@ export default async function Home() {
     <div className="min-h-dvh bg-page">
       <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-10">
         <Brand />
-        <div className="ms-auto flex max-w-full flex-wrap items-center gap-2"><LocalePicker />{session && <SignOut />}</div>
+        <div className="ms-auto flex max-w-full flex-wrap items-center gap-2"><ThemeToggle /><LocalePicker />{session && <SignOut />}</div>
       </header>
       <main className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.2fr_1fr] lg:gap-20 lg:py-28">
         <section>
@@ -31,7 +32,7 @@ export default async function Home() {
           <div className="divide-y divide-border/60 px-7">
             <div className="flex gap-4 py-7"><Package className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your products</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>A clear catalogue of what you trade.</T></p></div></div>
             <div className="flex gap-4 py-7"><Scale className="mt-1 size-5 shrink-0 text-success" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your measures</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>Local weight units. Exact definitions.</T></p></div></div>
-            <div className="flex gap-4 py-7"><Users className="mt-1 size-5 shrink-0 text-[#7950a3]" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your people</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>A shared workspace with the right access.</T></p></div></div>
+            <div className="flex gap-4 py-7"><Users className="mt-1 size-5 shrink-0 text-highlight" aria-hidden="true" /><div><h3 className="text-sm font-semibold"><T>Your people</T></h3><p className="mt-2 text-sm leading-6 text-ink-muted"><T>A shared workspace with the right access.</T></p></div></div>
           </div>
         </section>
       </main>
