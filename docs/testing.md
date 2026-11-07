@@ -110,6 +110,24 @@ to verify the same business and isolation rules through the changed error wrappe
 See the [handoff](handoffs/30-safe-diagnostics.md) for test-first and local rendered
 evidence; mocked providers and synthetic fixtures do not prove a deployed incident.
 
+## Request admission verification
+
+Task 31 adds real-matcher and mocked-Clerk tests for every unsafe method,
+extension-looking URLs, verified-user separation, spoofed headers, anonymous
+fallback, pre-Clerk authentication/proxy short-circuits, alternate sign-in action
+URLs, safe 429/503, retry headers and redacted diagnostics. The existing correlation
+test still checks real GT header forwarding and an unread form body.
+
+`src/db/request-limits.integration.test.ts` runs only on isolated
+`afcs_task07_verify` and is included in CI's disposable PostgreSQL job. It verifies
+exact concurrent allowances, saturation, independent identities/scopes,
+database-clock expiry despite application clock skew, independent admission
+commit, contention timeout, bounded stale cleanup and database constraints.
+Receipt/payment suites retain matching/changed replay, concurrent duplicate,
+authority recheck and atomic rollback cases. See the
+[Task 31 handoff](handoffs/31-abuse-controls.md) for local checks and operational
+limitations. These checks establish no live Clerk/Netlify/Neon acceptance.
+
 ## Business audit verification
 
 Task 27 adds the database-free writer/redaction suite and

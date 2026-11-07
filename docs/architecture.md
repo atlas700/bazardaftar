@@ -15,6 +15,8 @@
   the sign-in page uses `getSession()`.
 - The proxy composes Clerk session handling with General Translation locale
   handling. Route protection stays in each resource, following Clerk 7 guidance.
+  Task 31 adds shared PostgreSQL admission before unsafe action dispatch and
+  authentication entrances, including before Clerk's Frontend API short-circuit.
 - Vitest covers configuration, authentication, tenancy, permissions, and the
   implemented catalogue, purchasing, receiving, and inventory workflows. Opt-in
   PostgreSQL suites verify their persistence, isolation, rollback, retry, and
@@ -53,6 +55,7 @@
 | Business audit trail | `src/db/audit.ts` | Bounded operational snapshots, atomic local events and durable staff provider intents |
 | Pilot dashboard | `src/db/dashboard.ts` | Permission-scoped purchase/receipt counts, recorded stock, separate-currency debt and bounded recent source transactions |
 | Failure diagnostics | `src/diagnostics/server.ts`, `src/instrumentation.ts` | Redacted JSON failures, request correlation and safe action/render support references |
+| Request abuse controls | `src/auth/middleware.ts`, `src/db/request-limits.ts` | Verified-user mutation limits, shared anonymous/authentication budgets and atomic PostgreSQL counters |
 
 The operational dashboard reads source records in one read-only snapshot.
 Audit events reference source records;

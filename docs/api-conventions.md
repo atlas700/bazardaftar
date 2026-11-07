@@ -40,7 +40,38 @@
 
 The first mutation must include the error/correlation behavior above. Task 27's
 business audit trail records successful local changes in the mutation transaction;
-Task 30 supplies shared failure diagnostics below. Rate limiting remains Task 31.
+Task 30 supplies shared failure diagnostics below. Task 31 supplies shared HTTP
+admission controls before action dispatch; these never replace resource authorization.
+
+## Request admission contract
+
+The Node.js proxy matches every path, including extension-looking paths, and
+checks all methods except GET/HEAD/OPTIONS. Signed-in requests share a 60-request
+budget per verified Clerk user across routes, actions, organizations and sessions.
+Unsigned mutations share a separate 30-request budget. Sign-in GETs and unsafe
+sign-in/Frontend API proxy requests share a 60-request authentication budget,
+checked before Clerk can return its own proxy response. An unsafe sign-in request
+that reaches the application callback also checks its mutation budget.
+
+Each budget uses a 60-second fixed window starting with its first request, based
+on PostgreSQL time. Attempts, including invalid requests and financial replays,
+consume admission independently of the business transaction. Denials do not extend
+the window. Never exempt a caller-provided request UUID or action header from limits.
+
+Blocked requests stop before action dispatch with HTTP 429, `Retry-After` in whole
+seconds, `Cache-Control: no-store`, and JSON `{ error, retryAfterSeconds,
+correlationId }`. Store failure stops the request with safe HTTP 503 and a five-second
+retry hint. Neither response means a business mutation ran. The existing Next.js
+action client can show its generic route error recovery for these HTTP failures;
+this is not a new action-state shape or inline countdown. After waiting, retry an
+uncertain financial submission with its original request UUID and unchanged
+payload; check recorded history before creating a new transaction.
+
+Anonymous clients share budgets: caller cookies, IP/forwarding headers, user,
+organization, action and request IDs cannot select another anonymous identity.
+Clerk secret-key HMACs protect stored identity keys; no raw identity or client IP
+is stored. See [operational limits](security.md#request-abuse-controls) and the
+[Task 31 handoff](handoffs/31-abuse-controls.md).
 
 ## Failure diagnostics contract
 
