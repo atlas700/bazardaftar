@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 vi.mock("@/env", () => ({ env: { appOrigin: "https://example.test", clerkSecretKey: "test-only-private-key" } }));
 vi.mock("@/db/request-limits", () => ({ consumeRequestLimit: async () => ({ allowed: true, retryAfterSeconds: 60 }) }));
 vi.mock("@clerk/nextjs/server", () => ({ clerkMiddleware: (handler: (auth: unknown, request: NextRequest) => unknown) => (request: NextRequest) => handler(async () => ({ userId: "user_verified" }), request) }));

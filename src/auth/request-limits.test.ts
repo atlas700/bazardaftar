@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ consumeRequestLimit: vi.fn(), auth: vi.fn(), clerk: vi.fn() }));
@@ -14,6 +15,7 @@ vi.mock("@clerk/nextjs/server", () => ({ clerkMiddleware: (handler: (auth: unkno
 } }));
 
 import { authMiddleware } from "./middleware";
+import { config } from "@/proxy";
 
 async function request(path: string, method = "POST", headers: HeadersInit = {}) {
   return Reflect.apply(authMiddleware, undefined, [new NextRequest(`https://example.test${path}`, { method, headers })]);
@@ -25,6 +27,11 @@ beforeEach(() => {
 });
 
 describe("request abuse boundary", () => {
+  it("matches all application routes, including extension and framework paths", () => {
+    for (const path of ["/payments", "/purchases/file.csv", "/products/report.html", "/_next/anything", "/__clerk/v1/client/sign_ins", "/sign-in", "/onboarding"]) {
+      expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: `https://example.test${path}` })).toBe(true);
+    }
+  });
   it.each(["POST", "PUT", "PATCH", "DELETE"])("limits %s by the verified user across URLs and spoofed headers", async (method) => {
     const response = await request("/payments", method, { "x-user-id": "spoofed", "x-forwarded-for": "192.0.2.1", "next-action": "anything" });
     expect(response.status).toBe(200);

@@ -9,7 +9,7 @@ type FailureEvent =
   | "organization_onboarding_failed" | "staff_management_failed" | "catalogue_management_failed"
   | "product_management_failed" | "supplier_management_failed" | "warehouse_management_failed"
   | "purchase_draft_failed" | "purchase_mutation_failed" | "receipt_acceptance_failed"
-  | "inventory_adjustment_failed" | "supplier_settlement_failed" | "database_pool_failed" | "server_request_failed";
+  | "inventory_adjustment_failed" | "supplier_settlement_failed" | "database_pool_failed" | "server_request_failed" | "request_limit_failed";
 const failureKinds = ["database", "connectivity", "timeout", "provider", "unknown"] as const;
 type FailureKind = typeof failureKinds[number];
 

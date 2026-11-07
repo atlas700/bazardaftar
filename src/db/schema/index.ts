@@ -3,6 +3,19 @@ import { boolean, check, date, foreignKey, index, integer, jsonb, numeric, pgTab
 import { businessRoles } from "@/auth/permissions";
 import { supplierTypes } from "@/domain/supplier";
 
+export const requestRateLimits = pgTable("request_rate_limits", {
+  scope: text("scope", { enum: ["authentication", "mutation", "anonymous"] }).notNull(),
+  key: text("key").notNull(),
+  hits: integer("hits").notNull(),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.scope, table.key] }),
+  index("request_rate_limits_expiry").on(table.resetAt),
+  check("request_rate_limits_scope", sql`${table.scope} in ('authentication', 'mutation', 'anonymous')`),
+  check("request_rate_limits_key", sql`${table.key} ~ '^[0-9a-f]{64}$'`),
+  check("request_rate_limits_hits", sql`${table.hits} between 1 and 61`),
+]);
+
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
   clerkOrganizationId: text("clerk_organization_id").notNull().unique(),
