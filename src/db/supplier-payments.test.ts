@@ -40,7 +40,7 @@ describe("supplier payment input boundary", () => {
     }
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
-  it.each([{ supplierId: "bad" }, { currency: "USD" }, { after: "bad" }, { supplierId: [id] }])("denies malformed payment-history scope: %j", async (query) => {
+  it.each([{ supplierId: "bad" }, { currency: "USD" }, { after: "bad" }, { supplierId: [id] }, { paymentId: "bad" }, { paymentId: [id] }, { paymentId: id, after: id }])("denies malformed payment-history scope: %j", async (query) => {
     await expect(getPaymentsWorkspace(query)).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     expect(mocks.transaction).not.toHaveBeenCalled();
   });

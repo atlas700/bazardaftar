@@ -14,7 +14,7 @@ type Props = { searchParams?: Promise<Record<string, string | string[] | undefin
 
 export default async function PaymentsPage({ searchParams }: Props = {}) {
   const params = await searchParams ?? {};
-  const data = await getPaymentsWorkspace({ supplierId: params.supplierId, currency: params.currency, after: params.after });
+  const data = await getPaymentsWorkspace({ supplierId: params.supplierId, currency: params.currency, after: params.after, paymentId: params.paymentId });
   const query = new URLSearchParams({ currency: data.currency });
   if (data.supplier) query.set("supplierId", data.supplier.id);
   const scope = query.toString();
@@ -26,6 +26,7 @@ export default async function PaymentsPage({ searchParams }: Props = {}) {
       {data.suppliers.length ? <PaymentFilter key={`${data.organizationId}:${data.supplier?.id}:${data.currency}`} suppliers={data.suppliers} supplierId={data.supplier?.id} currency={data.currency} />
         : <p className="text-sm leading-6 text-ink-muted"><T>Add a supplier and accept a purchase receipt before recording a payment.</T> <Link href="/suppliers" className="inline-flex min-h-11 items-center text-primary underline"><T>Open suppliers</T></Link></p>}
       {data.supplier ? <div className="space-y-2 border-t border-border/70 pt-5">
+        <Link href={`/suppliers/${data.supplier.id}/statement?currency=${data.currency}`} className="inline-flex min-h-11 items-center text-sm text-primary underline"><T>Balances and statement</T></Link>
         <p className="text-sm text-ink-muted"><T>Outstanding receipt debt</T> — <bdi dir="auto">{data.supplier.name}</bdi></p>
         <p className="text-2xl font-semibold tabular-nums [overflow-wrap:anywhere]"><bdi dir="ltr">{data.outstanding} {data.currency}</bdi></p>
         {!data.supplier.isActive && <p className="text-sm leading-6 text-ink-muted"><T>This supplier is inactive. Existing receipt debt can still be settled.</T></p>}
@@ -57,8 +58,8 @@ export default async function PaymentsPage({ searchParams }: Props = {}) {
           </details>
         </li>)}
       </ul>}
-      {(data.after || data.nextCursor) && <nav aria-labelledby="payment-history-heading" className="flex flex-wrap gap-3">
-        {data.after && <Button asChild variant="outline"><Link href={`/payments?${scope}`}><T>Latest payments</T></Link></Button>}
+      {(data.after || data.paymentId || data.nextCursor) && <nav aria-labelledby="payment-history-heading" className="flex flex-wrap gap-3">
+        {(data.after || data.paymentId) && <Button asChild variant="outline"><Link href={`/payments?${scope}`}><T>Latest payments</T></Link></Button>}
         {data.nextCursor && <Button asChild variant="outline"><Link href={`/payments?${scope}&after=${data.nextCursor}`}><T>Older payments</T></Link></Button>}
       </nav>}
     </Panel>

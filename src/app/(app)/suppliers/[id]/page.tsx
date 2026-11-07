@@ -3,6 +3,7 @@ import Link from "next/link";
 import { T } from "gt-next";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader, Panel, StatusBadge } from "@/components/workspace";
+import { Button } from "@/components/ui/button";
 import { getSupplier, getSuppliersWorkspace } from "@/db/suppliers";
 import { SupplierForm } from "../_components/supplier-form";
 import { SupplierType } from "../_components/supplier-type";
@@ -11,10 +12,11 @@ export const metadata: Metadata = { title: "Supplier details" };
 
 export default async function SupplierPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [supplier, { canManage }] = await Promise.all([getSupplier(id), getSuppliersWorkspace()]);
+  const [supplier, { canManage, canReadBalances }] = await Promise.all([getSupplier(id), getSuppliersWorkspace()]);
   return <div className="max-w-4xl space-y-7">
     <Link href="/suppliers" className="inline-flex min-h-11 items-center gap-2 text-sm text-ink-muted hover:text-primary"><ArrowLeft className="size-4 rtl:-scale-x-100" aria-hidden="true" /><T>Suppliers</T></Link>
     <PageHeader title={<bdi dir="auto" className="break-words">{supplier.name}</bdi>} action={<StatusBadge active={supplier.isActive} />} />
+    {canReadBalances && <Button asChild variant="outline"><Link href={`/suppliers/${supplier.id}/statement`}><T>Balances and statement</T></Link></Button>}
     <Panel className="shadow-none" aria-labelledby="supplier-details">
       <h2 id="supplier-details" className="mb-6 font-semibold"><T>Supplier details</T></h2>
       <dl className="grid gap-6 break-words sm:grid-cols-2">

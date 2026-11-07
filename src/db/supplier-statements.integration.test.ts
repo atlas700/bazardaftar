@@ -127,6 +127,15 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("supplier accounts against 
     await expect(a.as(() => getSupplierAccount({ supplierId: a.supplier.id, after: `receipt:${foreign.id}` }))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
     const data = await a.as(() => getSupplierAccount({ supplierId: a.supplier.id, organizationId: b.organizationId }));
     expect(data.entries).toHaveLength(0); expect(data.balances[0].outstanding).toBe("0.00");
+    const [otherSupplier] = await db.insert(suppliers).values({ organizationId: b.organizationId, name: "Rice supplier" }).returning();
+    await expect(b.as(() => getSupplierAccount({ supplierId: otherSupplier.id, after: `receipt:${foreign.id}` }))).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+  });
+  it("reconciles converted PKR payments separately from AFN debt", async () => {
+    const f = await fixture(); await f.payable("100", "PKR"); await f.payable("20", "AFN");
+    await f.as(() => recordSupplierPayment({ ...f.command("1"), debtCurrency: "PKR", pkrCash: "1", pkrPerAfn: "2.345" }));
+    const data = await f.as(() => getSupplierAccount({ supplierId: f.supplier.id, currency: "PKR" }));
+    expect(data.balances[0].outstanding).toBe("20.00"); expect(data.balances[1].outstanding).toBe("96.65");
+    expect(data.entries[0]).toMatchObject({ kind: "payment", amount: "3.35", runningBalance: "96.65", afnCash: "1", pkrCash: "1", pkrPerAfn: "2.345000" });
   });
   it.each(businessRoles)("enforces account read permission for %s", async (role) => {
     const f = await fixture(); await f.role(role);

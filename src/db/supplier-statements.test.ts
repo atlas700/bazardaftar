@@ -54,4 +54,10 @@ describe("supplier account read boundary", () => {
     mocks.query.mockRejectedValue(new Error("private SQL and credentials"));
     await expect(getSupplierAccount({ supplierId: id })).rejects.toThrow(/^Supplier account unavailable\.$/);
   });
+  it("denies a removed local grant before reading supplier data", async () => {
+    const implementation = mocks.query.getMockImplementation()!;
+    mocks.query.mockImplementation((query: { text: string }) => query.text.includes('from "organization_role_assignments"') ? Promise.resolve({ rows: [["warehouse"]] }) : implementation(query));
+    await expect(getSupplierAccount({ supplierId: id })).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
+    expect(mocks.query.mock.calls.some(([query]) => query.text.includes('from "suppliers"'))).toBe(false);
+  });
 });
