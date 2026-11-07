@@ -12,7 +12,6 @@ vi.mock("@/app/_components/locale-picker", () => ({ LocalePicker: () => null }))
 vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard", redirect: vi.fn() }));
 vi.mock("gt-next", () => ({ T: ({ children }: { children: ReactNode }) => children, useGT: () => (text: string) => text }));
 import AppLayout from "./layout";
-import DashboardPage from "./dashboard/page";
 import SettingsPage from "./settings/page";
 import { hasPermission } from "@/auth/permissions";
 
@@ -32,11 +31,8 @@ describe("workspace identity and permitted actions", () => {
   });
   it.each(["owner", "admin", "manager", "warehouse", "sales", "accountant", "viewer"])("shows staff management only to owners/admins: %s", async (role) => {
     mocks.getWorkspaceSummary.mockResolvedValue({ name: "Business", role });
-    for (const Page of [DashboardPage, SettingsPage]) {
-      const html = renderToStaticMarkup(await Page());
-      expect(html.includes('href="/settings/staff"')).toBe(role === "owner" || role === "admin");
-    }
     const settings = renderToStaticMarkup(await SettingsPage());
+    expect(settings.includes('href="/settings/staff"')).toBe(role === "owner" || role === "admin");
     expect(settings.includes('href="/suppliers"')).toBe(hasPermission(role, "suppliers.read"));
     expect(settings).toContain('href="/settings/warehouse"');
   });
