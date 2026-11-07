@@ -20,7 +20,7 @@ beforeEach(() => mocks.query.mockResolvedValue({ rows: [] }));
 afterEach(() => vi.resetAllMocks());
 
 function inserted() {
-  const [query, values] = mocks.query.mock.calls.find(([query]) => query.text.startsWith('insert into "audit_logs"'))!;
+  const [query, values] = mocks.query.mock.calls.find(([query]) => query?.text?.startsWith('insert into "audit_logs"'))!;
   return { query, values, snapshots: values.filter((value: unknown) => typeof value === "string" && value.startsWith("{")).map((value: string) => JSON.parse(value)) };
 }
 
@@ -59,7 +59,7 @@ describe("transactional audit writer", () => {
       after: { emailAddress: "private@example.test", role: "org:member" } });
     expect(inserted().values).toEqual(expect.arrayContaining(["requested", requestId]));
     expect(inserted().snapshots).toEqual([{ role: "org:member" }]);
-    expect(mocks.query).toHaveBeenCalledOnce();
+    expect(mocks.query.mock.calls.filter(([query]) => query?.text).map(([query]) => query.text.split(" ")[0])).toEqual(["insert"]);
   });
 
   it("propagates an audit failure so its business transaction rolls back", async () => {

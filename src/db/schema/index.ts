@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, date, foreignKey, index, integer, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { businessRoles } from "@/auth/permissions";
 import { supplierTypes } from "@/domain/supplier";
 
@@ -8,6 +8,39 @@ export const organizations = pgTable("organizations", {
   clerkOrganizationId: text("clerk_organization_id").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const auditEntityTypes = ["organization", "staff", "catalog_unit", "product_category", "product", "supplier", "warehouse",
+  "purchase", "receipt", "supplier_payable", "inventory_adjustment", "supplier_payment", "payment_reduction"] as const;
+export const auditActions = ["create", "update", "deactivate", "activate", "order", "cancel", "accept", "approve_variance",
+  "adjust", "record", "reduce", "role", "invite", "add", "revoke"] as const;
+export type AuditSnapshot = Record<string, string | number | boolean | null | string[]>;
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  actorUserId: text("actor_user_id").notNull(),
+  actorMembershipId: text("actor_membership_id").notNull(),
+  entityType: text("entity_type", { enum: auditEntityTypes }).notNull(),
+  entityId: text("entity_id").notNull(),
+  action: text("action", { enum: auditActions }).notNull(),
+  outcome: text("outcome", { enum: ["requested", "completed"] }).notNull(),
+  requestId: uuid("request_id").notNull(),
+  before: jsonb("before").$type<AuditSnapshot>(),
+  after: jsonb("after").$type<AuditSnapshot>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("audit_logs_request").on(table.organizationId, table.requestId),
+  check("audit_logs_identity", sql`length(btrim(${table.actorUserId})) between 1 and 200
+    and length(btrim(${table.actorMembershipId})) between 1 and 200 and length(btrim(${table.entityId})) between 1 and 200`),
+  check("audit_logs_entity", sql`${table.entityType} in ('organization', 'staff', 'catalog_unit', 'product_category', 'product', 'supplier', 'warehouse',
+    'purchase', 'receipt', 'supplier_payable', 'inventory_adjustment', 'supplier_payment', 'payment_reduction')`),
+  check("audit_logs_action", sql`${table.action} in ('create', 'update', 'deactivate', 'activate', 'order', 'cancel', 'accept', 'approve_variance',
+    'adjust', 'record', 'reduce', 'role', 'invite', 'add', 'revoke')`),
+  check("audit_logs_outcome", sql`${table.outcome} = 'completed' or (${table.outcome} = 'requested' and ${table.entityType} = 'staff'
+    and ${table.action} in ('invite', 'add', 'revoke', 'deactivate'))`),
+  check("audit_logs_snapshots", sql`(${table.before} is null or (jsonb_typeof(${table.before}) = 'object' and octet_length(${table.before}::text) <= 8192))
+    and (${table.after} is null or (jsonb_typeof(${table.after}) = 'object' and octet_length(${table.after}::text) <= 8192))`),
+]);
 
 export const catalogUnits = pgTable("catalog_units", {
   id: uuid("id").defaultRandom().primaryKey(),
