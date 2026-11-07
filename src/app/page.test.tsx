@@ -6,7 +6,7 @@ const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/auth/server", () => ({ getSession }));
 vi.mock("@/auth/components", () => ({ SignOut: () => <button>Sign out</button> }));
 vi.mock("gt-next", () => ({ T: ({ children }: { children: ReactNode }) => children }));
-vi.mock("./_components/locale-picker", () => ({ LocalePicker: () => <button type="button" role="combobox" aria-label="Language">English</button> }));
+vi.mock("./_components/locale-picker", () => ({ LocalePicker: () => <button type="button" aria-label="Language">English</button> }));
 import Home from "./page";
 
 afterEach(() => vi.resetAllMocks());
@@ -30,7 +30,7 @@ describe("homepage session actions", () => {
     expect(html).not.toContain('href="/sign-in"');
     expect(html).toContain('href="/dashboard"');
     const header = html.split("</header>")[0];
-    expect(header).toContain('role="combobox" aria-label="Language"');
+    expect(header).toContain('aria-label="Language"');
     expect(header).toContain("<button>Sign out</button>");
     expect(html).not.toContain("user_existing");
   });
