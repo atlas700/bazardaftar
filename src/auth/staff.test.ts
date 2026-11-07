@@ -44,7 +44,8 @@ describe("Clerk staff adapter", () => {
     await expect(getStaffInvitations("org_a")).rejects.toThrow();
   });
   it("sends only a 30-day Clerk member invitation without business grants", async () => {
-    await inviteStaff("org_a", "staff@example.invalid");
+    organizations.createOrganizationInvitation.mockResolvedValue({ id: "inv_created" });
+    expect(await inviteStaff("org_a", "staff@example.invalid")).toBe("inv_created");
     expect(organizations.createOrganizationInvitation).toHaveBeenCalledExactlyOnceWith({
       organizationId: "org_a", emailAddress: "staff@example.invalid", role: "org:member", expiresInDays: 30,
     });

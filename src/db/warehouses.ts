@@ -8,6 +8,7 @@ import { getActiveOrganizationMembership } from "@/auth/organizations";
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { organizationRoleAssignments, organizations, warehouses } from "./schema";
 
 export type WarehouseState =
@@ -79,16 +80,21 @@ export async function manageWarehouse(input: unknown): Promise<WarehouseState> {
         current.membershipId !== tenant.membershipId || current.userId !== tenant.userId ||
         !actor || !hasPermission(actor.role, "organization.manage")) notFound();
       if (command.operation === "create-warehouse") {
-        await tx.insert(warehouses).values({ organizationId: tenant.organizationId, name: command.name, location: command.location });
+        const [warehouse] = await tx.insert(warehouses).values({ organizationId: tenant.organizationId, name: command.name, location: command.location }).returning();
+        await appendAudit(tx, tenant, { entityType: "warehouse", entityId: warehouse.id, action: "create", after: warehouse });
       } else {
         const changingStatus = command.operation !== "update-warehouse";
         const changes = command.operation === "update-warehouse" ? { name: command.name, location: command.location }
           : { isActive: command.operation === "activate-warehouse" };
-        const saved = await tx.update(warehouses).set(changes).where(and(eq(warehouses.id, command.id),
+        const scope = and(eq(warehouses.id, command.id),
           eq(warehouses.organizationId, tenant.organizationId),
           changingStatus ? eq(warehouses.isActive, command.operation === "deactivate-warehouse") : undefined,
-        )).returning({ id: warehouses.id });
+        );
+        const [before] = await tx.select().from(warehouses).where(scope);
+        const saved = await tx.update(warehouses).set(changes).where(scope).returning();
         if (saved.length === 0) return { status: "conflict" };
+        await appendAudit(tx, tenant, { entityType: "warehouse", entityId: saved[0].id, before, after: saved[0],
+          action: command.operation === "update-warehouse" ? "update" : command.operation === "activate-warehouse" ? "activate" : "deactivate" });
       }
       return { status: "success" };
     });

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { sql } from "drizzle-orm";
 import type { db } from "./index";
 import { auditLogs, type AuditSnapshot } from "./schema";
 import type { TenantContext } from "./tenant";
@@ -24,7 +25,7 @@ const snapshotFields = {
   receipt: ["purchaseOrderId", "currency", "total", "completesPurchase", "varianceApproved", "itemCount"],
   supplier_payable: ["receiptId", "supplierId", "currency", "amount"],
   inventory_adjustment: ["productId", "warehouseId", "quantityKg", "reasonCode"],
-  supplier_payment: ["supplierId", "currency", "afnCash", "pkrCash", "pkrPerAfn", "amount", "paymentDate", "allocationCount"],
+  supplier_payment: ["supplierId", "currency", "afnCash", "pkrCash", "pkrPerAfn", "amount", "paidOn", "allocationCount"],
   payment_reduction: ["paymentId", "payableId", "supplierId", "currency", "amount"],
 } satisfies Record<AuditRow["entityType"], string[]>;
 const changeFields = ["name", "businessType", "timezone", "baseCurrency", "locale", "sku", "unitId", "categoryId", "kind", "kilogramsPerUnit",
@@ -47,7 +48,11 @@ function snapshot(entityType: AuditRow["entityType"], source: AuditEvent["before
 
 // Call only after authority rechecking; completed local events use the mutation's transaction.
 export async function appendAudit(connection: Pick<typeof db, "insert">, actor: Pick<TenantContext, "organizationId" | "userId" | "membershipId">, event: AuditEvent): Promise<void> {
+  const { before, after: sourceAfter } = event;
+  const changedFields = before && sourceAfter ? changeFields.filter((key) => key in sourceAfter && before[key] !== sourceAfter[key]) : [];
+  const after = changedFields.length ? { changedFields, ...sourceAfter } : sourceAfter;
   await connection.insert(auditLogs).values({ organizationId: actor.organizationId, actorUserId: actor.userId, actorMembershipId: actor.membershipId,
     entityType: event.entityType, entityId: event.entityId, action: event.action, outcome: event.outcome ?? "completed", requestId: event.requestId ?? randomUUID(),
-    before: snapshot(event.entityType, event.before), after: snapshot(event.entityType, event.after) });
+    // Transaction-start time would place a Clerk completion before its independently committed request.
+    before: snapshot(event.entityType, before), after: snapshot(event.entityType, after), createdAt: sql`clock_timestamp()` });
 }

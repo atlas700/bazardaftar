@@ -13,6 +13,7 @@ vi.mock("@/env", () => ({ env: {
 } }));
 import { getProduct, getProducts, manageCatalog } from "./catalog";
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { catalogUnits, organizationRoleAssignments, organizations, productCategories, products } from "./schema";
 
 type Actor = { userId: string; membershipId: string; clerkOrganizationId: string };
@@ -42,6 +43,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("products against isolated 
     mocks.getActiveOrganizationMembership.mockImplementation(async () => context.getStore() ?? null);
   });
   afterAll(async () => {
+    await cleanupAuditFixtures(organizationIds);
     if (organizationIds.length) {
       await db.delete(products).where(inArray(products.organizationId, organizationIds));
       await db.delete(catalogUnits).where(inArray(catalogUnits.organizationId, organizationIds));

@@ -77,6 +77,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("append-only audit against 
     mocks.getActiveOrganizationMembership.mockImplementation(async () => context.getStore() ?? null);
     mocks.getStaffMemberships.mockImplementation(async () => [context.getStore(), { userId: "user_target", membershipId: "member_target" }]);
     mocks.getStaffInvitations.mockResolvedValue([]);
+    mocks.inviteStaff.mockResolvedValue("inv_created");
   });
   afterAll(async () => {
     await cleanupAuditFixtures(organizationIds);
@@ -248,6 +249,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("append-only audit against 
     const invitation = events.filter((event) => event.action === "invite");
     expect(invitation.map((event) => event.outcome).sort()).toEqual(["completed", "requested"]);
     expect(new Set(invitation.map((event) => event.requestId)).size).toBe(1);
+    expect(invitation.find((event) => event.outcome === "completed")!.createdAt.getTime()).toBeGreaterThanOrEqual(invitation.find((event) => event.outcome === "requested")!.createdAt.getTime());
     expect(JSON.stringify(events)).not.toContain("private@example");
   });
 
@@ -257,11 +259,76 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("append-only audit against 
     expect(await f.events()).toMatchObject([{ entityType: "staff", action: "invite", outcome: "requested" }]);
   });
 
+  it("does not create provider intents for rejected targets, last-owner denial or no-op retries", async () => {
+    const f = await fixture();
+    expect(await f.as(() => manageStaff({ operation: "deactivate", membershipId: f.actor.membershipId }))).toEqual({ status: "last-owner" });
+    expect(await f.as(() => manageStaff({ operation: "revoke", invitationId: "inv_missing" }))).toEqual({ status: "conflict" });
+    expect(await f.as(() => manageStaff({ operation: "add", userId: "user_target" }))).toEqual({ status: "success" });
+    mocks.getStaffInvitations.mockResolvedValue([{ id: "inv_existing", emailAddress: "PRIVATE@example.test", expiresAt: "2099-01-01T00:00:00Z" }]);
+    expect(await f.as(() => manageStaff({ operation: "invite", emailAddress: "private@example.test" }))).toEqual({ status: "success" });
+    expect(await f.events()).toEqual([]);
+    expect(mocks.inviteStaff).not.toHaveBeenCalled();
+    expect(mocks.addStaff).not.toHaveBeenCalled();
+    expect(mocks.removeStaff).not.toHaveBeenCalled();
+  });
+
   it("retains a provider request if remote success is followed by a failed audit transaction", async () => {
     const f = await fixture();
     await expect(failAudit(() => f.as(() => manageStaff({ operation: "invite", emailAddress: "private@example.test" })))).rejects.toThrow("Injected audit failure");
     expect(mocks.inviteStaff).toHaveBeenCalledOnce();
     expect(await f.events()).toMatchObject([{ action: "invite", outcome: "requested" }]);
+  });
+
+  it.each(["add", "revoke", "deactivate"] as const)("records a correlated %s request and completion", async (operation) => {
+    const f = await fixture();
+    mocks.getStaffInvitations.mockResolvedValue([{ id: "inv_target", emailAddress: "private@example.test", expiresAt: "2099-01-01T00:00:00Z" }]);
+    const command = operation === "add" ? { operation, userId: "user_new" }
+      : operation === "revoke" ? { operation, invitationId: "inv_target" } : { operation, membershipId: "member_target" };
+    expect(await f.as(() => manageStaff(command))).toEqual({ status: "success" });
+    const events = await f.events();
+    expect(events).toHaveLength(2);
+    expect(events.map((event) => event.outcome).sort()).toEqual(["completed", "requested"]);
+    expect(new Set(events.map((event) => event.requestId)).size).toBe(1);
+    expect(events.every((event) => event.action === operation && event.actorUserId === f.actor.userId)).toBe(true);
+    expect(JSON.stringify(events)).not.toContain("private@example.test");
+  });
+
+  it("does not call Clerk when the durable request write fails", async () => {
+    const f = await fixture(); const original = db.insert.bind(db);
+    const spy = vi.spyOn(db, "insert").mockImplementation((table) => { if (table === auditLogs) throw new Error("Intent unavailable"); return original(table); });
+    try { await expect(f.as(() => manageStaff({ operation: "add", userId: "user_new" }))).rejects.toThrow("Intent unavailable"); }
+    finally { spy.mockRestore(); }
+    expect(mocks.addStaff).not.toHaveBeenCalled();
+    expect(await f.events()).toEqual([]);
+  });
+
+  it("uses verified authority for audit identity despite spoofed input", async () => {
+    const f = await fixture(); const other = await fixture();
+    expect(await f.as(() => manageSupplier({ operation: "create-supplier", name: "Private", organizationId: other.organizationId,
+      actorUserId: other.actor.userId, actorMembershipId: other.actor.membershipId, role: "owner" }))).toEqual({ status: "success" });
+    expect(await f.events()).toMatchObject([{ organizationId: f.organizationId, actorUserId: f.actor.userId, actorMembershipId: f.actor.membershipId, entityType: "supplier" }]);
+    expect(await other.events()).toEqual([]);
+  });
+
+  it("does not invent an owner grant when bootstrap preserves a pre-existing local role", async () => {
+    const f = await fixture(); onboardingUsers.push(f.actor.userId);
+    await db.update(organizationRoleAssignments).set({ role: "viewer" }).where(eq(organizationRoleAssignments.organizationId, f.organizationId));
+    const request = await reserveOnboarding(f.actor.userId, { name: "Private business", businessType: "Grain", timezone: "Asia/Kabul", baseCurrency: "AFN", locale: "ps-AF" });
+    const pinned = await pinOnboardingOrganization(request, f.actor.clerkOrganizationId);
+    expect(await completeOnboarding(pinned, f.actor)).toBe(true);
+    expect((await f.events()).filter((event) => event.entityType === "staff")).toEqual([]);
+    const [grant] = await db.select().from(organizationRoleAssignments).where(eq(organizationRoleAssignments.organizationId, f.organizationId));
+    expect(grant.role).toBe("viewer");
+  });
+
+  it("rolls back local onboarding and its bootstrap marker if an audit insert fails", async () => {
+    const token = randomUUID(); const userId = `task27_user_${token}`; onboardingUsers.push(userId);
+    const request = await reserveOnboarding(userId, { name: "Business", businessType: "Grain", timezone: "Asia/Kabul", baseCurrency: "AFN", locale: "ps-AF" });
+    const pinned = await pinOnboardingOrganization(request, `task27_org_${token}`);
+    await expect(failAudit(() => completeOnboarding(pinned, { userId, membershipId: `member_${token}`, clerkOrganizationId: pinned.clerkOrganizationId! }))).rejects.toThrow("Injected audit failure");
+    expect(await db.select().from(organizations).where(eq(organizations.clerkOrganizationId, pinned.clerkOrganizationId!))).toEqual([]);
+    const [saved] = await db.select().from(organizationOnboarding).where(eq(organizationOnboarding.userId, userId));
+    expect(saved.ownerMembershipId).toBeNull();
   });
 
   it("audits local onboarding/bootstrap once across matching retries", async () => {

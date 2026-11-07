@@ -16,6 +16,7 @@ vi.mock("@/env", () => ({ env: {
 
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { organizationRoleAssignments, organizations } from "./schema";
 import { getStaffWorkspace, manageStaff } from "./staff";
 
@@ -59,6 +60,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("staff management against i
     });
   });
   afterAll(async () => {
+    await cleanupAuditFixtures(organizationIds);
     if (organizationIds.length) {
       await db.delete(organizationRoleAssignments).where(inArray(organizationRoleAssignments.organizationId, organizationIds));
       await db.delete(organizations).where(inArray(organizations.id, organizationIds));

@@ -9,6 +9,7 @@ import { supplierTypes } from "@/domain/supplier";
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { organizationRoleAssignments, organizations, suppliers } from "./schema";
 
 export type SupplierState =
@@ -88,15 +89,19 @@ export async function manageSupplier(input: unknown): Promise<SupplierState> {
         !actor || !hasPermission(actor.role, "suppliers.manage")) notFound();
       if (command.operation === "create-supplier") {
         const { name, phone, location, type, notes, paymentTerms } = command;
-        await tx.insert(suppliers).values({ organizationId: tenant.organizationId, name, phone, location, type, notes, paymentTerms });
+        const [supplier] = await tx.insert(suppliers).values({ organizationId: tenant.organizationId, name, phone, location, type, notes, paymentTerms }).returning();
+        await appendAudit(tx, tenant, { entityType: "supplier", entityId: supplier.id, action: "create", after: supplier });
       } else {
         const changes = command.operation === "deactivate-supplier" ? { isActive: false } : {
           name: command.name, phone: command.phone, location: command.location, type: command.type,
           notes: command.notes, paymentTerms: command.paymentTerms,
         };
-        const saved = await tx.update(suppliers).set(changes).where(and(eq(suppliers.id, command.id),
-          eq(suppliers.organizationId, tenant.organizationId), eq(suppliers.isActive, true))).returning({ id: suppliers.id });
+        const scope = and(eq(suppliers.id, command.id), eq(suppliers.organizationId, tenant.organizationId), eq(suppliers.isActive, true));
+        const [before] = await tx.select().from(suppliers).where(scope);
+        const saved = await tx.update(suppliers).set(changes).where(scope).returning();
         if (saved.length === 0) return { status: "conflict" };
+        await appendAudit(tx, tenant, { entityType: "supplier", entityId: saved[0].id,
+          action: command.operation === "deactivate-supplier" ? "deactivate" : "update", before, after: saved[0] });
       }
       return { status: "success" };
     });

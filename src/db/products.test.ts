@@ -19,6 +19,7 @@ const categoryId = "83409e5c-e4d7-4351-a6b3-46ee18c4f532";
 const tenant = { userId: "user_a", membershipId: "member_a", organizationId };
 const command = { operation: "create-product", name: "Wheat", sku: null, categoryId: null, unitId };
 function rows(query: { text: string }) {
+  if (query.text.startsWith('insert into "products"')) return [[id]];
   if (query.text.includes('from "organizations"')) return [[organizationId, "org_a"]];
   if (query.text.includes('from "organization_role_assignments"')) return [["owner"]];
   if (query.text.includes('from "catalog_units"')) return [[unitId]];

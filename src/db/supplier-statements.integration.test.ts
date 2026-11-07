@@ -11,6 +11,7 @@ vi.mock("@/auth/organizations", () => mocks);
 vi.mock("@/env", () => ({ env: { databaseUrl: process.env.AFCS_TEST_DATABASE_URL ?? "postgresql://unused:unused@127.0.0.1:1/unused", nodeEnvironment: "test" } }));
 import { getSupplierAccount } from "./supplier-statements";
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { createPurchaseDraft, getPurchase, mutatePurchase } from "./purchases";
 import { acceptReceipt } from "./receipts";
 import { getPaymentsWorkspace, recordSupplierPayment, reduceSupplierPayable } from "./supplier-payments";
@@ -57,6 +58,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("supplier accounts against 
     mocks.getActiveOrganizationMembership.mockImplementation(async () => context.getStore() ?? null);
   });
   afterAll(async () => {
+    await cleanupAuditFixtures(organizationIds);
     for (const table of [supplierPaymentReductions, supplierPaymentAllocations, supplierPayments, inventoryMovements, supplierPayables, goodsReceiptItems, goodsReceipts, purchaseOrderItems, purchaseOrders, products, catalogUnits, suppliers, warehouses, organizationRoleAssignments]) {
       if (organizationIds.length) await db.delete(table).where(inArray(table.organizationId, organizationIds));
     }
