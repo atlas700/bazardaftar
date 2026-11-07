@@ -42,19 +42,19 @@ describe("workspace navigation", () => {
   });
   it("offers purchase drafts as available", () => {
     state.pathname = "/purchases/new";
-      const html = renderToStaticMarkup(<AppNavigation role="manager" />);
-      const purchaseLink = html.match(/<a[^>]*href="\/purchases"[^>]*>[\s\S]*?<\/a>/)?.[0];
-      expect(purchaseLink).toContain('aria-current="page"');
-      expect(purchaseLink).not.toContain("Soon");
+    const html = renderToStaticMarkup(<AppNavigation role="manager" />);
+    const purchaseLink = html.match(/<a[^>]*href="\/purchases"[^>]*>[\s\S]*?<\/a>/)?.[0];
+    expect(purchaseLink).toContain('aria-current="page"');
+    expect(purchaseLink).not.toContain("Soon");
   });
 
   it("offers supplier payments and keeps sales outside the pilot", () => {
     state.pathname = "/payments/new";
-      const html = renderToStaticMarkup(<AppNavigation role="owner" />);
-      const paymentLink = html.match(/<a[^>]*href="\/payments"[^>]*>[\s\S]*?<\/a>/)?.[0];
-      expect(paymentLink).toContain('aria-current="page"');
-      expect(paymentLink).not.toContain("Soon");
-      expect(html).toContain("Outside pilot");
+    const html = renderToStaticMarkup(<AppNavigation role="owner" />);
+    const paymentLink = html.match(/<a[^>]*href="\/payments"[^>]*>[\s\S]*?<\/a>/)?.[0];
+    expect(paymentLink).toContain('aria-current="page"');
+    expect(paymentLink).not.toContain("Soon");
+    expect(html).toContain("Outside pilot");
   });
   it("offers inventory as available for every business role", () => {
     state.pathname = "/inventory";

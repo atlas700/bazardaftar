@@ -49,6 +49,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)
 - [Page and route UX audit fixes handoff](handoffs/app-ux-audit-fixes.md)
 - [Homepage sign-out and Radix language picker fix](handoffs/homepage-navigation-selects.md)
+- [Light/dark themes and mobile navigation sidebar](handoffs/workspace-themes-mobile-sidebar.md)
 - [PostgreSQL CI verification handoff](handoffs/postgresql-ci-verification.md)
 - [Pilot blocker clarifications](handoffs/pilot-blocker-clarifications.md)
 - [Confirmed pilot research interview and remaining G1 evidence](handoffs/pilot-research-evidence.md)
