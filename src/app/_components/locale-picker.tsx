@@ -1,16 +1,27 @@
-import { LocaleSelector, T } from "gt-next";
+"use client";
+
+import { useGT, useLocaleSelector } from "gt-next";
 import { Globe2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function LocalePicker() {
+  const gt = useGT();
+  const { locale, locales, setLocale, getLocaleProperties } = useLocaleSelector();
+  if (!locales.length) return null;
+
   return (
-    <label className="flex min-h-11 items-center gap-2 text-sm text-ink-muted">
-      <Globe2 className="size-4 shrink-0" aria-hidden="true" />
-      <span className="sr-only">
-        <T>Language</T>
-      </span>
-      <LocaleSelector
-        className="min-h-11 max-w-36 rounded-xl bg-transparent px-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      />
-    </label>
+    <Select value={locale || ""} onValueChange={setLocale}>
+      <SelectTrigger aria-label={gt("Language")} className="w-auto max-w-44 [&>span]:min-w-0 [&>span]:truncate">
+        <Globe2 className="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+        <SelectValue placeholder={gt("Language")}>
+          {locale && <bdi dir="auto" lang={locale}>{getLocaleProperties(locale).nativeNameWithRegionCode}</bdi>}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent align="end">
+        {locales.map((value) => <SelectItem key={value} value={value}>
+          <bdi dir="auto" lang={value}>{getLocaleProperties(value).nativeNameWithRegionCode}</bdi>
+        </SelectItem>)}
+      </SelectContent>
+    </Select>
   );
 }

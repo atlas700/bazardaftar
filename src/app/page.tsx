@@ -5,12 +5,16 @@ import { Brand } from "@/components/workspace";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Package, Scale, Users } from "lucide-react";
 import { getSession } from "@/auth/server";
+import { SignOut } from "@/auth/components";
 
 export default async function Home() {
   const session = await getSession();
   return (
     <div className="min-h-dvh bg-page">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-6 sm:px-10"><Brand /><LocalePicker /></header>
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-10">
+        <Brand />
+        <div className="ms-auto flex max-w-full flex-wrap items-center gap-2"><LocalePicker />{session && <SignOut />}</div>
+      </header>
       <main className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.2fr_1fr] lg:gap-20 lg:py-28">
         <section>
           <p className="mb-5 text-sm font-medium text-ink-muted"><T>Built around your business</T></p>

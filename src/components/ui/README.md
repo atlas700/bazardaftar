@@ -1,10 +1,13 @@
 # UI primitives
 
-Button, Input, NativeSelect, and Field are adapted from the MIT-licensed
+Button, Input, Select, and Field are adapted from the MIT-licensed
 [shadcn/ui new-york-v4 components](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/new-york-v4/ui).
 Retrieved 31 October 2026. Styles use BazarDaftar tokens, 44px touch targets, and logical
 directional properties. Field exposes only the native elements this app needs.
 Forms keep native Server Actions and authoritative server-side Zod validation.
+Select wraps the installed Radix Select primitives with the shared trigger, portal
+menu and keyboard/RTL behavior. A hidden native select may support form submission;
+the visible language picker and business dropdowns use the styled Radix control.
 
 Copyright (c) 2023 shadcn
 
