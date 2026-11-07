@@ -51,8 +51,10 @@
 | Supplier settlements | `src/db/supplier-payments.ts` | Exact cash entry, oldest-first receipt allocations and owner reductions |
 | Supplier accounts | `src/db/supplier-statements.ts` | Separate-currency balances and consistent paginated posting history |
 | Business audit trail | `src/db/audit.ts` | Bounded operational snapshots, atomic local events and durable staff provider intents |
+| Pilot dashboard | `src/db/dashboard.ts` | Permission-scoped purchase/receipt counts, recorded stock, separate-currency debt and bounded recent source transactions |
 
-The operational dashboard remains Task 28. Audit events reference source records;
+The operational dashboard reads source records in one read-only snapshot.
+Audit events reference source records;
 they are not a replacement stock or financial ledger. Sales
 remain deferred. The [build plan](agent-sized-build-plan.md#current-gate-status) owns current readiness
 and delivery order; module contracts live in [API conventions](api-conventions.md).

@@ -61,6 +61,6 @@ jobs:
           npm run db:migrate
           npm run db:migrate
       - name: Run PostgreSQL integration tests
-        run: npm run test -- src/db/onboarding.integration.test.ts src/db/staff.integration.test.ts src/db/catalog.integration.test.ts src/db/products.integration.test.ts src/db/suppliers.integration.test.ts src/db/warehouses.integration.test.ts src/db/purchases.integration.test.ts src/db/receipts.integration.test.ts src/db/inventory.integration.test.ts src/db/inventory-adjustments.integration.test.ts src/db/supplier-payments.integration.test.ts src/db/supplier-statements.integration.test.ts src/db/audit.integration.test.ts
+        run: npm run test -- src/db/onboarding.integration.test.ts src/db/staff.integration.test.ts src/db/catalog.integration.test.ts src/db/products.integration.test.ts src/db/suppliers.integration.test.ts src/db/warehouses.integration.test.ts src/db/purchases.integration.test.ts src/db/receipts.integration.test.ts src/db/inventory.integration.test.ts src/db/inventory-adjustments.integration.test.ts src/db/supplier-payments.integration.test.ts src/db/supplier-statements.integration.test.ts src/db/audit.integration.test.ts src/db/dashboard.integration.test.ts
         env:
           AFCS_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}

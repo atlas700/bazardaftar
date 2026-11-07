@@ -82,6 +82,22 @@ an agent workflow requirement; CI continues to run the existing automated checks
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
 
+## Pilot dashboard verification
+
+Task 28 adds database-boundary and screen tests plus
+`src/db/dashboard.integration.test.ts` in the existing isolated PostgreSQL job.
+Cases reconcile purchase states and accepted receipts, ledger-derived signed stock,
+receipt payables minus allocations/reductions, separate AFN/PKR totals, inactive
+history, zero and large exact amounts, tenant isolation, all seven roles, and
+bounded deterministic recent activity. Membership changes fail closed, and
+forbidden datasets are excluded from the queries as well as the screen.
+
+Actual-component local fixtures cover populated, empty, permission-limited,
+inactive/long, loading and error states at desktop/mobile widths in LTR/RTL.
+Focus, source navigation and the error retry callback are checked separately.
+See the [handoff](handoffs/28-pilot-dashboard.md) for evidence and limitations;
+synthetic rendering does not establish live Clerk or deployed acceptance.
+
 ## Business audit verification
 
 Task 27 adds the database-free writer/redaction suite and
