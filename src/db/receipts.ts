@@ -12,6 +12,7 @@ import { parseWeight, quantityToKg } from "@/domain/quantity";
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { catalogUnits, goodsReceiptItems, goodsReceipts, inventoryMovements, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, supplierPayables, suppliers, warehouses } from "./schema";
 
 export type ReceiptState =
@@ -131,10 +132,15 @@ export async function acceptReceipt(input: unknown): Promise<ReceiptState> {
     await tx.insert(inventoryMovements).values(saved.map((line) => ({ organizationId: tenant.organizationId, receiptItemId: line.id,
       productId: line.productId, warehouseId: purchase.warehouseId, quantityKg: line.quantityKg, createdAt: now,
       performedByUserId: tenant.userId, performedByMembershipId: tenant.membershipId })));
-    await tx.insert(supplierPayables).values({ organizationId: tenant.organizationId, receiptId: receipt.id, supplierId: purchase.supplierId, currency: purchase.currency, amount: total, createdAt: now });
+    const [payable] = await tx.insert(supplierPayables).values({ organizationId: tenant.organizationId, receiptId: receipt.id, supplierId: purchase.supplierId, currency: purchase.currency, amount: total, createdAt: now }).returning();
     await tx.update(purchaseOrders).set({ status: completesPurchase ? "received" : "partially_received", revision: purchase.revision + 1,
       updatedAt: now, updatedByUserId: tenant.userId, updatedByMembershipId: tenant.membershipId, lastMutationId: command.requestId, lastMutationFingerprint: fingerprint }).where(scope);
-    // Task 27: append acceptance and owner-approval audit events on this transaction connection.
+    const after = { ...receipt, currency: purchase.currency, itemCount: saved.length, varianceApproved: variance };
+    await appendAudit(tx, tenant, { entityType: "receipt", entityId: receipt.id, action: "accept", requestId: command.requestId, after });
+    if (variance) await appendAudit(tx, tenant, { entityType: "receipt", entityId: receipt.id, action: "approve_variance", requestId: command.requestId, after });
+    await appendAudit(tx, tenant, { entityType: "supplier_payable", entityId: payable.id, action: "create", requestId: command.requestId, after: payable });
+    await appendAudit(tx, tenant, { entityType: "purchase", entityId: purchase.id, action: "update", requestId: command.requestId,
+      before: purchase, after: { ...purchase, status: completesPurchase ? "received" : "partially_received", revision: purchase.revision + 1 } });
     return { status: "success", purchaseId: purchase.id, receiptId: receipt.id };
   });
 }

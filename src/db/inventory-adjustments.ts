@@ -10,6 +10,7 @@ import { formatDecimal, parseDecimal } from "@/domain/decimal";
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { inventoryMovements, organizationRoleAssignments, organizations, products, warehouses } from "./schema";
 
 export type AdjustmentState =
@@ -72,7 +73,7 @@ export async function adjustInventory(input: unknown): Promise<AdjustmentState> 
       kind: "adjustment", quantityKg: command.quantityKg, requestId: command.requestId, requestFingerprint: fingerprint,
       reasonCode: command.reasonCode, reason: command.reason, reference: command.reference, productName: product.name, warehouseName: warehouse.name,
       performedByUserId: tenant.userId, performedByMembershipId: tenant.membershipId, createdAt: new Date() }).returning();
-    // Task 27: append the owner-approved adjustment audit event on this transaction connection.
+    await appendAudit(tx, tenant, { entityType: "inventory_adjustment", entityId: movement.id, action: "adjust", requestId: command.requestId, after: movement });
     return { status: "success", productId: movement.productId, movementId: movement.id };
   });
 }

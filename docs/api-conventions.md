@@ -38,9 +38,34 @@
   blocks, or rethrow Next.js control-flow exceptions before sanitizing failures.
   Refresh/revalidate affected data and navigate only after confirmed success.
 
-The first mutation must include the error/correlation behavior above. A general
-logging platform, formal business audit trail, and rate limiting retain their
-later build-plan scope.
+The first mutation must include the error/correlation behavior above. Task 27's
+business audit trail records successful local changes in the mutation transaction;
+general request logging and rate limiting retain their later build-plan scope.
+
+## Business audit contract
+
+`src/db/audit.ts` exports only an internal, server-only `appendAudit(connection,
+actor, event)` writer. Call it after current authority checks, with the mutation's
+transaction connection and verified organization/user/membership. Never pass client
+tenant/actor fields or catch and ignore an audit failure. Use the existing request
+UUID for replayable financial/stock commands; other commands receive a server UUID.
+An authorized matching replay returns before writing any new completed event.
+
+Snapshots are bounded operational summaries with per-entity field allowlists.
+Contact details, supplier names, arbitrary notes/reasons, provider identifiers used
+for display, credentials and nested payloads are excluded. Changed field names can
+be recorded without their private contents. Source entity IDs retain traceability
+to receipt approval, correction reasons, allocations and other durable details.
+Audit events are not a complete event-replay or historical line-reconstruction API.
+
+Clerk mutations cannot share a PostgreSQL commit. After lock, actor and target
+validation, staff writes independently commit a `requested` event immediately
+before the provider call, then append `completed` inside the local transaction.
+The same UUID correlates both. If intent persistence fails, do not call Clerk.
+An unmatched request is an attempted operation requiring reconciliation, not proof
+of success or failure. No-ops and validation/permission denials create no events.
+See [audit access, retention and reconciliation](security.md#business-audit-trail).
+This task exposes no audit read API, export or screen.
 
 ## Task 09 bootstrap
 

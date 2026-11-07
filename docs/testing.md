@@ -82,7 +82,37 @@ an agent workflow requirement; CI continues to run the existing automated checks
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
 
+## Business audit verification
+
+Task 27 adds the database-free writer/redaction suite and
+`src/db/audit.integration.test.ts` to the existing disposable PostgreSQL job.
+Its cases cover append-only enforcement and metadata/snapshot constraints;
+verified tenant/actor attribution despite spoofed input; bounded redaction and
+private-field change names; catalogue seeding and edits; purchase lifecycle and
+explicit variance approval; atomic receipt/payable/status, stock adjustment,
+supplier payment and owner-reduction events; normalized replays; local role and
+bootstrap truthfulness; and rollback when audit insertion fails.
+
+Provider tests distinguish a committed request from a completed Clerk operation,
+exercise all four staff side effects, require chronological occurrence timestamps,
+prevent provider calls if intent storage fails, and retain intent after ambiguous
+provider/completion failure. No-ops, invalid/foreign targets and permission or
+last-owner denials write no event. They mock Clerk and do not establish live
+provider success or deployed recovery behavior.
+
+All integration suites use `cleanupAuditFixtures()` only for their tracked random
+tenant IDs. The helper refuses other database names and nonsynthetic organizations,
+then temporarily disables the guard under an exclusive table lock in a transaction.
+Never use it against application data or import it into application services.
+The dedicated database remains `afcs_task07_verify`; the standard database-free
+test run explicitly skips PostgreSQL cases. No browser/UI changes or coverage
+tooling are introduced. See the [handoff](handoffs/27-audit-logging.md) for evidence.
+
 ## Supplier payment verification
+
+Task 27's [audit verification](#business-audit-verification) additionally checks
+atomic payment/reduction events and requires audit insertion failures to roll back
+the source postings.
 
 Task 25 adds payment-boundary, action, role-matrix and screen cases plus
 `src/db/supplier-payments.integration.test.ts` in the existing isolated PostgreSQL

@@ -24,6 +24,7 @@ beforeEach(() => {
   mocks.requirePermission.mockResolvedValue(tenant);
   mocks.getStaffMemberships.mockResolvedValue(members);
   mocks.getStaffInvitations.mockResolvedValue([]);
+  mocks.inviteStaff.mockResolvedValue("inv_created");
   mocks.query.mockImplementation(async (config: string | { text: string }, values: unknown[]) => {
     const text = typeof config === "string" ? config : config.text;
     if (text.startsWith("select") && text.includes('"organizations"')) return { rows: [[organizationId, "org_a", "2026-10-27"]] };
@@ -68,7 +69,7 @@ describe("staff mutation boundary", () => {
   it("locks the organization and rechecks a demoted or removed queued actor", async () => {
     grants[0][3] = "viewer";
     await expect(manageStaff({ operation: "add", userId: "user_c" })).rejects.toHaveProperty("digest", "NEXT_HTTP_ERROR_FALLBACK;404");
-    expect(mocks.query.mock.calls.some(([query, values]) => query.text?.includes('for update') && values[0] === organizationId)).toBe(true);
+    expect(mocks.query.mock.calls.some(([query, values]) => query.text?.includes('for no key update') && values[0] === organizationId)).toBe(true);
     expect(mocks.addStaff).not.toHaveBeenCalled();
     grants[0][3] = "owner";
     mocks.getStaffMemberships.mockResolvedValue([members[1]]);
@@ -92,7 +93,7 @@ describe("staff mutation boundary", () => {
   it("adds membership without automatically granting a business role", async () => {
     expect(await manageStaff({ operation: "add", userId: "user_c" })).toEqual({ status: "success" });
     expect(mocks.addStaff).toHaveBeenCalledExactlyOnceWith("org_a", "user_c");
-    expect(mocks.query.mock.calls.some(([query]) => query.text?.startsWith("insert"))).toBe(false);
+    expect(mocks.query.mock.calls.some(([query]) => query.text?.startsWith('insert into "organization_role_assignments"'))).toBe(false);
   });
   it("sends a new invitation when no live duplicate exists", async () => {
     mocks.getStaffInvitations.mockResolvedValue([{ id: "inv_expired", emailAddress: "staff@example.invalid", expiresAt: "2020-01-01T00:00:00.000Z" }]);

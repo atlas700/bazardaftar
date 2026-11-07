@@ -11,6 +11,7 @@ vi.mock("@/auth/organizations", () => mocks);
 vi.mock("@/env", () => ({ env: { databaseUrl: process.env.AFCS_TEST_DATABASE_URL ?? "postgresql://unused:unused@127.0.0.1:1/unused", nodeEnvironment: "test" } }));
 import { createPurchaseDraft, getPurchase, getPurchasesWorkspace, mutatePurchase } from "./purchases";
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { catalogUnits, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, suppliers, warehouses } from "./schema";
 
 type Actor = { userId: string; membershipId: string; clerkOrganizationId: string };
@@ -55,6 +56,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("purchase drafts against is
     mocks.getActiveOrganizationMembership.mockImplementation(async () => context.getStore() ?? null);
   });
   afterAll(async () => {
+    await cleanupAuditFixtures(organizationIds);
     if (organizationIds.length) {
       for (const table of [purchaseOrderItems, purchaseOrders, products, catalogUnits, suppliers, warehouses, organizationRoleAssignments]) {
         await db.delete(table).where(inArray(table.organizationId, organizationIds));

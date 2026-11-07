@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
@@ -10,6 +11,7 @@ import { parseWeight, pilotWeightMeasures, quantityToKg } from "@/domain/quantit
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { catalogUnits, organizationRoleAssignments, organizations, productCategories, products } from "./schema";
 
 export type CatalogState =
@@ -72,6 +74,7 @@ export async function manageCatalog(input: unknown): Promise<CatalogState> {
   const parsed = commandSchema.safeParse(input);
   if (!parsed.success) return { status: "invalid", fields: [...new Set(parsed.error.issues.map((issue) => String(issue.path[0] ?? "operation")))] };
   const command = parsed.data;
+  const requestId = randomUUID();
   try {
     return await db.transaction(async (tx): Promise<CatalogState> => {
       // Share staff's lock so queued mutations recheck a revoked or changed actor.
@@ -86,17 +89,20 @@ export async function manageCatalog(input: unknown): Promise<CatalogState> {
         current.membershipId !== tenant.membershipId || current.userId !== tenant.userId ||
         !actor || !hasPermission(actor.role, "catalog.manage")) notFound();
       if (command.operation === "seed-units") {
-        await tx.insert(catalogUnits).values([
+        const seeded = await tx.insert(catalogUnits).values([
           ...Object.entries(pilotWeightMeasures).map(([name, kilogramsPerUnit]) => ({ organizationId: tenant.organizationId, name,
             kind: "fixed" as const, kilogramsPerUnit })),
           { organizationId: tenant.organizationId, name: "bag", kind: "bag", kilogramsPerUnit: null },
-        ]).onConflictDoNothing();
+        ]).onConflictDoNothing().returning();
+        for (const unit of seeded) await appendAudit(tx, tenant, { entityType: "catalog_unit", entityId: unit.id, action: "create", requestId, after: unit });
         return { status: "success" };
       }
       if (command.operation === "create-unit") {
-        await tx.insert(catalogUnits).values({ organizationId: tenant.organizationId, name: command.name, ...command.unit });
+        const [unit] = await tx.insert(catalogUnits).values({ organizationId: tenant.organizationId, name: command.name, ...command.unit }).returning();
+        await appendAudit(tx, tenant, { entityType: "catalog_unit", entityId: unit.id, action: "create", requestId, after: unit });
       } else if (command.operation === "create-category") {
-        await tx.insert(productCategories).values({ organizationId: tenant.organizationId, name: command.name });
+        const [category] = await tx.insert(productCategories).values({ organizationId: tenant.organizationId, name: command.name }).returning();
+        await appendAudit(tx, tenant, { entityType: "product_category", entityId: category.id, action: "create", requestId, after: category });
       } else if (command.operation === "create-product" || command.operation === "update-product") {
         const [unit] = await tx.select({ id: catalogUnits.id }).from(catalogUnits).where(and(
           eq(catalogUnits.id, command.unitId), eq(catalogUnits.organizationId, tenant.organizationId), eq(catalogUnits.isActive, true),
@@ -110,23 +116,31 @@ export async function manageCatalog(input: unknown): Promise<CatalogState> {
         }
         const details = { name: command.name, sku: command.sku, unitId: command.unitId, categoryId: command.categoryId };
         if (command.operation === "create-product") {
-          await tx.insert(products).values({ organizationId: tenant.organizationId, ...details });
+          const [product] = await tx.insert(products).values({ organizationId: tenant.organizationId, ...details }).returning();
+          await appendAudit(tx, tenant, { entityType: "product", entityId: product.id, action: "create", requestId, after: product });
         } else {
+          const [before] = await tx.select().from(products).where(and(eq(products.id, command.id), eq(products.organizationId, tenant.organizationId), eq(products.isActive, true)));
           const saved = await tx.update(products).set(details).where(and(eq(products.id, command.id),
-            eq(products.organizationId, tenant.organizationId), eq(products.isActive, true))).returning({ id: products.id });
+            eq(products.organizationId, tenant.organizationId), eq(products.isActive, true))).returning();
           if (saved.length === 0) return { status: "conflict" };
+          await appendAudit(tx, tenant, { entityType: "product", entityId: saved[0].id, action: "update", requestId, before, after: saved[0] });
         }
       } else if (command.operation === "deactivate-product") {
+        const [before] = await tx.select().from(products).where(and(eq(products.id, command.id), eq(products.organizationId, tenant.organizationId), eq(products.isActive, true)));
         const saved = await tx.update(products).set({ isActive: false }).where(and(eq(products.id, command.id),
-          eq(products.organizationId, tenant.organizationId), eq(products.isActive, true))).returning({ id: products.id });
+          eq(products.organizationId, tenant.organizationId), eq(products.isActive, true))).returning();
         if (saved.length === 0) return { status: "conflict" };
+        await appendAudit(tx, tenant, { entityType: "product", entityId: saved[0].id, action: "deactivate", requestId, before, after: saved[0] });
       } else {
         const table = command.operation === "update-unit" || command.operation === "deactivate-unit" ? catalogUnits : productCategories;
         const changes = command.operation === "update-unit" ? { name: command.name, ...command.unit }
           : command.operation === "update-category" ? { name: command.name } : { isActive: false };
+        const [before] = await tx.select().from(table).where(and(eq(table.id, command.id), eq(table.organizationId, tenant.organizationId), eq(table.isActive, true)));
         const saved = await tx.update(table).set(changes).where(and(eq(table.id, command.id),
-          eq(table.organizationId, tenant.organizationId), eq(table.isActive, true))).returning({ id: table.id });
+          eq(table.organizationId, tenant.organizationId), eq(table.isActive, true))).returning();
         if (saved.length === 0) return { status: "conflict" };
+        await appendAudit(tx, tenant, { entityType: table === catalogUnits ? "catalog_unit" : "product_category", entityId: saved[0].id,
+          action: command.operation.startsWith("deactivate") ? "deactivate" : "update", requestId, before, after: saved[0] });
       }
       return { status: "success" };
     });

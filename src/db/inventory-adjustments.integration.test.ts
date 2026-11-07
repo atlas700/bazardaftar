@@ -10,6 +10,7 @@ vi.mock("@/auth/server", () => mocks);
 vi.mock("@/auth/organizations", () => mocks);
 vi.mock("@/env", () => ({ env: { databaseUrl: process.env.AFCS_TEST_DATABASE_URL ?? "postgresql://unused:unused@127.0.0.1:1/unused", nodeEnvironment: "test" } }));
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { adjustInventory, getAdjustmentOptions } from "./inventory-adjustments";
 import { getInventoryWorkspace } from "./inventory";
 import { catalogUnits, inventoryMovements, organizationRoleAssignments, organizations, products, supplierPayables, warehouses } from "./schema";
@@ -42,6 +43,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("inventory adjustments agai
     mocks.getActiveOrganizationMembership.mockImplementation(async () => context.getStore() ?? null);
   });
   afterAll(async () => {
+    await cleanupAuditFixtures(organizationIds);
     for (const table of [inventoryMovements, products, catalogUnits, warehouses, organizationRoleAssignments]) {
       if (organizationIds.length) await db.delete(table).where(inArray(table.organizationId, organizationIds));
     }

@@ -12,6 +12,7 @@ vi.mock("@/env", () => ({ env: {
 } }));
 
 import { db } from "./index";
+import { cleanupAuditFixtures } from "./audit-fixtures.test-support";
 import { requirePermission } from "./authorization";
 import { getWorkspaceSummary } from "./workspace";
 import { completeOnboarding, getOnboardingRequest, pinOnboardingOrganization, reserveOnboarding, type OnboardingRequest } from "./onboarding";
@@ -44,6 +45,7 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("onboarding and authorizati
       const rows = await db.select({ id: organizations.id }).from(organizations).where(inArray(organizations.clerkOrganizationId, remoteIds));
       if (rows.length) {
         const ids = rows.map((row) => row.id);
+        await cleanupAuditFixtures(ids);
         await db.delete(organizationRoleAssignments).where(inArray(organizationRoleAssignments.organizationId, ids));
         await db.delete(organizationSettings).where(inArray(organizationSettings.organizationId, ids));
       }

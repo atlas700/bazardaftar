@@ -12,6 +12,7 @@ import { parseWeight, quantityToKg } from "@/domain/quantity";
 import { assertStatusTransition, localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import type { TenantContext } from "./tenant";
 import { catalogUnits, goodsReceiptItems, goodsReceipts, organizationRoleAssignments, organizations, products, purchaseOrderItems, purchaseOrders, suppliers, warehouses } from "./schema";
 
@@ -133,6 +134,8 @@ export async function createPurchaseDraft(input: unknown): Promise<PurchaseState
       supplierId: supplier.id, supplierName: supplier.name, warehouseId: warehouse.id, warehouseName: warehouse.name, currency: command.currency, total,
       createdByUserId: tenant.userId, createdByMembershipId: tenant.membershipId }).returning({ id: purchaseOrders.id });
     await tx.insert(purchaseOrderItems).values(items.map((item) => ({ ...item, purchaseOrderId: purchase.id })));
+    await appendAudit(tx, tenant, { entityType: "purchase", entityId: purchase.id, action: "create", requestId: command.requestId,
+      after: { supplierId: supplier.id, warehouseId: warehouse.id, currency: command.currency, total, status: "draft", revision: 1, itemCount: items.length } });
     return { status: "success", purchaseId: purchase.id };
   });
 }
@@ -243,7 +246,8 @@ export async function mutatePurchase(input: unknown): Promise<PurchaseState> {
     } else changes = { cancelledAt: now, cancelledByUserId: tenant.userId, cancelledByMembershipId: tenant.membershipId, cancellationReason: command.reason };
     await tx.update(purchaseOrders).set({ ...changes, status: next, revision: purchase.revision + 1, updatedAt: now,
       updatedByUserId: tenant.userId, updatedByMembershipId: tenant.membershipId, lastMutationId: command.requestId, lastMutationFingerprint: fingerprint }).where(scope);
-    // Task 27: append the lifecycle audit event here on this transaction connection.
+    await appendAudit(tx, tenant, { entityType: "purchase", entityId: purchase.id, action: command.action === "edit" ? "update" : command.action,
+      requestId: command.requestId, before: purchase, after: { ...purchase, ...changes, status: next, revision: purchase.revision + 1 } });
     return { status: "success", purchaseId: purchase.id };
   });
 }

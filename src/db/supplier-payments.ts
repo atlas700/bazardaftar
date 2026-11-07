@@ -11,6 +11,7 @@ import { allocateCashPayment, currencySchema, validateRoundingReduction } from "
 import { localIdSchema } from "@/domain/validation";
 import { requirePermission } from "./authorization";
 import { db } from "./index";
+import { appendAudit } from "./audit";
 import { goodsReceipts, organizationRoleAssignments, organizations, supplierPayables, supplierPaymentAllocations, supplierPaymentReductions, supplierPayments, suppliers } from "./schema";
 import type { TenantContext } from "./tenant";
 
@@ -112,6 +113,8 @@ export async function recordSupplierPayment(input: unknown): Promise<PaymentStat
       recordedByUserId: tenant.userId, recordedByMembershipId: tenant.membershipId }).returning();
     // shortcut: one insert fits pilot histories; batch allocations inside this transaction before very large histories.
     await tx.insert(supplierPaymentAllocations).values(allocations.map((row) => ({ ...row, organizationId: tenant.organizationId, paymentId: payment.id, supplierId: supplier.id, currency: payment.currency })));
+    await appendAudit(tx, tenant, { entityType: "supplier_payment", entityId: payment.id, action: "record", requestId: command.requestId,
+      after: { ...payment, allocationCount: allocations.length } });
     return { status: "success", supplierId: supplier.id, currency: payment.currency, paymentId: payment.id };
   });
 }
@@ -137,6 +140,7 @@ export async function reduceSupplierPayable(input: unknown): Promise<PaymentStat
     const [reduction] = await tx.insert(supplierPaymentReductions).values({ organizationId: tenant.organizationId, requestId: command.requestId, requestFingerprint: fingerprint,
       paymentId: allocation.paymentId, payableId: allocation.payableId, supplierId: allocation.supplierId, currency: allocation.currency, amount: command.amount, reason: command.reason,
       approvedByUserId: tenant.userId, approvedByMembershipId: tenant.membershipId }).returning();
+    await appendAudit(tx, tenant, { entityType: "payment_reduction", entityId: reduction.id, action: "reduce", requestId: command.requestId, after: reduction });
     return { status: "success", supplierId: reduction.supplierId, currency: reduction.currency, paymentId: reduction.paymentId, reductionId: reduction.id };
   });
 }

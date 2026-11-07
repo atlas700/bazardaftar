@@ -33,9 +33,10 @@ export async function getStaffInvitations(organizationId: string) {
 
 export async function inviteStaff(organizationId: string, emailAddress: string) {
   const client = await clerkClient();
-  await client.organizations.createOrganizationInvitation({
+  const invitation = await client.organizations.createOrganizationInvitation({
     organizationId, emailAddress, role: "org:member", expiresInDays: 30,
   });
+  return invitation.id;
 }
 
 export async function addStaff(organizationId: string, userId: string) {

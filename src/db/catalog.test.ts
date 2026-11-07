@@ -21,7 +21,8 @@ beforeEach(() => {
   mocks.requirePermission.mockResolvedValue(tenant);
   mocks.getActiveOrganizationMembership.mockResolvedValue({ ...tenant, clerkOrganizationId: "org_a" });
   mocks.query.mockImplementation(async (query: { text: string }) => ({ rows:
-    query.text.startsWith("select") ? (query.text.includes('"organizations"') ? [[organizationId, "org_a"]] : [["owner"]]) : [],
+    query.text.startsWith("select") ? (query.text.includes('"organizations"') ? [[organizationId, "org_a"]] : [["owner"]])
+      : query.text.startsWith('insert into "catalog_units"') ? [[id]] : [],
   }));
 });
 afterEach(() => vi.resetAllMocks());

@@ -49,6 +49,9 @@ task readiness and order. Update both when an approved decision changes the scop
   separately approved rounding reductions; see its [handoff](handoffs/25-supplier-payments.md).
   Task 26 adds read-only per-currency supplier balances and paginated account
   statements; see its [handoff](handoffs/26-supplier-statements.md).
+  Task 27 adds append-only audit records for sensitive pilot mutations and durable
+  request/completion evidence for staff provider changes; see its
+  [handoff](handoffs/27-audit-logging.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -95,7 +98,11 @@ This delivery update closes no live pilot gate. Task 25 implementation is record
 in its [handoff](handoffs/25-supplier-payments.md) and merged in
 [PR #44](https://github.com/atlas700/bazardaftar/pull/44) on 5 November with passing
 CI. Task 26 implementation and local evidence are recorded in its
-[handoff](handoffs/26-supplier-statements.md); **Task 27** is next.
+[handoff](handoffs/26-supplier-statements.md); it merged in
+[PR #45](https://github.com/atlas700/bazardaftar/pull/45) on 7 November with passing
+quality/database CI. Task 27 implementation and local evidence are recorded in its
+[handoff](handoffs/27-audit-logging.md); **Task 28** is next. Remote CI/review and
+live provider acceptance for Task 27 remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
@@ -184,7 +191,7 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 27 — add append-only audit logging for sensitive pilot operations;
+**Next task:** 28 — build the pilot dashboard from trusted purchasing, stock and supplier queries;
 Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
 Task 17 adds the single warehouse setup under existing business-settings permissions;
@@ -308,7 +315,8 @@ The scope column also constrains the detailed task descriptions below.
 | 23–24 | Deferred | Sales drafts and fulfilment |
 | 25 | Complete | Supplier cash payments, automatic oldest-first allocation and owner-only rounding reductions; see [handoff](handoffs/25-supplier-payments.md) |
 | 26 | Complete | Read-only supplier balances and paginated statements; see [handoff](handoffs/26-supplier-statements.md) |
-| 27–28 | Pilot required | Audit logging, purchasing dashboard |
+| 27 | Complete | Append-only audit trail, atomic local events and durable provider intents; see [handoff](handoffs/27-audit-logging.md) |
+| 28 | Pilot required | Purchasing dashboard |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
 | 30–35 | Pilot required | Reliability, focused tests, purchase-to-receipt E2E, staging, onboarding |
 
@@ -870,6 +878,10 @@ without counting one payment more than once.
 ### Reporting, reliability, and delivery
 
 #### 27 — Add append-only audit logging
+
+**Status:** Implemented 7 November 2026. See the [handoff](handoffs/27-audit-logging.md)
+for acceptance, retention/access/redaction, source coverage and the explicit
+Clerk/PostgreSQL boundary. No audit reader/UI or historical backfill is introduced.
 
 **Goal:** Make sensitive operational events traceable.
 
