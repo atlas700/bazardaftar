@@ -23,6 +23,20 @@ beforeEach(() => {
 afterEach(() => vi.resetAllMocks());
 
 describe("workspace identity and permitted actions", () => {
+  it("puts mobile navigation in a menu-controlled sidebar instead of a scrolling navbar", async () => {
+    const html = renderToStaticMarkup(await AppLayout({ children: "Records" }));
+    expect(html).toContain('aria-label="Open navigation"');
+    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).toContain("<dialog");
+    expect(html).not.toContain("overflow-x-auto");
+  });
+
+  it("offers a theme toggle in the workspace navbar", async () => {
+    const html = renderToStaticMarkup(await AppLayout({ children: "Records" }));
+    expect(html).toContain("Switch to dark theme");
+    expect(html).toContain("Switch to light theme");
+  });
+
   it.each(["Helmand Grain", "Second Business"])("identifies the verified active business %s with a selection link", async (name) => {
     mocks.getWorkspaceSummary.mockResolvedValue({ name, role: "viewer" });
     const html = renderToStaticMarkup(await AppLayout({ children: "Records" }));

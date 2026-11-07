@@ -20,29 +20,30 @@ const navigationItems = [
 
 type AppNavigationProps = {
   role: string;
-  compact?: boolean;
+  onNavigate?: () => void;
 };
 
-export function AppNavigation({ role, compact = false }: AppNavigationProps) {
+export function AppNavigation({ role, onNavigate }: AppNavigationProps) {
   const pathname = usePathname();
   const gt = useGT();
 
   return (
     <nav aria-label={gt("Primary navigation")}>
-      <ul className={compact ? "flex gap-1" : "space-y-1.5"}>
+      <ul className="space-y-1.5">
         {navigationItems.filter(({ permission }) => hasPermission(role, permission)).map(({ href, label, icon: Icon, soon }) => {
           const isCurrent = pathname === href || pathname.startsWith(`${href}/`);
 
           return (
-            <li key={href} className={compact ? "shrink-0" : undefined}>
+            <li key={href}>
               <Link
                 aria-current={isCurrent ? "page" : undefined}
-                className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring", isCurrent ? "bg-surface text-ink shadow-xs ring-1 ring-black/5" : "text-ink-muted hover:bg-surface/60 hover:text-ink")}
+                className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring", isCurrent ? "bg-surface text-ink shadow-xs ring-1 ring-border/70" : "text-ink-muted hover:bg-surface/60 hover:text-ink")}
                 href={href}
                 prefetch={false}
+                onClick={onNavigate}
               >
                 <Icon className={cn("size-[18px] shrink-0", isCurrent && "text-primary")} aria-hidden="true" />
-                <span>{label}</span>
+                <span className="min-w-0 break-words">{label}</span>
                 {soon && <span className="ms-auto rounded px-1.5 py-0.5 text-[11px] font-normal text-ink-muted">{href === "/sales" ? <T>Outside pilot</T> : <T>Soon</T>}</span>}
               </Link>
             </li>

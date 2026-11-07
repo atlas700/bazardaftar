@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   color-scheme: light;
   --page: #f5f5f7;
   --surface: #ffffff;
+  --sidebar: #eeeef1;
   --ink: #1d1d1f;
   --ink-muted: #626269;
   --primary: #0066cc;
@@ -15,7 +18,27 @@
   --destructive: #b42318;
   --success: #217347;
   --input: #929299;
+  --highlight: #7950a3;
   --radius: 0.75rem;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #18181b;
+  --surface: #232326;
+  --sidebar: #1c1c1f;
+  --ink: #f4f4f5;
+  --ink-muted: #b0b0b8;
+  --primary: #72b7ff;
+  --primary-strong: #9acbff;
+  --on-primary: #111820;
+  --muted: #2e2e33;
+  --border: #45454d;
+  --ring: #72b7ff;
+  --destructive: #ff9b91;
+  --success: #78d4a2;
+  --input: #85858f;
+  --highlight: #c7a3e8;
 }
 
 @theme inline {
@@ -23,6 +46,7 @@
   --color-background: var(--surface);
   --color-foreground: var(--ink);
   --color-surface: var(--surface);
+  --color-sidebar: var(--sidebar);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-muted-foreground: var(--ink-muted);
@@ -40,6 +64,7 @@
   --color-input: var(--input);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
+  --color-highlight: var(--highlight);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 0.25rem);
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", var(--font-geist-sans), "Noto Sans Arabic", Tahoma, sans-serif;
@@ -47,7 +72,8 @@
 }
 
 @layer base {
-  html { scroll-padding-top: 6rem; }
+  html { scroll-padding-top: 6rem; scrollbar-gutter: stable; }
+  html:has(dialog[open]) { overflow: hidden; }
   body { letter-spacing: -0.012em; }
   button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
   button:not(:disabled), summary { cursor: pointer; }

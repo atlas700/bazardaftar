@@ -9,7 +9,9 @@ import { Building2 } from "lucide-react";
 import { T } from "gt-next";
 import { Brand } from "@/components/workspace";
 import { LocalePicker } from "@/app/_components/locale-picker";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AppNavigation, WorkspaceLocation } from "./_components/app-navigation";
+import { MobileNavigation } from "./_components/mobile-navigation";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -27,7 +29,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
       >
         <T>Skip to content</T>
       </a>
-      <aside className="sticky top-0 hidden h-dvh overflow-y-auto border-e border-border/70 bg-[#eeeef1] lg:flex lg:flex-col">
+      <aside className="sticky top-0 hidden h-dvh overflow-y-auto border-e border-border/70 bg-sidebar lg:flex lg:flex-col">
         <Link
           className="px-6 py-8 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-ring"
           href="/dashboard"
@@ -44,29 +46,23 @@ export default async function AppLayout({ children }: AppLayoutProps) {
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="border-b border-border/70 bg-page lg:hidden">
-          <div className="flex items-center justify-between gap-3 pe-4 sm:pe-6">
-            <Link
-              className="flex min-h-16 items-center px-4 text-base font-semibold tracking-tight text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring sm:px-6"
-              href="/dashboard"
-            >
-              <Brand compact />
-            </Link>
-            <SignOut />
-          </div>
-          <div className="overflow-x-auto px-4 pb-3 sm:px-6">
-            <AppNavigation role={workspace.role} compact />
-          </div>
-        </header>
-        <div className="flex min-h-[4.5rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/70 bg-surface/70 px-4 py-3 sm:px-7 lg:px-10">
+        <header className="flex min-h-16 items-center gap-2 border-b border-border/70 bg-surface px-4 py-3 sm:px-7 lg:gap-4 lg:px-10">
+          <MobileNavigation role={workspace.role}><SignOut /></MobileNavigation>
           <div className="min-w-0 flex-1 basis-40 space-y-1">
             <Link href="/join" prefetch={false} className="flex min-h-11 max-w-full items-center gap-2 text-sm font-semibold hover:text-primary">
               <Building2 aria-hidden="true" className="size-4 shrink-0" />
               <bdi dir="auto" className="min-w-0 break-words">{workspace.name}</bdi>
               <span className="sr-only"><T>Switch business</T></span>
             </Link>
-            <WorkspaceLocation />
+            <div className="hidden sm:block"><WorkspaceLocation /></div>
           </div>
+          <div className="ms-auto flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <div className="hidden sm:block"><LocalePicker /></div>
+          </div>
+        </header>
+        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-2 sm:hidden">
+          <WorkspaceLocation />
           <LocalePicker />
         </div>
         <main
