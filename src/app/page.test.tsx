@@ -12,6 +12,14 @@ import Home from "./page";
 afterEach(() => vi.resetAllMocks());
 
 describe("homepage session actions", () => {
+  it("offers the shared theme toggle in the homepage navbar", async () => {
+    getSession.mockResolvedValue(null);
+    const html = renderToStaticMarkup(await Home());
+    const header = html.split("</header>")[0];
+    expect(header).toContain("Switch to dark theme");
+    expect(header).toContain("Switch to light theme");
+  });
+
   it("offers sign-in to anonymous visitors", async () => {
     getSession.mockResolvedValue(null);
     const html = renderToStaticMarkup(await Home());
