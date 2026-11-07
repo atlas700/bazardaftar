@@ -62,13 +62,32 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("request limits against iso
     expect(saved.hits).toBe(1);
   });
 
+  it("times out a contended counter instead of admitting a request without accounting", async () => {
+    const identity = key();
+    await consumeRequestLimit("mutation", identity);
+    let release = () => {}, locked = () => {};
+    const ready = new Promise<void>((resolve) => { locked = resolve; });
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const blocker = db.transaction(async (tx) => {
+      await tx.select().from(requestRateLimits).where(eq(requestRateLimits.key, identity)).for("update");
+      locked(); await gate;
+    });
+    await ready;
+    try { await expect(consumeRequestLimit("mutation", identity)).rejects.toThrow(); }
+    finally { release(); await blocker; }
+    const [saved] = await db.select().from(requestRateLimits).where(eq(requestRateLimits.key, identity));
+    expect(saved.hits).toBe(1);
+  });
+
   it("cleans at most 100 day-old rows without deleting active or currently reused counters", async () => {
     const staleKeys = Array.from({ length: 101 }, key);
     const active = key(), reused = key();
     await db.insert(requestRateLimits).values([...staleKeys, reused].map((identity) => ({ scope: "mutation" as const, key: identity, hits: 1, resetAt: sql`statement_timestamp() - interval '2 days'` })));
-    await consumeRequestLimit("mutation", active);
-    expect(await db.select().from(requestRateLimits).where(inArray(requestRateLimits.key, [...staleKeys, reused]))).toHaveLength(2);
     expect((await consumeRequestLimit("mutation", reused)).allowed).toBe(true);
+    expect(await db.select().from(requestRateLimits).where(inArray(requestRateLimits.key, staleKeys))).toHaveLength(1);
+    const [reset] = await db.select().from(requestRateLimits).where(eq(requestRateLimits.key, reused));
+    expect(reset.hits).toBe(1);
+    await consumeRequestLimit("mutation", active);
     expect(await db.select().from(requestRateLimits).where(inArray(requestRateLimits.key, [active, reused]))).toHaveLength(2);
   });
 

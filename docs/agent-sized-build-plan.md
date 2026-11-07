@@ -56,6 +56,8 @@ task readiness and order. Update both when an approved decision changes the scop
   separate-currency supplier balances; see its [handoff](handoffs/28-pilot-dashboard.md).
   Task 30 adds safe error references, request correlation and redacted structured
   failure logs; see its [handoff](handoffs/30-safe-diagnostics.md).
+  Task 31 adds PostgreSQL-backed shared request admission, pre-Clerk authentication
+  limits and verified-user mutation budgets; see its [handoff](handoffs/31-abuse-controls.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -109,7 +111,8 @@ quality/database CI. Task 27 implementation and local evidence are recorded in i
 are recorded in its [handoff](handoffs/28-pilot-dashboard.md); it merged in
 [PR #48](https://github.com/atlas700/bazardaftar/pull/48) on 7 November.
 Task 30's implementation and local checks are recorded in its
-[handoff](handoffs/30-safe-diagnostics.md); **Task 31** is next.
+[handoff](handoffs/30-safe-diagnostics.md). Task 31's local acceptance is recorded
+in its [handoff](handoffs/31-abuse-controls.md); **Task 32** is next.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -329,7 +332,8 @@ The scope column also constrains the detailed task descriptions below.
 | 28 | Complete | Permission-scoped purchasing/stock/supplier dashboard; see [handoff](handoffs/28-pilot-dashboard.md) |
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
 | 30 | Complete | Safe failures, request references and redacted structured logs; see [handoff](handoffs/30-safe-diagnostics.md) |
-| 31–35 | Pilot required | Abuse controls, focused tests, purchase-to-receipt E2E, staging, onboarding |
+| 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
+| 32–35 | Pilot required | Focused tests, purchase-to-receipt E2E, staging, onboarding |
 
 ### Foundation
 

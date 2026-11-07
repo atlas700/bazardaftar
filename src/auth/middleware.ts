@@ -38,7 +38,7 @@ async function limitRequest(scope: RequestLimitScope, identity: string, requestI
 const withClerk = clerkMiddleware(
   async (auth, request) => {
     const requestId = request.headers.get(REQUEST_ID_HEADER) ?? randomUUID();
-    if (unsafe(request.method) && !authenticationRequest(request)) {
+    if (unsafe(request.method)) {
       const { userId } = await auth();
       const blocked = await limitRequest(userId ? "mutation" : "anonymous", userId ?? "anonymous", requestId);
       if (blocked) return blocked;

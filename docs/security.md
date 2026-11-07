@@ -101,12 +101,47 @@ last-owner check. Use the app for ownership changes; reconcile external changes
 without resetting grants or bootstrap markers. No automated owner recovery or
 Clerk Admin promotion is introduced. See [Task 11 recovery](handoffs/11-staff-management.md#expiry-and-recovery).
 
-## Deferred controls
+## Request abuse controls
+
+Task 31 uses PostgreSQL-backed fixed-window admission across application
+instances. The [request contract](api-conventions.md#request-admission-contract)
+defines methods, scope, limits and safe responses. Only verified Clerk identity
+selects a signed-in user's bucket. Tenant/permission checks, Next.js origin/body
+limits, transaction rechecks and durable financial fingerprints stay authoritative.
+No per-process map or caller-provided identity is used.
+
+Anonymous authentication and unsigned mutations use separate shared budgets.
+This is a coarse one-business-pilot safeguard: one client can consume anonymous
+capacity for others. There is no trusted client-IP boundary configured in this
+repository, so forwarding headers are deliberately ignored. Before broader use,
+Task 34 must verify the deployed adapter's client-IP/proxy trust boundary and
+appropriate provider/edge controls. Requests made directly to Clerk's domain stay
+under Clerk's controls; this app only limits its own sign-in/Frontend API paths.
+Clerk proxy GETs for assets/session reads remain outside these counters.
+
+`request_rate_limits` contains scope, HMAC key, bounded hits and UTC reset time.
+The existing server-only Clerk secret keys the versioned HMAC; rotating that
+secret resets effective admission identities. Counters commit before business
+work and are not business audit records. Each request resets its expired row and
+cleans at most 100 other rows expired for more than a day, using the expiry index
+and `SKIP LOCKED`. When idle, stale rows remain until traffic resumes; privileged
+maintenance can remove expired rows without touching business/audit history.
+
+The counter transaction sets a two-second statement timeout and 500ms lock timeout;
+connection acquisition/availability still depends on the configured PostgreSQL
+pool/provider. Counter failures fail closed with redacted `request_limit_failed`
+diagnostics. Ordinary 429s produce no failure-log flood. Fixed windows permit
+boundary bursts, and every attempted limited request still reaches PostgreSQL;
+this is not volumetric DDoS protection or a provider spending cap. Deployed Node.js
+proxy/pg compatibility, quotas, spend controls and live acceptance remain Task 34
+evidence. Apply migration `0017_request_rate_limits.sql` before deploying the app.
+
+## Mutation safeguards
 
 The first mutation must meet the safe error and correlation requirements in the
 [mutation contract](api-conventions.md#mutation-contract), approved by
-[ADR 0015](adr/0015-server-action-mutation-boundary.md). General request logging
-and rate limiting retain their later build-plan scope.
+[ADR 0015](adr/0015-server-action-mutation-boundary.md). General access-request
+logging remains outside this feature.
 
 ## Business audit trail
 

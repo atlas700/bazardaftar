@@ -74,11 +74,11 @@ describe("request abuse boundary", () => {
     expect(mocks.clerk).not.toHaveBeenCalled();
   });
 
-  it("does not charge auth POST twice or throttle Clerk asset/session reads", async () => {
+  it("also checks the verified mutation budget for action POSTs sent to sign-in without counting either budget twice", async () => {
     await request("/sign-in", "POST");
-    expect(mocks.consumeRequestLimit).toHaveBeenCalledOnce();
+    expect(mocks.consumeRequestLimit.mock.calls.map(([scope]) => scope)).toEqual(["authentication", "mutation"]);
     await request("/__clerk/v1/client", "GET");
-    expect(mocks.consumeRequestLimit).toHaveBeenCalledOnce();
+    expect(mocks.consumeRequestLimit).toHaveBeenCalledTimes(2);
   });
 
   it("blocks a financial write with a safe 429 and fresh correlation before its action runs", async () => {

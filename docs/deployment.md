@@ -14,6 +14,17 @@
 
 ## Environment configuration
 
+Task 31 requires the Node.js proxy and shared PostgreSQL access for request
+admission. Apply `0017_request_rate_limits.sql` before the application change;
+no new environment variable, account or dependency is added. Runtime access needs
+SELECT/INSERT/UPDATE/DELETE on `request_rate_limits`, separately from the append-only
+audit table's restricted privileges. Counter outages stop limited requests with
+503; the app does not fall back to process-local counters. Verify adapter/pg
+compatibility, anonymous-budget suitability and trusted client-IP/perimeter
+protection in staging before real pilot use; see
+[request abuse controls](security.md#request-abuse-controls). Direct Clerk-domain
+traffic needs provider-side controls. No deployment is performed by Task 31.
+
 - The server validates `NODE_ENV` at startup. It must be `development`,
   `production`, or `test`.
 - Clerk requires `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` from
