@@ -52,7 +52,8 @@ an agent workflow requirement; CI continues to run the existing automated checks
   against a fresh disposable service; the `quality` job stays database-free.
 - Existing suites cover tenancy, authorization, exact totals, purchase transitions,
   receipts/payables, inventory reads, stock adjustments, supplier payments and
-  owner-approved rounding reductions. Task 32 closes remaining critical pilot gaps.
+  owner-approved rounding reductions. Task 32's [invariant register](handoffs/32-pilot-test-coverage.md)
+  maps the named failure cases and records repeatability evidence.
 - Task 08 tests mock Clerk and the PostgreSQL transport while using Drizzle's real
   query generation. They cover exact organization/user filtering, absent/deleted
   or mismatched membership, stale claims, sanitized failures, the parameterized
@@ -81,6 +82,25 @@ an agent workflow requirement; CI continues to run the existing automated checks
 - Browser end-to-end coverage is deferred to Task 33; it must use isolated seeded
   data for purchasing, accepted receipt/payable creation, supplier payment, and
   stock/supplier balance reconciliation rather than a shared development database.
+
+## Complete isolated integration run
+
+Set `AFCS_TEST_DATABASE_URL` explicitly to the disposable `afcs_task07_verify`
+database, using the [database setup](database.md). Then run:
+
+```bash
+npm run test:integration
+npm run test:integration -- --sequence.seed=33
+```
+
+The dedicated configuration requires a loopback PostgreSQL URL for that exact
+database without query options or a fragment; missing, malformed, remote or
+wrong-database URLs fail before loading suites. Every `src/db/*.integration.test.ts`
+file is discovered automatically. Files run sequentially because fixture teardown
+temporarily takes an exclusive audit-table lock; test order is shuffled with
+recorded seeds 32 and 33. Each suite also checks the actual database name before
+writing. CI runs both orders after applying migrations twice. The default
+database-free run still skips opt-in PostgreSQL cases.
 
 ## Pilot dashboard verification
 

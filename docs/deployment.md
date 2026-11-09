@@ -73,10 +73,11 @@ traffic needs provider-side controls. No deployment is performed by Task 31.
 4. Complete first-business setup, then select **Open workspace**. With an owner
    account, confirm access to products, suppliers, warehouse/catalogue settings,
    purchases, inventory, and the owner-only stock adjustment entry. Repeat the
-   relevant allowed/denied paths with the intended staff roles. Supplier payments
-   and sales remain unavailable, and the overview has no operational metrics yet;
-   use the [build plan](agent-sized-build-plan.md#pilot-delivery-order) for current
-   scope. Select **Sign out** in desktop or mobile navigation, then revisit a
+   relevant allowed/denied paths with the intended staff roles. Verify supplier
+   payments, per-currency statements, and the permission-scoped dashboard. Sales
+   remain outside the purchasing pilot. Reconcile recorded stock with a physical
+   count because outgoing stock is not recorded. Select **Sign out** in desktop or
+   mobile navigation, then revisit a
    protected URL and verify it redirects to `/sign-in`. Try a fresh private window as well.
 5. Repeat an anonymous protected request with Pashto selected; verify the sign-in
    flow preserves the locale preference and the document remains RTL.

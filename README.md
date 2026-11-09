@@ -19,7 +19,8 @@ Supplier account statements reconcile receipt debt, allocations and reductions,
 with separate AFN/PKR balances and paginated posting history. Sensitive pilot changes
 append bounded audit records alongside local writes; staff provider changes retain
 durable request/completion evidence. See the [audit handoff](docs/handoffs/27-audit-logging.md).
-The purchasing dashboard and operational delivery remain in the
+The permission-scoped purchasing dashboard summarizes purchases, recorded stock,
+supplier balances, and recent activity. Remaining pilot delivery follows the
 [build plan](docs/agent-sized-build-plan.md). G1 is accepted on retrospective
 founder evidence under
 [ADR 0003](docs/adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026);
