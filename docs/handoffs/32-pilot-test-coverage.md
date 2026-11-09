@@ -66,7 +66,10 @@ Parent rechecked the guard and all connected callers. No unresolved findings.
 - `npm audit --omit=dev --audit-level=high`: zero vulnerabilities.
 - `git diff --check` passed. The existing `node:crypto` Edge instrumentation
   build warning remains; no new warning category was introduced.
-- Remote CI is pending delivery; live provider and deployment checks are separate.
+- Remote CI exposed a rollback assertion comparing unordered SQL results as an
+  ordered array. It now checks equal length and exact event contents independently
+  of retrieval order; no rollback assertion was removed. Local recheck and CI
+  results follow the corrective commit. Live provider/deployment checks are separate.
 
 ## Limits and next task
 
