@@ -62,6 +62,12 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("request limits against iso
     expect(saved.hits).toBe(1);
   });
 
+  it("bounds retry hints when a concurrent counter's reset is ahead of this statement's clock", async () => {
+    const identity = key();
+    await db.insert(requestRateLimits).values({ scope: "mutation", key: identity, hits: 61, resetAt: sql`statement_timestamp() + interval '61 seconds'` });
+    expect(await consumeRequestLimit("mutation", identity)).toEqual({ allowed: false, retryAfterSeconds: 60 });
+  });
+
   it("times out a contended counter instead of admitting a request without accounting", async () => {
     const identity = key();
     await consumeRequestLimit("mutation", identity);
