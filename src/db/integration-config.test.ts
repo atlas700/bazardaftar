@@ -3,7 +3,8 @@ import { expect, it } from "vitest";
 
 const config = new URL("../../vitest.integration.config.mts", import.meta.url).href;
 
-it.each(["", "not-a-url", "postgresql://test:secret@localhost/afcs_dev", "https://localhost/afcs_task07_verify"])(
+it.each(["", "not-a-url", "postgresql://test:secret@localhost/afcs_dev", "https://localhost/afcs_task07_verify",
+  "postgresql://test:secret@remote.example/afcs_task07_verify", "postgresql://localhost/afcs_task07_verify?host=remote.example"])(
   "refuses an absent or unsafe integration database without exposing credentials (%#)", (databaseUrl) => {
     const result = spawnSync(process.execPath, ["--input-type=module", "-e", `await import(${JSON.stringify(config)})`], {
       env: { ...process.env, AFCS_TEST_DATABASE_URL: databaseUrl }, encoding: "utf8",
