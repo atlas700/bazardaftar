@@ -66,12 +66,14 @@ need founder or pilot evidence are labelled **Open**.
 - [Completed numeric policy interview](handoffs/pilot-numeric-policy.md)
 - [Pilot-plan and quality maintenance handoff](handoffs/pilot-plan-and-quality.md)
 - [Pre-validation review workflow handoff](handoffs/pre-validation-review.md)
+- [Code review guidance handoff](handoffs/code-review-guidance.md)
 - [Design skill installation and provenance handoff](handoffs/design-skills.md)
 - [Documentation consistency and agent-guidance delivery](handoffs/documentation-consistency.md)
 
 ## Existing project guidance
 
 - [Project agent instructions](../AGENTS.md)
+- [Code review guide](../REVIEW.md)
 - [Development workflow](agents/development.md)
 - [Task-specific skill requirements](agents/skills.md)
 - [Domain documentation conventions](agents/domain.md)
