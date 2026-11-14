@@ -27,6 +27,12 @@ only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
    `NODE_ENV=production` is set: Tailwind/PostCSS and TypeScript are development
    dependencies. If a previous deploy reports a missing `@tailwindcss/postcss`,
    deploy the fix with Netlify's clear-cache retry option.
+   The proxy must not import `pg`: admission uses a signed HTTP call to the Node
+   route `/api/internal/request-limit`. Keep `APP_ORIGIN` set to this deployment's
+   exact reachable origin. Redirects, site-access challenges, or a wrong origin
+   make admission fail closed with 503; allow the signed call through any site
+   protection. No new secret is required: signatures use the existing server-only
+   Clerk secret with a separate HMAC purpose and expire after 30 seconds.
 4. Set these values in Netlify's encrypted environment settings, scoped **only**
    to this test site. Keep deploy previews disabled until they have separately
    isolated database/auth settings. Never give a fork or arbitrary PR these keys.
@@ -73,9 +79,11 @@ only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
 - Perform the [purchase-to-payment flow](testing.md#pilot-browser-workflow)
   manually with new synthetic records. Retry the same receipt and confirm one
   stock/debt effect. Confirm per-currency balances and the physical-count notice.
-- Exercise Node proxy request admission on the deployed adapter: normal signed-in
+- Verify unsigned POSTs to `/api/internal/request-limit` return uncached 404s.
+  Exercise proxy request admission on the deployed adapter: normal signed-in
   reads/writes, bounded 429/retry behavior, and safe 503 during a controlled outage
-  on this disposable test environment. Verify database TCP support and trusted
+  on this disposable test environment. PostgreSQL runs in the Node route, never
+  the Edge proxy. Verify same-origin admission calls and trusted
   client-IP/perimeter controls; current anonymous budgets are shared, not per IP.
   Check Clerk-domain abuse controls separately.
 - Inspect redacted diagnostics for runtime errors and request correlation IDs.

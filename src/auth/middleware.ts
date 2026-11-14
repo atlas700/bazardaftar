@@ -2,7 +2,8 @@ import { createHmac, randomUUID } from "node:crypto";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { createNextMiddleware } from "gt-next/middleware";
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
-import { consumeRequestLimit, type RequestLimitScope } from "@/db/request-limits";
+import { consumeRequestLimit } from "@/request-limits/client";
+import { REQUEST_LIMIT_PATH, type RequestLimitScope } from "@/request-limits/protocol";
 import { REQUEST_ID_HEADER } from "@/diagnostics/failure";
 import { logFailure } from "@/diagnostics/server";
 import { env } from "@/env";
@@ -52,6 +53,8 @@ const withClerk = clerkMiddleware(
 );
 
 export async function authMiddleware(request: NextRequest, event: NextFetchEvent) {
+  // The Node route authenticates signed admissions itself; re-entering Clerk would recurse.
+  if (request.nextUrl.pathname === REQUEST_LIMIT_PATH) return NextResponse.next();
   if (request.nextUrl.pathname === "/health" && ["GET", "HEAD"].includes(request.method)) {
     return NextResponse.next();
   }

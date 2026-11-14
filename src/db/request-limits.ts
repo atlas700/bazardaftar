@@ -3,9 +3,9 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { requestRateLimits } from "./schema";
+import type { RequestLimitScope } from "@/request-limits/protocol";
 
 const allowances = { authentication: 60, mutation: 60, anonymous: 30 } as const;
-export type RequestLimitScope = keyof typeof allowances;
 
 // Separate from business transactions: failed operations still consume admission.
 export async function consumeRequestLimit(scope: RequestLimitScope, key: string) {
