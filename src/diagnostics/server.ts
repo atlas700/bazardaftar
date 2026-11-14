@@ -1,6 +1,5 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { errorReference, REQUEST_ID_HEADER, type FailureState } from "./failure";
@@ -35,7 +34,7 @@ export function safeServerError(message: string, error: unknown): Error {
 }
 
 function correlationId(value: unknown): string {
-  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : randomUUID();
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : crypto.randomUUID();
 }
 
 export function logFailure(event: FailureEvent, stage: string, error: unknown, context: { requestId?: unknown; digest?: unknown } = {}): string {
