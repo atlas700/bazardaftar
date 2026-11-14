@@ -61,6 +61,8 @@ task readiness and order. Update both when an approved decision changes the scop
   Task 32 records the critical invariant coverage, a guarded complete integration
   runner, two shuffled repeat runs and the bounded retry-hint regression fix; see
   its [handoff](handoffs/32-pilot-test-coverage.md).
+  Task 33 adds one real Clerk/browser purchase-to-payment workflow, isolated
+  fixtures and headless CI; see its [handoff](handoffs/33-pilot-browser-workflow.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -119,7 +121,9 @@ in its [handoff](handoffs/31-abuse-controls.md). Task 31 merged in
 [PR #52](https://github.com/atlas700/bazardaftar/pull/52); its main-branch
 [quality/database CI](https://github.com/atlas700/bazardaftar/actions/runs/42358039728)
 passed. Task 32's acceptance and local checks are recorded in its
-[handoff](handoffs/32-pilot-test-coverage.md); **Task 33** is next.
+[handoff](handoffs/32-pilot-test-coverage.md). Task 33's local browser acceptance is
+recorded in its [handoff](handoffs/33-pilot-browser-workflow.md); remote browser CI
+is pending. **Task 34 preparation** is next; hosted setup awaits founder connection.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -341,7 +345,8 @@ The scope column also constrains the detailed task descriptions below.
 | 30 | Complete | Safe failures, request references and redacted structured logs; see [handoff](handoffs/30-safe-diagnostics.md) |
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
 | 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
-| 33–35 | Pilot required | Purchase-to-payment E2E, staging, onboarding |
+| 33 | Implemented; browser CI pending | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) |
+| 34–35 | Pilot required | Staging and onboarding/support |
 
 ### Foundation
 

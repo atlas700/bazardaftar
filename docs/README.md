@@ -46,6 +46,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 30 safe errors and server diagnostics](handoffs/30-safe-diagnostics.md)
 - [Task 31 shared rate limits and mutation abuse controls](handoffs/31-abuse-controls.md)
 - [Task 32 focused pilot test coverage](handoffs/32-pilot-test-coverage.md)
+- [Task 33 browser pilot workflow](handoffs/33-pilot-browser-workflow.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)

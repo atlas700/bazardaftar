@@ -79,9 +79,9 @@ an agent workflow requirement; CI continues to run the existing automated checks
   rollback, non-restoration after role
   deletion/downgrade/rejoin, constraints, and actual grant query isolation. The
   guard preserves sign-in/framework exceptions and sanitizes service failures.
-- Browser end-to-end coverage is deferred to Task 33; it must use isolated seeded
-  data for purchasing, accepted receipt/payable creation, supplier payment, and
-  stock/supplier balance reconciliation rather than a shared development database.
+- Task 33 supplies one real Clerk/browser scenario with isolated seeded data for
+  purchasing, receipt retry/payable creation, supplier payment and stock/balance
+  reconciliation. It never uses the shared development database.
 
 ## Complete isolated integration run
 
@@ -101,6 +101,29 @@ temporarily takes an exclusive audit-table lock; test order is shuffled with
 recorded seeds 32 and 33. Each suite also checks the actual database name before
 writing. CI runs both orders after applying migrations twice. The default
 database-free run still skips opt-in PostgreSQL cases.
+
+## Browser pilot workflow
+
+Set `AFCS_TEST_DATABASE_URL` to the isolated loopback database. Configure matching
+Clerk **development** keys using `.env.local` or process variables. Apply committed
+migrations to that database and build using those same public keys, then run:
+
+```bash
+npm run build
+npm run test:e2e
+```
+
+Windows requires installed Google Chrome. Linux requires
+`npx --no-install playwright install --with-deps chromium`. The runner starts a
+fresh production server at `http://localhost:3100`, performs the one scenario,
+and removes its uniquely tagged local and Clerk fixtures. Its sign-in token does
+not send a real message or validate OTP. See the [handoff](handoffs/33-pilot-browser-workflow.md)
+for the exact 4 kg / 40 AFN / 25 AFN assertions and cleanup boundaries.
+
+`.github/workflows/e2e.yml` runs on repository pushes/manual dispatch with
+development-only repository secrets. Fork PRs receive none. Public failure
+artifacts contain only synthetic PNG/page context, retained for three days;
+CI traces are disabled. Local reports/traces remain ignored and sensitive.
 
 ## Pilot dashboard verification
 
