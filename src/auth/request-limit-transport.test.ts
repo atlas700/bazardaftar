@@ -42,7 +42,7 @@ it.each(["missing", "forged", "expired", "future", "scope", "key", "tampered"])(
   const identity = kind === "key" ? "client-ip" : key;
   const signature = createHmac("sha256", "test-only-private-key")
     .update(JSON.stringify(["request-limit-transport-v1", scope, identity, timestamp])).digest("hex");
-  const headers = kind === "missing" ? {} : {
+  const headers: HeadersInit = kind === "missing" ? {} : {
     "x-limit-scope": scope, "x-limit-key": kind === "tampered" ? "b".repeat(64) : identity,
     "x-limit-timestamp": timestamp, "x-limit-signature": kind === "forged" ? "0".repeat(64) : signature,
   };

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ consumeRequestLimit: vi.fn(), auth: vi.fn(), clerk: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/env", () => ({ env: { appOrigin: "https://example.test", clerkSecretKey: "test-only-private-key" } }));
-vi.mock("@/db/request-limits", () => mocks);
+vi.mock("@/request-limits/client", () => mocks);
 vi.mock("@clerk/nextjs/server", () => ({ clerkMiddleware: (handler: (auth: unknown, request: NextRequest) => unknown) => async (request: NextRequest) => {
   mocks.clerk(request);
   // Clerk's Frontend API proxy returns before invoking the application's callback.
@@ -27,6 +27,13 @@ beforeEach(() => {
 });
 
 describe("request abuse boundary", () => {
+  it("lets the signed admission route authenticate itself without recursion", async () => {
+    const response = await request("/api/internal/request-limit");
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(mocks.clerk).not.toHaveBeenCalled();
+    expect(mocks.consumeRequestLimit).not.toHaveBeenCalled();
+  });
+
   it.each(["GET", "HEAD"])("keeps %s /health independent of Clerk and locale processing", async (method) => {
     const response = await request("/health", method);
     expect(response.headers.get("x-middleware-next")).toBe("1");
