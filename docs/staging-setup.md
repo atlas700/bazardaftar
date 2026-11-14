@@ -23,6 +23,10 @@ only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
    [`netlify.toml`](../netlify.toml) sets Node 24, `npm run build`, and `.next`.
    Let Netlify select its maintained OpenNext adapter; record the adapter version
    from the build log. A local Next build does not verify that adapter.
+   The committed `NPM_FLAGS = "--include=dev"` also installs build tools when
+   `NODE_ENV=production` is set: Tailwind/PostCSS and TypeScript are development
+   dependencies. If a previous deploy reports a missing `@tailwindcss/postcss`,
+   deploy the fix with Netlify's clear-cache retry option.
 4. Set these values in Netlify's encrypted environment settings, scoped **only**
    to this test site. Keep deploy previews disabled until they have separately
    isolated database/auth settings. Never give a fork or arbitrary PR these keys.
