@@ -20,7 +20,8 @@ export const test = base.extend<{ pilot: Pilot }>({
       assert.equal((await client.query("select current_database() as name")).rows[0].name, "afcs_task07_verify");
       const user = await clerk.users.createUser({ emailAddress: [email], skipPasswordRequirement: true, privateMetadata: { bazardaftarE2eRun: runId } });
       userId = user.id;
-      const organization = await clerk.organizations.createOrganization({ name: `E2E ${runId}`, createdBy: userId, privateMetadata: { bazardaftarE2eRun: runId } });
+      // Clerk rejects UUID digits as phone numbers; ownership stays in private metadata.
+      const organization = await clerk.organizations.createOrganization({ name: "BazarDaftar browser test", createdBy: userId, privateMetadata: { bazardaftarE2eRun: runId } });
       clerkOrganizationId = organization.id;
       const { data: memberships } = await clerk.organizations.getOrganizationMembershipList({ organizationId: organization.id, userId: [userId] });
       assert.equal(memberships.length, 1);
