@@ -4,3 +4,5 @@
 
 [build.environment]
   NODE_VERSION = "24"
+  # Tailwind/PostCSS and TypeScript are needed even with NODE_ENV=production.
+  NPM_FLAGS = "--include=dev"
