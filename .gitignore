@@ -24,6 +24,7 @@
 # misc
 .DS_Store
 *.pem
+*.dump
 
 # debug
 npm-debug.log*
@@ -37,6 +38,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# netlify local state
+/.netlify/
 
 # typescript
 *.tsbuildinfo

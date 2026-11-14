@@ -122,8 +122,13 @@ in its [handoff](handoffs/31-abuse-controls.md). Task 31 merged in
 [quality/database CI](https://github.com/atlas700/bazardaftar/actions/runs/42358039728)
 passed. Task 32's acceptance and local checks are recorded in its
 [handoff](handoffs/32-pilot-test-coverage.md). Task 33's local browser acceptance is
-recorded in its [handoff](handoffs/33-pilot-browser-workflow.md); remote browser CI
-is pending. **Task 34 preparation** is next; hosted setup awaits founder connection.
+recorded in its [handoff](handoffs/33-pilot-browser-workflow.md).
+On 14 November, [PR #53](https://github.com/atlas700/bazardaftar/pull/53)
+and [PR #54](https://github.com/atlas700/bazardaftar/pull/54) remain open with passing
+checks, including Task 33's browser job. **Task 34 is in progress:** repository
+preparation is recorded in its [handoff](handoffs/34-staging-preparation.md);
+hosted setup awaits founder-owned accounts. The founder confirmed on 14 November
+that neither the Netlify test site nor the Neon test project exists yet.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -213,8 +218,9 @@ or interview transcripts.
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
 | G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
 
-**Next task:** 31 — rate limits and mutation abuse controls;
-Task 30 implements safe user-facing failures and correlated server diagnostics.
+**Next task:** finish Task 34 — connect and verify staging, migrations, backups,
+restore and monitoring. Task 35 onboarding/support/measurement follows it.
+Tasks 30–33 are implemented; their delivery and CI states are recorded above.
 Task 29 reports and CSV exports remain deferred until pilot evidence requires them.
 Tasks 23–24 sales remain deferred under ADR 0003.
 Task 16 customers remains deferred under ADR 0003.
@@ -345,8 +351,9 @@ The scope column also constrains the detailed task descriptions below.
 | 30 | Complete | Safe failures, request references and redacted structured logs; see [handoff](handoffs/30-safe-diagnostics.md) |
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
 | 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
-| 33 | Implemented; browser CI pending | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) |
-| 34–35 | Pilot required | Staging and onboarding/support |
+| 33 | Implemented; browser CI passed; PR open | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) and PR #54 |
+| 34 | In progress; preparation only | Health endpoint, Netlify configuration and operator checklist; hosted resources, recovery and alerts remain unverified; see [handoff](handoffs/34-staging-preparation.md) |
+| 35 | Pilot required; not started | Onboarding, support and measurement after staging verification |
 
 ### Foundation
 

@@ -2,15 +2,17 @@
 
 ## Confirmed baseline
 
-- No hosting service, deployment pipeline, staging environment, production database,
-  backup configuration, or deployment environment variables are configured.
+- Repository staging configuration and a connection/recovery checklist are
+  prepared; see [Connect the temporary test environment](staging-setup.md).
+  No hosting account, deployed staging site, production database, scheduled backup,
+  or deployment secrets have been connected or configured.
 - Amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free and
   Neon Free for temporary testing with synthetic business records. Paid production
   hosting is deferred. The founder owns hosting, billing, alerts, and recovery;
   USD 60/month is the approved future hosting/database ceiling. No billing limit
   or deployed resource has been configured by recording that decision.
-- Staging deployment, migration handling, backup scheduling, restore verification,
-  and monitoring are planned for Task 34.
+- Task 34 has a database-backed `/health` endpoint and `netlify.toml`. Hosted
+  deployment, backup scheduling, restore verification and monitoring remain open.
 
 ## Environment configuration
 
