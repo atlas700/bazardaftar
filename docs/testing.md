@@ -5,7 +5,8 @@
 After implementing a feature or code/configuration change, and before the final
 quality-command pass:
 
-1. Use `ponytail:ponytail-review` to review the complete task diff and connected
+1. Read the [review guide](../REVIEW.md), then use `ponytail:ponytail-review`
+   to review the complete task diff and connected
    callers and tests against the task's acceptance criteria and repository rules.
 2. Trace affected security boundaries: input validation, authentication,
    authorization and tenant isolation, injection risks, and secret or sensitive
