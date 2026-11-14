@@ -18,7 +18,7 @@ Sales, customer payments, multiple warehouses, returns, lot/grade tracking, and
 offline mode are deferred. Accepted ADRs govern product policy; this plan governs
 task readiness and order. Update both when an approved decision changes the scope.
 
-## Current repository baseline (7 November 2026)
+## Current repository baseline (9 November 2026)
 
 - The application shell, localization plumbing, Clerk authentication, environment
   validation, Vitest tests, and CI are implemented (Tasks 01–06).
@@ -58,6 +58,9 @@ task readiness and order. Update both when an approved decision changes the scop
   failure logs; see its [handoff](handoffs/30-safe-diagnostics.md).
   Task 31 adds PostgreSQL-backed shared request admission, pre-Clerk authentication
   limits and verified-user mutation budgets; see its [handoff](handoffs/31-abuse-controls.md).
+  Task 32 records the critical invariant coverage, a guarded complete integration
+  runner, two shuffled repeat runs and the bounded retry-hint regression fix; see
+  its [handoff](handoffs/32-pilot-test-coverage.md).
   Task 16 remains deferred.
   The separately authorized
   [workspace redesign](adr/0020-workspace-design-system.md) adds Apple-inspired
@@ -112,7 +115,11 @@ are recorded in its [handoff](handoffs/28-pilot-dashboard.md); it merged in
 [PR #48](https://github.com/atlas700/bazardaftar/pull/48) on 7 November.
 Task 30's implementation and local checks are recorded in its
 [handoff](handoffs/30-safe-diagnostics.md). Task 31's local acceptance is recorded
-in its [handoff](handoffs/31-abuse-controls.md); **Task 32** is next.
+in its [handoff](handoffs/31-abuse-controls.md). Task 31 merged in
+[PR #52](https://github.com/atlas700/bazardaftar/pull/52); its main-branch
+[quality/database CI](https://github.com/atlas700/bazardaftar/actions/runs/42358039728)
+passed. Task 32's acceptance and local checks are recorded in its
+[handoff](handoffs/32-pilot-test-coverage.md); **Task 33** is next.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -333,7 +340,8 @@ The scope column also constrains the detailed task descriptions below.
 | 29 | Deferred | CSV/report suite until pilot evidence requires it |
 | 30 | Complete | Safe failures, request references and redacted structured logs; see [handoff](handoffs/30-safe-diagnostics.md) |
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
-| 32–35 | Pilot required | Focused tests, purchase-to-receipt E2E, staging, onboarding |
+| 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
+| 33–35 | Pilot required | Purchase-to-payment E2E, staging, onboarding |
 
 ### Foundation
 

@@ -29,7 +29,7 @@ export async function consumeRequestLimit(scope: RequestLimitScope, key: string)
         hits = case when bucket.reset_at <= statement_timestamp() then 1 else least(bucket.hits + 1, ${limit + 1}) end,
         reset_at = case when bucket.reset_at <= statement_timestamp() then statement_timestamp() + interval '60 seconds' else bucket.reset_at end
       returning hits <= ${limit} as allowed,
-        greatest(1, ceil(extract(epoch from (reset_at - statement_timestamp()))))::integer as retry_after_seconds
+        least(60, greatest(1, ceil(extract(epoch from (reset_at - statement_timestamp())))))::integer as retry_after_seconds
     `);
     const decision = result.rows[0];
     if (!decision) throw new Error("Request limit unavailable.");

@@ -225,7 +225,9 @@ describe.skipIf(!process.env.AFCS_TEST_DATABASE_URL)("append-only audit against 
       return manageStaff({ operation: "role", membershipId: "member_target", role: "manager" });
     });
     await expect(failAudit(work)).rejects.toThrow("Injected audit failure");
-    expect(await f.events()).toEqual(before);
+    const after = await f.events();
+    expect(after).toHaveLength(before.length);
+    expect(after).toEqual(expect.arrayContaining(before));
     const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, f.supplier.id));
     expect(supplier.isActive).toBe(true);
     if (kind === "purchase") expect(await db.select().from(purchaseOrders).where(eq(purchaseOrders.organizationId, f.organizationId))).toEqual([]);
