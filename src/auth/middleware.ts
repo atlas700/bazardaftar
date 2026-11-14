@@ -52,6 +52,9 @@ const withClerk = clerkMiddleware(
 );
 
 export async function authMiddleware(request: NextRequest, event: NextFetchEvent) {
+  if (request.nextUrl.pathname === "/health" && ["GET", "HEAD"].includes(request.method)) {
+    return NextResponse.next();
+  }
   const requestId = randomUUID();
   request.headers.set(REQUEST_ID_HEADER, requestId);
   // Clerk may return its Frontend API proxy before invoking our callback.

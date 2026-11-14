@@ -6,7 +6,7 @@ import { env } from "@/env";
 import { logFailure } from "@/diagnostics/server";
 
 function createPool() {
-  const pool = new Pool({ connectionString: env.databaseUrl });
+  const pool = new Pool({ connectionString: env.databaseUrl, connectionTimeoutMillis: 5000 });
   pool.on("error", (error) => {
     logFailure("database_pool_failed", "pool", error);
   });

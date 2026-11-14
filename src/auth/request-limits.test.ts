@@ -27,6 +27,20 @@ beforeEach(() => {
 });
 
 describe("request abuse boundary", () => {
+  it.each(["GET", "HEAD"])("keeps %s /health independent of Clerk and locale processing", async (method) => {
+    const response = await request("/health", method);
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("x-generaltranslation-locale")).toBeNull();
+    expect(mocks.clerk).not.toHaveBeenCalled();
+    expect(mocks.consumeRequestLimit).not.toHaveBeenCalled();
+  });
+
+  it.each([["/health", "POST"], ["/health/details", "GET"], ["/inventory", "GET"]])("preserves Clerk processing for %s %s", async (path, method) => {
+    await request(path, method);
+    expect(mocks.clerk).toHaveBeenCalledOnce();
+    if (method === "POST") expect(mocks.consumeRequestLimit.mock.calls[0][0]).toBe("mutation");
+  });
+
   it("matches all application routes, including extension and framework paths", () => {
     for (const path of ["/payments", "/purchases/file.csv", "/products/report.html", "/_next/anything", "/__clerk/v1/client/sign_ins", "/sign-in", "/onboarding"]) {
       expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: `https://example.test${path}` })).toBe(true);
