@@ -39,6 +39,7 @@ describe("database client", () => {
     expect(connect).not.toHaveBeenCalled();
     expect(query).not.toHaveBeenCalled();
     expect(db.$client.totalCount).toBe(0);
+    expect(db.$client.options.connectionTimeoutMillis).toBe(5000);
   });
 
   it("reuses the pool across development module reloads without duplicate handlers", async () => {
