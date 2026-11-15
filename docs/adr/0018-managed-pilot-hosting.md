@@ -69,6 +69,16 @@ pauses and development SMS limits can interrupt testing; routine test numbers
 do not establish real SMS delivery. Repository deployment compatibility remains
 unverified until a test deployment succeeds.
 
+## Implementation status (15 November 2026)
+
+The [staging recovery handoff](../handoffs/34-staging-recovery-verification.md)
+records connected Netlify/Neon synthetic staging, private B2 backups, restored-app
+verification, staging quota controls and confirmed monitor emails. PR #62 is
+merged; post-merge freshness activation is not yet recorded. Production setup,
+hosted recovery acceptance, elapsed retention and provider quota/spending email
+evidence remain open. These implementation updates do not change this ADR's
+operating targets or authorize paid setup or real-business pilot access.
+
 ## Links
 
 - [Local database foundation](0013-local-postgresql-foundation.md)

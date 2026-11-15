@@ -132,9 +132,15 @@ connection acquisition/availability still depends on the configured PostgreSQL
 pool/provider. Counter failures fail closed with redacted `request_limit_failed`
 diagnostics. Ordinary 429s produce no failure-log flood. Fixed windows permit
 boundary bursts, and every attempted limited request still reaches PostgreSQL;
-this is not volumetric DDoS protection or a provider spending cap. Deployed Node.js
-proxy/pg compatibility, quotas, spend controls and live acceptance remain Task 34
-evidence. Apply migration `0017_request_rate_limits.sql` before deploying the app.
+this is not volumetric DDoS protection or a provider spending cap. The proxy uses
+signed HTTP at fixed `APP_ORIGIN` to the exact internal Node.js counter route;
+`pg` stays outside the proxy import graph. That route bypasses middleware admission
+to prevent recursion, validates scope/key/timestamp and authenticates the signature
+before database access. Never log its short-lived signed headers. Deployment must
+verify this path without redirects or site-access challenges; quotas, spend
+controls and live acceptance remain Task 34 evidence. See the
+[boundary handoff](handoffs/34-netlify-proxy-database-boundary.md).
+Apply migration `0017_request_rate_limits.sql` before deploying the app.
 
 ## Mutation safeguards
 

@@ -18,7 +18,7 @@ Sales, customer payments, multiple warehouses, returns, lot/grade tracking, and
 offline mode are deferred. Accepted ADRs govern product policy; this plan governs
 task readiness and order. Update both when an approved decision changes the scope.
 
-## Current repository baseline (9 November 2026)
+## Current repository baseline (15 November 2026)
 
 - The application shell, localization plumbing, Clerk authentication, environment
   validation, Vitest tests, and CI are implemented (Tasks 01–06).
@@ -130,6 +130,10 @@ and [PR #54](https://github.com/atlas700/bazardaftar/pull/54) are merged.
 [handoff](handoffs/34-staging-recovery-verification.md) records a successful
 restored-app browser workflow and confirmed monitor emails. The founder limited
 this increment to free synthetic staging and deferred paid setup.
+[PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November
+at `a473abc7e7cf9d0330e40709cab9ab0dfcdb7b5b`. Its operational handoff leaves
+freshness monitoring paused until the first verified main-branch refresh;
+post-merge activation is not established by the merge itself.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -138,7 +142,7 @@ The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 - keep client components as small interactive leaves;
 - validate untrusted input at every server boundary;
 - do not weaken TypeScript;
-- add database code only under `src/db` once persistence is actually introduced;
+- keep database access under `src/db` and outside the proxy import graph;
 - use generated, reviewed SQL migrations; never use destructive schema shortcuts.
 
 ## Non-negotiable operating rules
@@ -207,7 +211,7 @@ gate changes; an accepted policy does not count as completed user research.
 Research records stay private; link a redacted evidence summary rather than names
 or interview transcripts.
 
-| Gate | Status and evidence (updated 1 November 2026) | Owner | Blocks |
+| Gate | Status and evidence (updated 15 November 2026) | Owner | Blocks |
 | --- | --- | --- | --- |
 | G0 market | Accepted: [ADR 0003](adr/0003-helmand-pilot-workflow.md), amended 28 October to target Helmand grain and mixed-goods wholesalers | Founder | Market choice is resolved |
 | G1 research | Accepted by founder on 1 November under [ADR 0003](adr/0003-helmand-pilot-workflow.md#amendment--founder-acceptance-of-retrospective-g1-research-1-november-2026): 50 reported interviewees, approximately 50 reported business observations, reconfirmed shared workflow, and B001 reconstructed across eight topics in the [evidence register](handoffs/g1-evidence-register.md). Original 20 individually recorded interviews/five mapped observations are not established; that prerequisite is replaced by founder acceptance. Workers' findings remain grouped; payment allocation and other unknowns stay explicit | Founder/researcher | G1 no longer blocks Task 15; acceptance alone does not establish pilot-release readiness |
@@ -217,12 +221,16 @@ or interview transcripts.
 | G4 database | Accepted: [ADR 0013](adr/0013-local-postgresql-foundation.md) approves local PostgreSQL and reviewed migrations; [ADR 0014](adr/0014-clerk-organizations-local-business-roles.md), 25 October, replaces local membership ownership with verified Clerk membership and a local organization mapping | Technical lead/founder | G1 is accepted; task-specific schema checks and other G4 gates remain required |
 | G4 mutation boundary | Accepted: [ADR 0015](adr/0015-server-action-mutation-boundary.md), 26 October; native Server Actions with the [mutation contract](api-conventions.md#mutation-contract) and a narrow first-organization bootstrap exception | Technical lead/founder | Boundary decision resolved; each mutation still needs its task's authorization and recovery checks |
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
-| G4 deployment | Partially resolved: amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free/Neon Free with synthetic test records; paid production hosting is deferred, with a USD 60/month hosting/database ceiling. Approved real-pilot targets: 30-day backups, at most one hour lost entries, four-hour recovery during business hours, overseas storage, and email alerts to the founder. Exact provider/region/backup destination, separate costs, enforceable spend controls, configuration, and restore/alert evidence remain open | Founder | Task 34 still requires G1 and remaining setup decisions; pilot release requires verification |
+| G4 deployment | Partially resolved: Netlify Free/Neon Free synthetic staging is connected; Neon region `aws-eu-central-1` and private B2 backup destination are recorded. The [15 November handoff](handoffs/34-staging-recovery-verification.md) records restored-app verification, monitor email delivery and staging quota controls. Freshness activation, provider quota/spending emails and elapsed retention remain unverified. Paid production provider/region/destination, separate costs, spending controls and scheduling/hosted recovery acceptance remain deferred/open under [ADR 0018](adr/0018-managed-pilot-hosting.md). The USD 60/month ceiling and 30-day/one-hour/four-hour real-pilot targets are unchanged | Founder | G1 is accepted. Finish staging acceptance before Task 35's internal rehearsal; production and other pilot-release gates still block real business use |
 
-**Next task:** finish Task 34's remaining release gates: activate reviewed staging
-freshness monitoring after merge, verify provider quota/spend notifications, and
-settle production recovery/scheduling when paid setup resumes. Task 35 follows
-staging verification; it is not implemented by the recovery increment.
+**Next task:** finish Task 34's free-staging acceptance: verify a successful
+main-branch backup refresh after PR #62, then resume freshness monitoring against
+that fresh target, and verify provider quota/spending notifications. Task 35's
+synthetic onboarding/support/measurement preparation and internal dry run follow
+staging verification. Paid production setup remains deferred; its recovery,
+scheduling, costs and retention evidence remain explicit Task 34 release gates
+before real business use. Neither this sequencing clarification nor Task 35's
+internal dry run closes Task 34 or authorizes pilot access.
 Tasks 30–33 are implemented; their delivery and CI states are recorded above.
 Task 29 reports and CSV exports remain deferred until pilot evidence requires them.
 Tasks 23–24 sales remain deferred under ADR 0003.
@@ -355,8 +363,8 @@ The scope column also constrains the detailed task descriptions below.
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
 | 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
 | 33 | Complete; PR merged | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) and PR #54 |
-| 34 | In progress; restored-app rehearsal passed | Staging rows/runtime grants and real-auth restored workflow verified; free monitoring and quota controls advanced. Production recovery, provider spend-email and activation gates remain open; see [handoff](handoffs/34-staging-recovery-verification.md) |
-| 35 | Pilot required; not started | Onboarding, support and measurement after staging verification |
+| 34 | In progress; PR #62 merged | Staging rows/runtime grants and real-auth restored workflow verified; monitor emails and quota controls recorded. Staging freshness activation/provider spend-email evidence and production recovery/retention gates remain open; see [handoff](handoffs/34-staging-recovery-verification.md) |
+| 35 | Pilot required; not started | Synthetic onboarding, support and measurement preparation/internal dry run after staging verification; real business use remains gated |
 
 ### Foundation
 
@@ -1075,9 +1083,22 @@ recovery targets. Record end-to-end sign-in in the deployed environment.
 **Handoff:** name deploy owner, rollback procedure, backup location/retention, and
 restore evidence date.
 
+Track free-staging acceptance separately from deferred production acceptance.
+The [current staging handoff](handoffs/34-staging-recovery-verification.md)
+records completed evidence and remaining activation/alert checks. Finishing those
+staging checks permits Task 35's synthetic preparation and internal dry run;
+Task 34 remains open until its production recovery, retention, cost and alert
+requirements pass. Paid setup and real-business pilot access are not authorized
+by internal rehearsal.
+
 #### 35 — Pilot onboarding, support, and measurement
 
 **Goal:** Turn deployed software into a learning experiment.
+
+**Readiness:** start synthetic preparation and the internal dry run after Task 34's
+staging acceptance. Real-business onboarding and measurement require the remaining
+Task 34 production acceptance and the other pilot-release gates. An internal dry
+run is not evidence of real transactions or pilot acceptance.
 
 **Do:** Create an onboarding checklist, initial data-import/manual entry procedure,
 support contact/runbook, consent-aware product event plan, and a weekly pilot review
