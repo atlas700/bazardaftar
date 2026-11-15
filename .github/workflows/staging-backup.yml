@@ -1,0 +1,50 @@
+name: Staging database backup
+
+on:
+  schedule:
+    # shortcut: GitHub can delay/drop schedules; replace before accepting pilot RPO.
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: github.repository == 'atlas700/bazardaftar' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: postgres:18-bookworm
+    services:
+      restore:
+        image: postgres:18-bookworm
+        env:
+          POSTGRES_DB: afcs_restore_drill
+          POSTGRES_USER: restore
+          POSTGRES_PASSWORD: ci_only
+        options: >-
+          --health-cmd "pg_isready -U restore -d afcs_restore_drill"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install isolated backup dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends python3-venv ca-certificates
+          python3 -m venv /tmp/backup-venv
+          /tmp/backup-venv/bin/pip install -r scripts/backup-requirements.txt
+      - name: Back up synthetic staging records to encrypted B2 storage
+        run: /tmp/backup-venv/bin/python scripts/staging_backup.py
+        env:
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_BACKUP_DATABASE_URL }}
+          BACKBLAZE_BUCKET_NAME: ${{ vars.STAGING_BACKUP_BUCKET }}
+          BACKBLAZE_BUCKET_REGION: ${{ vars.STAGING_BACKUP_REGION }}
+          BACKBLAZE_BUCKET_ENDPOINT: ${{ vars.STAGING_BACKUP_ENDPOINT }}
+          BACKBLAZE_BUCKET_KEY_ID: ${{ secrets.STAGING_BACKUP_KEY_ID }}
+          BACKBLAZE_BUCKET_APP_KEY: ${{ secrets.STAGING_BACKUP_APP_KEY }}

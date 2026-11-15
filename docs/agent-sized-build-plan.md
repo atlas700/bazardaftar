@@ -352,7 +352,7 @@ The scope column also constrains the detailed task descriptions below.
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
 | 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
 | 33 | Implemented; browser CI passed; PR open | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) and PR #54 |
-| 34 | In progress; preparation only | Health endpoint, Netlify configuration and operator checklist; hosted resources, recovery and alerts remain unverified; see [handoff](handoffs/34-staging-preparation.md) |
+| 34 | In progress; staging connected | Hosted health/sign-in reachable, migrations applied, staging backup/restore automation added; full recovery, alert delivery and spending gates remain open; see [handoff](handoffs/34-staging-backup-recovery.md) |
 | 35 | Pilot required; not started | Onboarding, support and measurement after staging verification |
 
 ### Foundation
