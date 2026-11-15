@@ -2,7 +2,7 @@
 
 Prepared 9 November; updated 15 November 2026. The founder-owned Netlify/Neon test
 environment is connected at https://bazardaftar.netlify.app. See the dated
-[backup and recovery handoff](handoffs/34-staging-backup-recovery.md) for evidence
+[application recovery handoff](handoffs/34-staging-recovery-verification.md) for evidence
 and remaining acceptance. Follow [ADR 0018](adr/0018-managed-pilot-hosting.md): synthetic records
 only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
 
@@ -117,19 +117,38 @@ provider recovery arrangement that meets that target. No backup email delivery
 is established by a successful workflow.
 
 Configure repository secrets `STAGING_BACKUP_DATABASE_URL` (direct, separate
-read-only Neon login), `STAGING_BACKUP_KEY_ID`, `STAGING_BACKUP_APP_KEY`; repository
+read-only Neon login), `STAGING_BACKUP_KEY_ID`, `STAGING_BACKUP_APP_KEY`,
+`STAGING_BACKUP_UPTIMEROBOT_KEY`; repository
 variables `STAGING_BACKUP_BUCKET`, `STAGING_BACKUP_REGION`,
-`STAGING_BACKUP_ENDPOINT`. Keep these out of Netlify runtime settings. The database
-role needs CONNECT, schema USAGE and table/sequence SELECT, including default
+`STAGING_BACKUP_ENDPOINT`, `STAGING_BACKUP_MONITOR_ID`. Keep these out of Netlify
+runtime settings. The database role needs CONNECT, schema USAGE and table/sequence SELECT, including default
 privileges for the migration owner. Recheck grants after changing that owner.
 
 Archives use private B2 storage, AES256 encryption and a SHA256 digest. The job
 downloads its uploaded object and restores it atomically into a new PostgreSQL 18
-service, then checks migration count. It never restores to the source. B2 native
+service, then checks migration history, compares the source/restored business
+tables and verifies restricted runtime grants. Synthetic writes during the drill
+can cause conservative comparison failure; repeat with writes paused. It never
+restores to the source. B2 native
 lifecycle for `staging/postgres/` hides objects after 30 days and deletes hidden
 versions after one more day; expiry timing and full application recovery remain
 separate checks. Use a bucket/prefix-restricted key with only required capabilities
 before pilot use; the current supplied bucket key has broader permissions.
+
+After verification, the job updates the existing UptimeRobot freshness monitor
+with an expiring signed GET for a separate harmless `ok` marker. No archive link
+is shared. Expiry is at recovery-point age 45 minutes; provider tolerance and
+five-minute polling add detection latency. The separate workflow-badge monitor
+detects failed runs. Both use the existing founder email contact. Keep freshness
+monitoring paused until this increment is merged and the first main run updates
+it, then resume it. Pause it before disabling the backup workflow.
+
+For the full restored-app drill, manually dispatch the **Pilot browser workflow**
+with `recovery=true` on the reviewed branch. It uses a fresh PostgreSQL 18 service,
+creates the browser database from the verified restore, and runs the existing
+Clerk workflow with a restricted runtime login. Fixture setup/cleanup uses the
+disposable owner. This preserves the loopback-only test-database guard; never
+point browser fixtures at hosted staging. Ordinary runs still migrate a blank DB.
 
 The commands below remain available for manual rehearsal. Use PostgreSQL
 18 client tools for the connected source and private libpq service/password files (or a secret manager).

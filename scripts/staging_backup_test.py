@@ -101,8 +101,10 @@ class StagingBackupTests(unittest.TestCase):
             restore_drill(s3, self.environment, {"key": "staging/postgres/test.dump", "sha256": "bad"})
         self.assertEqual(run.call_count, 1)
 
+    @patch("staging_backup.configure_restore_runtime")
+    @patch("staging_backup.verify_restored_data", return_value=21)
     @patch("staging_backup.run")
-    def test_restore_is_atomic_and_checks_migration_history(self, run):
+    def test_restore_is_atomic_and_checks_migration_history(self, run, verify_data, configure_runtime):
         import hashlib
 
         s3 = Mock()
@@ -111,6 +113,10 @@ class StagingBackupTests(unittest.TestCase):
         run.side_effect = ["0", "", "18"]
         result = restore_drill(s3, self.environment, {"key": "staging/postgres/test.dump", "sha256": hashlib.sha256(archive).hexdigest()})
         self.assertEqual(result["restoredMigrations"], 18)
+        self.assertEqual(result["verifiedTables"], 21)
+        self.assertTrue(result["restrictedRuntimeVerified"])
+        verify_data.assert_called_once()
+        configure_runtime.assert_called_once()
         self.assertIn("--single-transaction", run.call_args_list[1].args[0])
         self.assertIn("--exit-on-error", run.call_args_list[1].args[0])
         command = run.call_args_list[1].args[0]

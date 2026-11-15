@@ -4,6 +4,8 @@ import { requireTestDatabaseUrl } from "./scripts/test-database.mjs";
 
 loadEnvConfig(process.cwd());
 const databaseUrl = requireTestDatabaseUrl(process.env.AFCS_TEST_DATABASE_URL);
+const runtimeDatabaseUrl = process.env.AFCS_E2E_RUNTIME_DATABASE_URL
+  ? requireTestDatabaseUrl(process.env.AFCS_E2E_RUNTIME_DATABASE_URL) : databaseUrl;
 if (!process.env.CLERK_SECRET_KEY?.startsWith("sk_test_") || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_test_")) {
   throw new Error("Browser tests require matching Clerk development-instance keys.");
 }
@@ -23,6 +25,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { DATABASE_URL: databaseUrl, APP_ORIGIN: baseURL, NODE_ENV: "production" },
+    env: { DATABASE_URL: runtimeDatabaseUrl, APP_ORIGIN: baseURL, NODE_ENV: "production" },
   },
 });
