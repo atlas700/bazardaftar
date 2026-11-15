@@ -74,6 +74,23 @@ def backup(s3, environment):
         return {"key": key, "bytes": size, "sha256": checksum, "recoveryPoint": recovery_point}
 
 
+def verify_restored_data(source_env, target_env):
+    script = Path(__file__).with_name("staging-recovery-fingerprint.sql")
+    command = ["psql", "-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-f", str(script)]
+    source = run(command, source_env)
+    restored = run(command, target_env)
+    if not source or source != restored:
+        raise RuntimeError("Restored records differ from staging; pause synthetic writes and repeat the drill.")
+    return len(source.splitlines())
+
+
+def configure_restore_runtime(env):
+    if env.get("PGHOST") != "restore" or env.get("PGDATABASE") != "afcs_restore_drill":
+        raise ValueError("Runtime grants require the fixed disposable restore service.")
+    run(["psql", "-X", "-q", "-v", "ON_ERROR_STOP=1", "-f",
+         str(Path(__file__).with_name("staging-restore-runtime.sql"))], env)
+
+
 def restore_drill(s3, environment, saved):
     # This hostname/database belongs only to the job's disposable PostgreSQL service.
     env = {key: value for key, value in os.environ.items() if not key.startswith("PG")}
@@ -98,7 +115,9 @@ def restore_drill(s3, environment, saved):
         journal = Path(__file__).resolve().parent.parent / "drizzle/meta/_journal.json"
         if int(migrations) != len(json.loads(journal.read_text())["entries"]):
             raise RuntimeError("Restored migration history does not match the repository.")
-        return {"restoredMigrations": int(migrations)}
+        tables = verify_restored_data(database_environment(environment["STAGING_DATABASE_URL"]), env)
+        configure_restore_runtime(env)
+        return {"restoredMigrations": int(migrations), "verifiedTables": tables, "restrictedRuntimeVerified": True}
 
 
 def main():

@@ -14,9 +14,10 @@ class StagingRecoveryTests(unittest.TestCase):
 
     @patch("staging_backup.run")
     def test_matching_rows_report_only_verified_table_count(self, run):
-        run.return_value = '{"public.audit_logs": [2, "digest"], "drizzle.__drizzle_migrations": [18, "digest"]}'
+        run.return_value = '["drizzle.__drizzle_migrations", 18, "digest"]\n["public.audit_logs", 2, "digest"]'
         self.assertEqual(verify_restored_data({}, {}), 2)
-        sql = run.call_args.args[0][-1]
+        from pathlib import Path
+        sql = Path(run.call_args.args[0][-1]).read_text()
         self.assertIn("request_rate_limits", sql)
         self.assertIn("REPEATABLE READ", sql)
 
