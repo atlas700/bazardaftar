@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -9,6 +10,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.request import Request, urlopen
 from uuid import uuid4
 
 
@@ -91,6 +93,32 @@ def configure_restore_runtime(env):
          str(Path(__file__).with_name("staging-restore-runtime.sql"))], env)
 
 
+def report_backup_freshness(s3, environment, saved):
+    point = datetime.fromisoformat(saved["recoveryPoint"].replace("Z", "+00:00"))
+    age = (datetime.now(timezone.utc) - point).total_seconds()
+    lifetime = min(2700, 2700 - math.ceil(age))
+    if lifetime <= 0 or age < -60:
+        raise ValueError("Recovery point is stale or in the future.")
+    monitor = environment["STAGING_BACKUP_MONITOR_ID"]
+    if not re.fullmatch(r"[0-9]+", monitor):
+        raise ValueError("Invalid backup freshness monitor.")
+    # A separate harmless marker expires with the recovery point; never share an archive URL.
+    key = "staging/postgres/status/" + uuid4().hex + ".txt"
+    s3.put_object(Bucket=environment["BACKBLAZE_BUCKET_NAME"], Key=key, Body=b"ok",
+                  ServerSideEncryption="AES256", CacheControl="no-store", ContentType="text/plain")
+    url = s3.generate_presigned_url("get_object", Params={
+        "Bucket": environment["BACKBLAZE_BUCKET_NAME"], "Key": key,
+    }, ExpiresIn=lifetime)
+    request = Request(f"https://api.uptimerobot.com/v3/monitors/{monitor}", method="PATCH",
+                      data=json.dumps({"url": url}).encode(), headers={
+                          "Authorization": "Bearer " + environment["UPTIMEROBOT_API_KEY"],
+                          "Content-Type": "application/json",
+                      })
+    with urlopen(request, timeout=30) as response:
+        if response.status != 200:
+            raise RuntimeError("Backup freshness monitor update failed.")
+
+
 def restore_drill(s3, environment, saved):
     # This hostname/database belongs only to the job's disposable PostgreSQL service.
     env = {key: value for key, value in os.environ.items() if not key.startswith("PG")}
@@ -123,7 +151,8 @@ def restore_drill(s3, environment, saved):
 def main():
     try:
         required = ["STAGING_DATABASE_URL", "BACKBLAZE_BUCKET_NAME", "BACKBLAZE_BUCKET_REGION",
-                    "BACKBLAZE_BUCKET_ENDPOINT", "BACKBLAZE_BUCKET_KEY_ID", "BACKBLAZE_BUCKET_APP_KEY"]
+                    "BACKBLAZE_BUCKET_ENDPOINT", "BACKBLAZE_BUCKET_KEY_ID", "BACKBLAZE_BUCKET_APP_KEY",
+                    "UPTIMEROBOT_API_KEY", "STAGING_BACKUP_MONITOR_ID"]
         if any(not os.environ.get(name) for name in required):
             raise ValueError("Missing backup configuration.")
         region = os.environ["BACKBLAZE_BUCKET_REGION"]
@@ -143,6 +172,8 @@ def main():
         saved = backup(client, os.environ)
         print(json.dumps({"event": "staging_backup_completed", **saved}))
         print(json.dumps({"event": "staging_restore_completed", **restore_drill(client, os.environ, saved)}))
+        report_backup_freshness(client, os.environ, saved)
+        print(json.dumps({"event": "staging_backup_freshness_updated"}))
         return 0
     except Exception as error:
         print(json.dumps({"event": "staging_backup_failed", "kind": type(error).__name__}))

@@ -33,6 +33,17 @@ class StagingRecoveryTests(unittest.TestCase):
         s3.put_object.assert_not_called()
         urlopen.assert_not_called()
 
+    @patch("staging_backup.urlopen")
+    def test_failed_marker_upload_never_resets_monitor(self, urlopen):
+        from datetime import datetime, timezone
+        from unittest.mock import Mock
+        s3 = Mock()
+        s3.put_object.side_effect = RuntimeError("storage unavailable")
+        with self.assertRaises(RuntimeError):
+            report_backup_freshness(s3, {"BACKBLAZE_BUCKET_NAME": "private", "STAGING_BACKUP_MONITOR_ID": "123"},
+                                    {"recoveryPoint": datetime.now(timezone.utc).isoformat()})
+        urlopen.assert_not_called()
+
     @patch("staging_backup.run")
     def test_changed_business_data_fails_even_when_migration_counts_match(self, run):
         run.side_effect = ['{"public.inventory_movements": [1, "source"]}',

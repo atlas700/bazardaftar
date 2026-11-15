@@ -49,6 +49,7 @@ jobs:
             --env STAGING_DATABASE_URL --env BACKBLAZE_BUCKET_NAME \
             --env BACKBLAZE_BUCKET_REGION --env BACKBLAZE_BUCKET_ENDPOINT \
             --env BACKBLAZE_BUCKET_KEY_ID --env BACKBLAZE_BUCKET_APP_KEY \
+            --env UPTIMEROBOT_API_KEY --env STAGING_BACKUP_MONITOR_ID \
             postgres:18-bookworm bash -c '
               set -e
               apt-get update -qq
@@ -64,6 +65,8 @@ jobs:
           BACKBLAZE_BUCKET_ENDPOINT: ${{ vars.STAGING_BACKUP_ENDPOINT }}
           BACKBLAZE_BUCKET_KEY_ID: ${{ secrets.STAGING_BACKUP_KEY_ID }}
           BACKBLAZE_BUCKET_APP_KEY: ${{ secrets.STAGING_BACKUP_APP_KEY }}
+          UPTIMEROBOT_API_KEY: ${{ secrets.STAGING_BACKUP_UPTIMEROBOT_KEY }}
+          STAGING_BACKUP_MONITOR_ID: ${{ vars.STAGING_BACKUP_MONITOR_ID }}
       - name: Create the isolated browser database
         run: |
           if [ "${{ github.event_name == 'workflow_dispatch' && inputs.recovery }}" = "true" ]; then
