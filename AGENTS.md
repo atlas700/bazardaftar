@@ -27,6 +27,8 @@ area-specific rules rather than loading every document.
 - **Planning, implementation, code review, or validation:** read the
   [development workflow](docs/agents/development.md) and
   [task-specific skill requirements](docs/agents/skills.md).
+- **Feature implementation and completion:** follow the
+  [Graphify workflow](docs/agents/graphify.md).
 - **Code review:** use [REVIEW.md](REVIEW.md) for scope, review focus, and findings.
 - **App design or styling, including small style edits:** also read the
   [design and styling requirements](docs/agents/skills.md#design-and-styling).
