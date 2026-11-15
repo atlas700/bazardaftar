@@ -50,6 +50,7 @@ need founder or pilot evidence are labelled **Open**.
 - [Task 33 browser pilot workflow](handoffs/33-pilot-browser-workflow.md)
 - [Task 34 staging preparation and remaining hosted acceptance](handoffs/34-staging-preparation.md)
 - [Task 34 connected staging and backup recovery evidence](handoffs/34-staging-backup-recovery.md)
+- [Task 34 application recovery and free staging monitoring](handoffs/34-staging-recovery-verification.md)
 - [Supplier contact policy](adr/0021-supplier-contact-records.md)
 - [Workspace design-system decision](adr/0020-workspace-design-system.md)
 - [Workspace design-system redesign handoff](handoffs/workspace-design-system.md)
