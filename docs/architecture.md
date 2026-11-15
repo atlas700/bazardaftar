@@ -17,6 +17,9 @@
   handling. Route protection stays in each resource, following Clerk 7 guidance.
   Task 31 adds shared PostgreSQL admission before unsafe action dispatch and
   authentication entrances, including before Clerk's Frontend API short-circuit.
+  The proxy reaches those counters through signed HTTP to the exact internal
+  Node.js route at `APP_ORIGIN`. Keep database imports outside the proxy graph;
+  see the [transport boundary](handoffs/34-netlify-proxy-database-boundary.md).
 - Vitest covers configuration, authentication, tenancy, permissions, and the
   implemented catalogue, purchasing, receiving, and inventory workflows. Opt-in
   PostgreSQL suites verify their persistence, isolation, rollback, retry, and
@@ -55,7 +58,7 @@
 | Business audit trail | `src/db/audit.ts` | Bounded operational snapshots, atomic local events and durable staff provider intents |
 | Pilot dashboard | `src/db/dashboard.ts` | Permission-scoped purchase/receipt counts, recorded stock, separate-currency debt and bounded recent source transactions |
 | Failure diagnostics | `src/diagnostics/server.ts`, `src/instrumentation.ts` | Redacted JSON failures, request correlation and safe action/render support references |
-| Request abuse controls | `src/auth/middleware.ts`, `src/db/request-limits.ts` | Verified-user mutation limits, shared anonymous/authentication budgets and atomic PostgreSQL counters |
+| Request abuse controls | `src/auth/middleware.ts`, `src/request-limits/{client,protocol}.ts`, `src/app/api/internal/request-limit/route.ts`, `src/db/request-limits.ts` | Proxy admission over signed HTTP to a Node.js counter endpoint; verified-user mutation limits and atomic shared PostgreSQL counters |
 
 The operational dashboard reads source records in one read-only snapshot.
 Audit events reference source records;

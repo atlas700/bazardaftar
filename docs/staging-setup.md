@@ -77,7 +77,7 @@ only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
 - Use a fresh browser profile: invited sign-in, blank-account onboarding, correct
   business isolation, permissions/denial, sign-out, locale persistence and RTL.
   Check HTTPS session-cookie behavior on the actual host.
-- Perform the [purchase-to-payment flow](testing.md#pilot-browser-workflow)
+- Perform the [purchase-to-payment flow](testing.md#browser-pilot-workflow)
   manually with new synthetic records. Retry the same receipt and confirm one
   stock/debt effect. Confirm per-currency balances and the physical-count notice.
 - Verify unsigned POSTs to `/api/internal/request-limit` return uncached 404s.
@@ -110,7 +110,7 @@ and stale-backup emails; a file on the app's ephemeral disk is not a durable bac
 
 The repository now includes a staging-only GitHub Actions backup and download/
 restore job in `.github/workflows/staging-backup.yml`. It runs on the default
-branch after merge at minutes 17 and 47, or manually through Actions. The scheduler
+branch at minutes 17 and 47, or manually through Actions. The scheduler
 can delay or drop runs and does not establish the one-hour recovery-point target.
 Before real use, configure independent failure/staleness emails and a scheduler/
 provider recovery arrangement that meets that target. No backup email delivery
@@ -139,9 +139,12 @@ After verification, the job updates the existing UptimeRobot freshness monitor
 with an expiring signed GET for a separate harmless `ok` marker. No archive link
 is shared. Expiry is at recovery-point age 45 minutes; provider tolerance and
 five-minute polling add detection latency. The separate workflow-badge monitor
-detects failed runs. Both use the existing founder email contact. Keep freshness
-monitoring paused until this increment is merged and the first main run updates
-it, then resume it. Pause it before disabling the backup workflow.
+detects failed runs. Both use the existing founder email contact.
+[PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November;
+the latest [operational handoff](handoffs/34-staging-recovery-verification.md)
+records freshness monitoring paused. Verify a successful main-branch run updates
+the target before resuming it; the merge alone does not establish activation.
+Pause it before disabling the backup workflow.
 
 For the full restored-app drill, manually dispatch the **Pilot browser workflow**
 with `recovery=true` on the reviewed branch. It uses a fresh PostgreSQL 18 service,

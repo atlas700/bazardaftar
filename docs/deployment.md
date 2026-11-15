@@ -1,31 +1,46 @@
 # Deployment
 
-## Confirmed baseline
+## Recorded baseline (15 November 2026)
 
-- Repository staging configuration and a connection/recovery checklist are
-  prepared; see [Connect the temporary test environment](staging-setup.md).
-  No hosting account, deployed staging site, production database, scheduled backup,
-  or deployment secrets have been connected or configured.
+- Synthetic staging is connected on Netlify Free and Neon Free. Application and
+  backup secrets are configured privately; the repository includes the scheduled
+  staging backup workflow. See [the staging checklist](staging-setup.md) and
+  [recovery evidence](handoffs/34-staging-recovery-verification.md).
 - Amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free and
   Neon Free for temporary testing with synthetic business records. Paid production
   hosting is deferred. The founder owns hosting, billing, alerts, and recovery;
-  USD 60/month is the approved future hosting/database ceiling. No billing limit
-  or deployed resource has been configured by recording that decision.
-- Task 34 has a database-backed `/health` endpoint and `netlify.toml`. Hosted
-  deployment, backup scheduling, restore verification and monitoring remain open.
+  USD 60/month is the approved future hosting/database ceiling. Recorded staging
+  controls include Netlify overage/build blocking settings and a Neon compute cap;
+  they do not establish production spending controls or billing-email delivery.
+- Task 34 records hosted `/health`, B2 archive upload/download verification,
+  restored-row and runtime-grant checks, and a restored-app browser workflow in
+  disposable PostgreSQL 18. The founder confirmed monitor DOWN/UP and freshness
+  DOWN emails. This is synthetic recovery evidence, not hosted failover or
+  production OTP acceptance.
+- [PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November.
+  The latest operational handoff leaves freshness monitoring paused pending the
+  first verified main-branch refresh. Activation has not been reverified here.
+  Production recovery/scheduling, elapsed retention and provider quota/spending
+  email evidence remain open; paid setup remains deferred.
 
 ## Environment configuration
 
-Task 31 requires the Node.js proxy and shared PostgreSQL access for request
-admission. Apply `0017_request_rate_limits.sql` before the application change;
-no new environment variable, account or dependency is added. Runtime access needs
-SELECT/INSERT/UPDATE/DELETE on `request_rate_limits`, separately from the append-only
+Request admission uses shared PostgreSQL counters. The proxy calls the exact
+`/api/internal/request-limit` Node.js route over signed HTTP at the fixed
+`APP_ORIGIN`; that route owns database access for this transport. Keep `pg` and
+database imports outside the proxy's import graph for Netlify packaging. The internal route
+bypasses Clerk/locale/admission to prevent recursion and authenticates its own
+short-lived signature before database access. See the
+[boundary handoff](handoffs/34-netlify-proxy-database-boundary.md).
+Apply `0017_request_rate_limits.sql` before deploying this admission code.
+Runtime access needs SELECT/INSERT/UPDATE/DELETE on `request_rate_limits`, separately from the append-only
 audit table's restricted privileges. Counter outages stop limited requests with
-503; the app does not fall back to process-local counters. Verify adapter/pg
-compatibility, anonymous-budget suitability and trusted client-IP/perimeter
+503; the app does not fall back to process-local counters. `APP_ORIGIN` must reach
+this exact deployment without redirects or site-access challenges. Verify the
+signed admission path, anonymous-budget suitability and trusted client-IP/perimeter
 protection in staging before real pilot use; see
 [request abuse controls](security.md#request-abuse-controls). Direct Clerk-domain
-traffic needs provider-side controls. No deployment is performed by Task 31.
+traffic needs provider-side controls. Never log signed admission headers.
 
 - The server validates `NODE_ENV` at startup. It must be `development`,
   `production`, or `test`.
@@ -43,10 +58,10 @@ traffic needs provider-side controls. No deployment is performed by Task 31.
   unreachable placeholder and never connects to or migrates a database. The
   separate `database` job applies committed migrations only to its disposable
   PostgreSQL service; it provides no deployment or restore evidence.
-- Staging and production values will be set in the approved deployment target's
-  encrypted environment configuration after remaining G4 operating policies are
-  approved. They must not be committed to the repository. Secrets must never use
-  a `NEXT_PUBLIC_` prefix.
+- Staging values are configured privately in the hosting and backup environments;
+  backup credentials stay outside app runtime. Configure production values only
+  after its remaining G4 operating policies are approved. Do not commit secrets
+  or give them a `NEXT_PUBLIC_` prefix.
 - Configure real build-time publishable keys before building a deployable artifact;
   Next.js embeds public environment values in browser bundles.
 
@@ -152,7 +167,8 @@ Clerk's reserved test email-code flow. It verified creation, delayed activation,
 dashboard access, saved-detail recovery, mobile RTL layout, repeated submission,
 membership-removal denial, and sign-out. The synthetic remote account/organization
 and their local rows were deleted afterward. This is development evidence; pilot
-phone OTP, production cookies, backup restoration, and deployment remain open.
+phone OTP and production cookies remain open. Later staging deployment and
+synthetic restore evidence are recorded in the baseline above.
 
 ### Business authorization rollout
 
@@ -208,8 +224,10 @@ and [Task 11 recovery](handoffs/11-staff-management.md#expiry-and-recovery).
 
 ## Decision status
 
-**Partially resolved — G4 deployment:** temporary test hosting and the operating
-targets above are approved under amended ADR 0018. Paid provider/region/destination,
-separate costs, spending controls, configuration, and restore/alert verification
-remain open. Task 34 still requires G1; a free test deployment does not close
-the task or authorize real-business pilot use.
+**Partially resolved — G4 deployment:** G1 was accepted on 1 November. Temporary
+staging is connected and has the dated recovery/monitoring evidence above.
+Task 34 remains open for staging freshness activation and provider quota/spending
+email evidence, elapsed retention, and production provider/region/destination,
+separate costs, spending controls, scheduling and hosted recovery acceptance.
+Paid setup is deferred. A free test deployment does not authorize real-business
+pilot use; follow the [build plan's delivery order](agent-sized-build-plan.md).
