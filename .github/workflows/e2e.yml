@@ -44,14 +44,18 @@ jobs:
       - name: Restore and compare synthetic staging with restricted runtime grants
         if: github.event_name == 'workflow_dispatch' && inputs.recovery && github.repository == 'atlas700/bazardaftar'
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y postgresql-client-18 python3-venv
-          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
-          export PATH="/usr/lib/postgresql/18/bin:$PATH"
-          echo '127.0.0.1 restore' | sudo tee -a /etc/hosts >/dev/null
-          python3 -m venv /tmp/backup-venv
-          /tmp/backup-venv/bin/pip install -r scripts/backup-requirements.txt
-          /tmp/backup-venv/bin/python scripts/staging_backup.py
+          docker run --rm --network host --add-host restore:127.0.0.1 \
+            --volume "$PWD:/workspace:ro" --workdir /workspace \
+            --env STAGING_DATABASE_URL --env BACKBLAZE_BUCKET_NAME \
+            --env BACKBLAZE_BUCKET_REGION --env BACKBLAZE_BUCKET_ENDPOINT \
+            --env BACKBLAZE_BUCKET_KEY_ID --env BACKBLAZE_BUCKET_APP_KEY \
+            postgres:18-bookworm bash -c '
+              set -e
+              apt-get update -qq
+              apt-get install -y --no-install-recommends python3-venv ca-certificates
+              python3 -m venv /tmp/backup-venv
+              /tmp/backup-venv/bin/pip install -r scripts/backup-requirements.txt
+              /tmp/backup-venv/bin/python scripts/staging_backup.py'
           echo 'AFCS_E2E_RUNTIME_DATABASE_URL=postgresql://afcs_restore_runtime:ci_only@127.0.0.1:5432/afcs_task07_verify' >> "$GITHUB_ENV"
         env:
           STAGING_DATABASE_URL: ${{ secrets.STAGING_BACKUP_DATABASE_URL }}
