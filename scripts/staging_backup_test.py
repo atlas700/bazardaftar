@@ -1,5 +1,4 @@
 import os
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -45,7 +44,7 @@ class StagingBackupTests(unittest.TestCase):
     def test_upload_is_verified_before_success_and_dump_is_removed(self, run):
         def command(args, env):
             if args[0] == "psql":
-                return "2026-11-15T06:00:00Z\n"
+                return "2026-11-15T06:00:00Z"
             if args[0] == "pg_dump":
                 Path(args[args.index("--file") + 1]).write_bytes(b"test archive")
             return ""

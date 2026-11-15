@@ -17,6 +17,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Check staging backup failure and verification boundaries
+        run: python3 -m unittest discover -s scripts -p '*_test.py'
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
