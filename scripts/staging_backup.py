@@ -40,6 +40,7 @@ def run(args, env):
     result = subprocess.run(args, env=env, capture_output=True, text=True, timeout=300)
     if result.returncode:
         # Tool errors can contain credentials, SQL, or business records.
+        print(json.dumps({"event": "staging_backup_tool_failed", "tool": args[0], "exitCode": result.returncode}))
         raise RuntimeError("PostgreSQL tool failed.")
     return result.stdout.strip()
 
@@ -91,7 +92,7 @@ def restore_drill(s3, environment, saved):
             checksum = hashlib.file_digest(source, "sha256").hexdigest()
         if checksum != saved["sha256"]:
             raise RuntimeError("Downloaded backup checksum mismatch.")
-        run(["pg_restore", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", str(archive)], env)
+        run(["pg_restore", "--dbname", "afcs_restore_drill", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", str(archive)], env)
         migrations = run(["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c",
                           "select count(*) from drizzle.__drizzle_migrations"], env)
         journal = Path(__file__).resolve().parent.parent / "drizzle/meta/_journal.json"
