@@ -106,7 +106,9 @@ The live freshness test used a separate 60-second signed marker link. Its GET
 initially returned uncached 200, then returned 401 after expiry. UptimeRobot
 recorded DOWN/Unauthorized at 10:59:18 UTC. The founder confirmed receipt of the
 workflow-failure DOWN/UP emails and freshness DOWN email. The freshness target
-was then restored from the verified 10:50:55.262035 recovery point. Short-link
+was then restored from the verified 10:50:55.262035 recovery point. UptimeRobot
+recorded UP/OK at 11:01:09 UTC. The freshness monitor was then paused successfully
+until merge and the first main refresh; health/workflow-failure monitors remain active. Short-link
 expiry did not happen at an exact second: provider tolerance and monitoring
 latency are material, and the production RPO remains unaccepted.
 
