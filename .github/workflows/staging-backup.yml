@@ -1,12 +1,8 @@
 name: Staging database backup
 
 on:
-  push:
-    branches: [ops/task-34-backup-recovery]
-    paths:
-      - .github/workflows/staging-backup.yml
-      - scripts/staging_backup.py
   schedule:
+    # shortcut: GitHub can delay/drop schedules; replace before accepting pilot RPO.
     - cron: "17,47 * * * *"
   workflow_dispatch:
 
@@ -19,7 +15,7 @@ concurrency:
 
 jobs:
   backup:
-    if: github.repository == 'atlas700/bazardaftar' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ops/task-34-backup-recovery')
+    if: github.repository == 'atlas700/bazardaftar' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container: postgres:18-bookworm

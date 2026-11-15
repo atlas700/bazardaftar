@@ -1,16 +1,17 @@
 # Connect the temporary test environment
 
-Prepared 9 November; reviewed 14 November 2026. No Netlify or Neon account is
-connected. The founder confirmed that neither test resource has been created.
-This checklist implements the preparation requested by the founder; it is not deployment
-evidence. Follow [ADR 0018](adr/0018-managed-pilot-hosting.md): synthetic records
+Prepared 9 November; updated 15 November 2026. The founder-owned Netlify/Neon test
+environment is connected at https://bazardaftar.netlify.app. See the dated
+[backup and recovery handoff](handoffs/34-staging-backup-recovery.md) for evidence
+and remaining acceptance. Follow [ADR 0018](adr/0018-managed-pilot-hosting.md): synthetic records
 only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
 
 ## Connect accounts and configure the app
 
 1. Sign in to Netlify and Neon with founder-owned accounts; enable account MFA.
    Recheck current free-plan eligibility and quotas before creating resources.
-   Create a separate Neon PostgreSQL 16 project/database for temporary testing.
+   Create a separate Neon PostgreSQL project/database for temporary testing
+   (the connected test server is PostgreSQL 18).
    Record its region privately. Never copy development or real business records.
 2. Save both connection strings from Neon securely: the **pooled** URL for the
    running app and the **direct, unpooled** URL for migrations, dumps and restores.
@@ -107,8 +108,31 @@ An hourly start time alone cannot prove a one-hour recovery point. Keep backup
 credentials separate from application runtime credentials. Configure job-failure
 and stale-backup emails; a file on the app's ephemeral disk is not a durable backup.
 
-These are manual rehearsal commands, not a configured scheduler. Use PostgreSQL
-16 client tools and private libpq service/password files (or a secret manager).
+The repository now includes a staging-only GitHub Actions backup and download/
+restore job in `.github/workflows/staging-backup.yml`. It runs on the default
+branch after merge at minutes 17 and 47, or manually through Actions. The scheduler
+can delay or drop runs and does not establish the one-hour recovery-point target.
+Before real use, configure independent failure/staleness emails and a scheduler/
+provider recovery arrangement that meets that target. No backup email delivery
+is established by a successful workflow.
+
+Configure repository secrets `STAGING_BACKUP_DATABASE_URL` (direct, separate
+read-only Neon login), `STAGING_BACKUP_KEY_ID`, `STAGING_BACKUP_APP_KEY`; repository
+variables `STAGING_BACKUP_BUCKET`, `STAGING_BACKUP_REGION`,
+`STAGING_BACKUP_ENDPOINT`. Keep these out of Netlify runtime settings. The database
+role needs CONNECT, schema USAGE and table/sequence SELECT, including default
+privileges for the migration owner. Recheck grants after changing that owner.
+
+Archives use private B2 storage, AES256 encryption and a SHA256 digest. The job
+downloads its uploaded object and restores it atomically into a new PostgreSQL 18
+service, then checks migration count. It never restores to the source. B2 native
+lifecycle for `staging/postgres/` hides objects after 30 days and deletes hidden
+versions after one more day; expiry timing and full application recovery remain
+separate checks. Use a bucket/prefix-restricted key with only required capabilities
+before pilot use; the current supplied bucket key has broader permissions.
+
+The commands below remain available for manual rehearsal. Use PostgreSQL
+18 client tools for the connected source and private libpq service/password files (or a secret manager).
 The named services below must resolve to the **direct** source test database and
 a **new empty, separately named** restore database. Protect password files with
 owner-only OS permissions. `pg_dump --version` must match or exceed the server
@@ -180,10 +204,12 @@ Task 34 handoff:
 
 ## Current documentation references
 
-Rechecked 14 November 2026:
+Rechecked 15 November 2026:
 [Netlify Next.js configuration and middleware limitations](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/),
 [Neon pooled versus direct connections](https://neon.com/docs/connect/connection-pooling),
-[PostgreSQL 16 pg_dump](https://www.postgresql.org/docs/16/app-pgdump.html),
-[pg_restore](https://www.postgresql.org/docs/16/app-pgrestore.html), and
+[PostgreSQL 18 pg_dump](https://www.postgresql.org/docs/18/app-pgdump.html),
+[pg_restore](https://www.postgresql.org/docs/18/app-pgrestore.html),
+[GitHub scheduled workflow limitations](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule),
+[B2 lifecycle rules](https://www.backblaze.com/docs/cloud-storage-lifecycle-rules), and
 [libpq service files](https://www.postgresql.org/docs/16/libpq-pgservice.html).
-Recheck limits/pricing before connecting; no provider resource was provisioned.
+Recheck limits/pricing before paid use; no paid upgrade is authorized here.
