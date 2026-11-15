@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from staging_backup import backup, database_environment, main
+from staging_backup import backup, database_environment, main, restore_drill
 
 
 class StagingBackupTests(unittest.TestCase):
@@ -83,6 +83,36 @@ class StagingBackupTests(unittest.TestCase):
         s3.head_object.return_value = {"ContentLength": 0, "Metadata": {}, "ServerSideEncryption": "AES256"}
         with self.assertRaises(RuntimeError):
             backup(s3, self.environment)
+
+    @patch("staging_backup.run", return_value="1")
+    def test_restore_refuses_nonempty_target_before_download(self, run):
+        s3 = Mock()
+        with self.assertRaises(RuntimeError):
+            restore_drill(s3, self.environment, {"key": "staging/postgres/test.dump", "sha256": "bad"})
+        s3.download_file.assert_not_called()
+        self.assertEqual(run.call_args.args[1]["PGHOST"], "restore")
+        self.assertEqual(run.call_args.args[1]["PGDATABASE"], "afcs_restore_drill")
+
+    @patch("staging_backup.run", return_value="0")
+    def test_restore_rejects_changed_download_before_executing_sql(self, run):
+        s3 = Mock()
+        s3.download_file.side_effect = lambda bucket, key, path: Path(path).write_bytes(b"changed archive")
+        with self.assertRaises(RuntimeError):
+            restore_drill(s3, self.environment, {"key": "staging/postgres/test.dump", "sha256": "bad"})
+        self.assertEqual(run.call_count, 1)
+
+    @patch("staging_backup.run")
+    def test_restore_is_atomic_and_checks_migration_history(self, run):
+        import hashlib
+
+        s3 = Mock()
+        archive = b"verified archive"
+        s3.download_file.side_effect = lambda bucket, key, path: Path(path).write_bytes(archive)
+        run.side_effect = ["0", "", "18"]
+        result = restore_drill(s3, self.environment, {"key": "staging/postgres/test.dump", "sha256": hashlib.sha256(archive).hexdigest()})
+        self.assertEqual(result["restoredMigrations"], 18)
+        self.assertIn("--single-transaction", run.call_args_list[1].args[0])
+        self.assertIn("--exit-on-error", run.call_args_list[1].args[0])
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("builtins.print")

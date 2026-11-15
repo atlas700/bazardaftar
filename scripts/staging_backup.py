@@ -73,6 +73,33 @@ def backup(s3, environment):
         return {"key": key, "bytes": size, "sha256": checksum, "recoveryPoint": recovery_point}
 
 
+def restore_drill(s3, environment, saved):
+    # This hostname/database belongs only to the job's disposable PostgreSQL service.
+    env = {key: value for key, value in os.environ.items() if not key.startswith("PG")}
+    env.update({"PGHOST": "restore", "PGPORT": "5432", "PGDATABASE": "afcs_restore_drill",
+                "PGUSER": "restore", "PGPASSWORD": "ci_only", "PGSSLMODE": "disable", "PGCONNECT_TIMEOUT": "10"})
+    objects = run(["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c",
+                   "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
+                   "where n.nspname !~ '^pg_' and n.nspname <> 'information_schema' "
+                   "and c.relkind in ('r','p','v','m','S','f')"], env)
+    if objects != "0":
+        raise RuntimeError("Restore target is not empty.")
+    with tempfile.TemporaryDirectory(prefix="bazardaftar-restore-") as directory:
+        archive = Path(directory) / "downloaded.dump"
+        s3.download_file(environment["BACKBLAZE_BUCKET_NAME"], saved["key"], str(archive))
+        with archive.open("rb") as source:
+            checksum = hashlib.file_digest(source, "sha256").hexdigest()
+        if checksum != saved["sha256"]:
+            raise RuntimeError("Downloaded backup checksum mismatch.")
+        run(["pg_restore", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", str(archive)], env)
+        migrations = run(["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c",
+                          "select count(*) from drizzle.__drizzle_migrations"], env)
+        journal = Path(__file__).resolve().parent.parent / "drizzle/meta/_journal.json"
+        if int(migrations) != len(json.loads(journal.read_text())["entries"]):
+            raise RuntimeError("Restored migration history does not match the repository.")
+        return {"restoredMigrations": int(migrations)}
+
+
 def main():
     try:
         required = ["STAGING_DATABASE_URL", "BACKBLAZE_BUCKET_NAME", "BACKBLAZE_BUCKET_REGION",
@@ -93,7 +120,9 @@ def main():
             config=Config(signature_version="s3v4", request_checksum_calculation="when_required",
                           response_checksum_validation="when_required", connect_timeout=10, read_timeout=60),
         )
-        print(json.dumps({"event": "staging_backup_completed", **backup(client, os.environ)}))
+        saved = backup(client, os.environ)
+        print(json.dumps({"event": "staging_backup_completed", **saved}))
+        print(json.dumps({"event": "staging_restore_completed", **restore_drill(client, os.environ, saved)}))
         return 0
     except Exception as error:
         print(json.dumps({"event": "staging_backup_failed", "kind": type(error).__name__}))

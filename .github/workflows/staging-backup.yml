@@ -1,6 +1,11 @@
 name: Staging database backup
 
 on:
+  push:
+    branches: [ops/task-34-backup-recovery]
+    paths:
+      - .github/workflows/staging-backup.yml
+      - scripts/staging_backup.py
   schedule:
     - cron: "17,47 * * * *"
   workflow_dispatch:
@@ -14,10 +19,20 @@ concurrency:
 
 jobs:
   backup:
-    if: github.repository == 'atlas700/bazardaftar' && github.ref == 'refs/heads/main'
+    if: github.repository == 'atlas700/bazardaftar' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ops/task-34-backup-recovery')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container: postgres:18-bookworm
+    services:
+      restore:
+        image: postgres:18-bookworm
+        env:
+          POSTGRES_DB: afcs_restore_drill
+          POSTGRES_USER: restore
+          POSTGRES_PASSWORD: ci_only
+        options: >-
+          --health-cmd "pg_isready -U restore -d afcs_restore_drill"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v6
         with:
