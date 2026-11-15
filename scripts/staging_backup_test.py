@@ -113,6 +113,8 @@ class StagingBackupTests(unittest.TestCase):
         self.assertEqual(result["restoredMigrations"], 18)
         self.assertIn("--single-transaction", run.call_args_list[1].args[0])
         self.assertIn("--exit-on-error", run.call_args_list[1].args[0])
+        command = run.call_args_list[1].args[0]
+        self.assertEqual(command[command.index("--dbname") + 1], "afcs_restore_drill")
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("builtins.print")
