@@ -233,9 +233,10 @@ and [Task 11 recovery](handoffs/11-staff-management.md#expiry-and-recovery).
 ## Decision status
 
 **Partially resolved — G4 deployment:** G1 was accepted on 1 November. Temporary
-staging is connected and has the dated recovery/monitoring evidence above.
-Task 34 remains open for provider quota/spending evidence and B2 account-control
-verification, elapsed retention, and production provider/region/destination,
-separate costs, spending controls, scheduling and hosted recovery acceptance.
-Paid setup is deferred. A free test deployment does not authorize real-business
-pilot use; follow the [build plan's delivery order](agent-sized-build-plan.md).
+staging is connected and has the dated recovery/monitoring evidence above. The
+founder closed Task 34 tracking on 18 November for synthetic scope; provider
+notification delivery, custom B2 cap editing, elapsed retention, and production
+provider/region/destination, separate costs, spending controls, scheduling and
+hosted recovery acceptance remain open. Paid setup is deferred. A free test
+deployment does not authorize real-business pilot use; follow the
+[build plan's delivery order](agent-sized-build-plan.md).

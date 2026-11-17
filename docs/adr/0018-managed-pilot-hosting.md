@@ -69,17 +69,20 @@ pauses and development SMS limits can interrupt testing; routine test numbers
 do not establish real SMS delivery. Repository deployment compatibility remains
 unverified until a test deployment succeeds.
 
-## Implementation status (17 November 2026)
+## Implementation status (18 November 2026)
 
 The [isolated recovery handoff](../handoffs/34-isolated-staging-recovery.md)
 records 16 November UTC evidence: a separate Free synthetic Neon target restored from a verified archive,
 restricted runtime/backup roles, a guarded Netlify cutover, hosted health and
 public sign-in, current-main disposable recovery/browser verification, and
-freshness activation with UP readback. Provider quota/spending receipt and B2
-account-control evidence still block Task 35 admission. Production setup,
-authenticated hosted recovery acceptance and elapsed retention remain open.
-These implementation updates do not change this ADR's
-operating targets or authorize paid setup or real-business pilot access.
+freshness activation with UP readback. On 17 November, current-main backup run
+44155208289 succeeded and its fresh marker/UptimeRobot status read UP. On 18
+November, the founder closed Task 34 tracking for synthetic scope. B2 account
+alerts are enabled, but custom cap editing requires a credit card; no qualifying
+provider quota/spending notice was found. Those checks, production setup,
+authenticated hosted recovery acceptance and elapsed retention remain open. This
+task-status closure does not change this ADR's operating targets or authorize
+paid setup or real-business pilot access.
 
 ## Links
 

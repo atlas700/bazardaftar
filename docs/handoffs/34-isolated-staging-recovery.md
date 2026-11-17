@@ -1,11 +1,12 @@
 # Task 34 — Isolated synthetic staging recovery
 
-17 November 2026 Kabul; provider events below are 16 November UTC. These are dated
-recovery results, not a new live health or freshness check on 17 November.
-**Task 34 remains open and Task 35 has not started:**
-provider quota/spending-notification evidence still blocks staging admission.
-The founder owns the accounts, alerts and recovery. No paid upgrade or production
-cutover was authorized or performed.
+18 November 2026 Kabul. **Task 34 tracking was closed by explicit founder direction
+on 18 November for synthetic staging scope.** This administrative status does not
+mean outstanding provider or production gates passed. Task 35 has not started and
+readiness issue #65 remains open. The founder owns the accounts, alerts and
+recovery. No paid upgrade or production cutover was authorized or performed.
+Recovery, backup and monitor results below are dated evidence; freshness was not
+rechecked on 18 November.
 
 ## Recovered target and continuity
 
@@ -67,6 +68,30 @@ not pointed at the hosted database. Health and public navigation do not prove
 authenticated hosted workflow or recovery-time targets. The 45-minute marker,
 five-minute checks and GitHub scheduling delays remain synthetic monitoring limits.
 
+## 17–18 November follow-up evidence and founder closure
+
+On 17 November UTC, [current-main backup run 44155208289](https://github.com/atlas700/bazardaftar/actions/runs/44155208289)
+completed successfully on main commit `d5f4b63d04700331f26d7304c4f3c59afc6ce18a`.
+Its fresh marker returned HTTP 200 with `ok` and `Cache-Control: no-store`; the
+UptimeRobot monitor read UP after the run. This is dated evidence only; the
+45-minute marker has since expired, so current freshness is unknown.
+
+On 18 November, the signed-in B2 Caps & Alerts page showed email alerts enabled
+for storage, download bandwidth, and Class B/C transactions. The page's Edit Caps
+flow required entering a credit card, and Billing showed no payment method. No
+card was added and no cap setting was changed; a separate custom spending ceiling
+was therefore not established. The current billing estimate showed $0.00 for
+17 November. These observations do not establish alert delivery or cap enforcement.
+
+A read-only Gmail search for provider quota/usage/spending alerts found no
+qualifying notice. The only result was an unrelated Neon product newsletter dated
+11 January 2025. No email was opened or sent. No quota was deliberately consumed
+to trigger an alert.
+
+The founder's 18 November instruction closes Task 34 tracking for synthetic
+staging. It does not mark provider notification delivery, custom B2 cap editing,
+elapsed retention, production recovery or other pilot-release gates as passed.
+
 ## Quotas, remaining gates and next action
 
 The new Neon endpoint is fixed at 0.25 CU min/max, with default scale-to-zero,
@@ -75,11 +100,11 @@ automatic top-up disabled, overage accumulation excluded and no exceeded quota.
 No billing setting changed. These controls do not establish production costs or
 uninterrupted availability on Free plans.
 
-Provider notification receipt remains missing. The connected mailbox search found
-no qualifying quota/spending message; that does not prove no other mailbox received
-one. B2's account console required sign-in, so account-level Caps & Alerts could
-not be inspected or changed using the available bucket credentials.
-[B2 documents account-console cap/alert controls](https://www.backblaze.com/docs/cloud-storage-create-and-manage-caps-and-alerts).
+Provider notification receipt remains missing. The 18 November Gmail search found
+no qualifying notice in the searched mailbox. B2's account page showed alert
+recipients enabled, but custom cap editing required a credit card; no custom cap
+was set or verified. The founder deferred paid setup. [B2 documents account-console
+cap/alert controls](https://www.backblaze.com/docs/cloud-storage-create-and-manage-caps-and-alerts).
 [Netlify documents automatic usage emails](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/billing-faq-for-credit-based-plans/),
 but no supported test-delivery endpoint was established through available APIs.
 [Neon spending notifications](https://neon.com/docs/introduction/spending-notifications)
@@ -87,13 +112,12 @@ require Launch/Scale; no paid upgrade was made to obtain them. Historical monito
 emails are not provider quota/spending evidence. No usage was deliberately burned
 or receipt invented to close this gate.
 
-**Exact next action:** obtain authenticated B2 account access to inspect the
-existing Caps & Alerts controls, and genuine provider quota/spending delivery
-evidence through a supported free notification path or an actual provider notice.
-Record receipt privately and only redacted results in [readiness #65](https://github.com/atlas700/bazardaftar/issues/65).
-If the Free plan cannot supply required evidence, record the exact limitation;
-do not waive the gate. Only then reassess Task 35 admission through
-[map #64](https://github.com/atlas700/bazardaftar/issues/64). Native dependencies
+**Remaining operational gate:** obtain genuine provider quota/spending delivery
+evidence through a supported no-cost path or an actual provider notice. Record
+any receipt privately and only redacted results in [readiness #65](https://github.com/atlas700/bazardaftar/issues/65).
+Task 34's administrative closure does not provide that evidence or resolve Task
+35 admission through [map #64](https://github.com/atlas700/bazardaftar/issues/64).
+Native dependencies
 #65 → #66/#67 → #68 remain open. Production provider/cost decisions, retention,
 scheduling, authenticated hosted recovery and other pilot-release gates remain
 separate and unaccepted.
