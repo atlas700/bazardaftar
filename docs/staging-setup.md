@@ -1,17 +1,19 @@
 # Connect the temporary test environment
 
-Prepared 9 November; updated 17 November 2026. The founder-owned Netlify/Neon test
+Prepared 9 November; updated 18 November 2026. The founder-owned Netlify/Neon test
 environment is connected at https://bazardaftar.netlify.app. See the dated
 [isolated recovery handoff](handoffs/34-isolated-staging-recovery.md) for evidence
 and remaining acceptance. Follow [ADR 0018](adr/0018-managed-pilot-hosting.md): synthetic records
-only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
+only, founder-owned accounts, no paid upgrade. Task 34 tracking was closed by
+founder direction; G4 deployment and Task 35 admission remain open.
 
 The current target is the independent Free synthetic project restored from the
 15 November 10:50:55 UTC archive, not an existing production-named branch. The
 restricted pooled runtime and direct read-only backup credentials are separate
 from the restore owner. Main's cleared-cache deploy, `/health` 200 and freshness
-UP were recorded on 16 November UTC; provider quota/spending evidence still blocks
-Task 35. Hosted public navigation/development sign-in and the full disposable CI workflow
+UP were recorded on 16 November UTC. A 17 November current-main backup and
+freshness check also passed; provider quota/spending evidence still blocks Task 35.
+Hosted public navigation/development sign-in and the full disposable CI workflow
 are separate evidence. Do not repeat provisioning or overwrite an existing DB.
 
 ## Connect accounts and configure the app
