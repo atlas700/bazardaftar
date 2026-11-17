@@ -69,14 +69,16 @@ pauses and development SMS limits can interrupt testing; routine test numbers
 do not establish real SMS delivery. Repository deployment compatibility remains
 unverified until a test deployment succeeds.
 
-## Implementation status (15 November 2026)
+## Implementation status (17 November 2026)
 
-The [staging recovery handoff](../handoffs/34-staging-recovery-verification.md)
-records connected Netlify/Neon synthetic staging, private B2 backups, restored-app
-verification, staging quota controls and confirmed monitor emails. PR #62 is
-merged; post-merge freshness activation is not yet recorded. Production setup,
-hosted recovery acceptance, elapsed retention and provider quota/spending email
-evidence remain open. These implementation updates do not change this ADR's
+The [isolated recovery handoff](../handoffs/34-isolated-staging-recovery.md)
+records 16 November UTC evidence: a separate Free synthetic Neon target restored from a verified archive,
+restricted runtime/backup roles, a guarded Netlify cutover, hosted health and
+public sign-in, current-main disposable recovery/browser verification, and
+freshness activation with UP readback. Provider quota/spending receipt and B2
+account-control evidence still block Task 35 admission. Production setup,
+authenticated hosted recovery acceptance and elapsed retention remain open.
+These implementation updates do not change this ADR's
 operating targets or authorize paid setup or real-business pilot access.
 
 ## Links

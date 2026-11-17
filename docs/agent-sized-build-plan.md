@@ -125,15 +125,16 @@ passed. Task 32's acceptance and local checks are recorded in its
 recorded in its [handoff](handoffs/33-pilot-browser-workflow.md).
 Checked 15 November: [PR #53](https://github.com/atlas700/bazardaftar/pull/53)
 and [PR #54](https://github.com/atlas700/bazardaftar/pull/54) are merged.
-**Task 34 is in progress:** staging is connected and
-[PR #60](https://github.com/atlas700/bazardaftar/pull/60) is merged. The latest
-[handoff](handoffs/34-staging-recovery-verification.md) records a successful
-restored-app browser workflow and confirmed monitor emails. The founder limited
-this increment to free synthetic staging and deferred paid setup.
-[PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November
-at `a473abc7e7cf9d0330e40709cab9ab0dfcdb7b5b`. Its operational handoff leaves
-freshness monitoring paused until the first verified main-branch refresh;
-post-merge activation is not established by the merge itself.
+**Task 34 is in progress:** the [17 November recovery handoff](handoffs/34-isolated-staging-recovery.md)
+records 16 November UTC evidence of an isolated Free synthetic Neon restore, restricted runtime/backup roles,
+guarded Netlify cutover and hosted `/health` 200. Current-main backup and disposable
+restored-app browser checks pass; freshness was resumed against a verified fresh
+marker and read back UP. Hosted public navigation/development sign-in is separate
+from full business workflow evidence in CI. Provider quota/spending receipt and
+B2 account-control evidence remain open and still block Task 35. The founder
+limited recovery to free synthetic staging and deferred paid setup. Earlier
+[PR #62](https://github.com/atlas700/bazardaftar/pull/62) remains merged; neither
+that merge nor this recovery completes Task 34 or authorizes real business use.
 Remote CI/review and live provider acceptance remain separate delivery states.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
@@ -221,11 +222,12 @@ or interview transcripts.
 | G4 database | Accepted: [ADR 0013](adr/0013-local-postgresql-foundation.md) approves local PostgreSQL and reviewed migrations; [ADR 0014](adr/0014-clerk-organizations-local-business-roles.md), 25 October, replaces local membership ownership with verified Clerk membership and a local organization mapping | Technical lead/founder | G1 is accepted; task-specific schema checks and other G4 gates remain required |
 | G4 mutation boundary | Accepted: [ADR 0015](adr/0015-server-action-mutation-boundary.md), 26 October; native Server Actions with the [mutation contract](api-conventions.md#mutation-contract) and a narrow first-organization bootstrap exception | Technical lead/founder | Boundary decision resolved; each mutation still needs its task's authorization and recovery checks |
 | G4 permissions | Accepted: [ADR 0016](adr/0016-local-business-authorization.md); Task 10 implements fixed roles, membership-bound grants, and server guards. Task 25 implements ADR 0019's owner-only rounding-reduction permission | Technical lead/founder | Policy and foundation resolved; each new workflow still needs its own permission and resource-ownership checks |
-| G4 deployment | Partially resolved: Netlify Free/Neon Free synthetic staging is connected; Neon region `aws-eu-central-1` and private B2 backup destination are recorded. The [15 November handoff](handoffs/34-staging-recovery-verification.md) records restored-app verification, monitor email delivery and staging quota controls. Freshness activation, provider quota/spending emails and elapsed retention remain unverified. Paid production provider/region/destination, separate costs, spending controls and scheduling/hosted recovery acceptance remain deferred/open under [ADR 0018](adr/0018-managed-pilot-hosting.md). The USD 60/month ceiling and 30-day/one-hour/four-hour real-pilot targets are unchanged | Founder | G1 is accepted. Finish staging acceptance before Task 35's internal rehearsal; production and other pilot-release gates still block real business use |
+| G4 deployment | Partially resolved: the [17 November handoff](handoffs/34-isolated-staging-recovery.md) records a separate Free synthetic Neon restore in `aws-eu-central-1`, restricted roles, guarded Netlify cutover, hosted health, current-main backup/disposable workflow and freshness UP. Provider quota/spending receipt, B2 account controls and elapsed retention remain open. Paid production provider/region/destination, separate costs, spending controls and scheduling/authenticated hosted recovery acceptance remain deferred/open under [ADR 0018](adr/0018-managed-pilot-hosting.md). The USD 60/month ceiling and 30-day/one-hour/four-hour real-pilot targets are unchanged | Founder | G1 is accepted. Finish staging acceptance before Task 35's internal rehearsal; production and other pilot-release gates still block real business use |
 
-**Next task:** finish Task 34's free-staging acceptance: verify a successful
-main-branch backup refresh after PR #62, then resume freshness monitoring against
-that fresh target, and verify provider quota/spending notifications. Task 35's
+**Next task:** finish Task 34's free-staging acceptance: obtain B2 account access
+for Caps & Alerts verification and genuine provider quota/spending receipt.
+Current-main recovery and freshness activation are recorded; recheck freshness
+when resuming operations. Task 35's
 synthetic onboarding/support/measurement preparation and internal dry run follow
 staging verification. Paid production setup remains deferred; its recovery,
 scheduling, costs and retention evidence remain explicit Task 34 release gates
@@ -363,7 +365,7 @@ The scope column also constrains the detailed task descriptions below.
 | 31 | Complete | Shared request limits for authentication and mutations, safe rejection and retry/idempotency verification; see [handoff](handoffs/31-abuse-controls.md) |
 | 32 | Complete | Critical invariant register, guarded integration discovery, repeat runs and bounded request retry hints; see [handoff](handoffs/32-pilot-test-coverage.md) |
 | 33 | Complete; PR merged | One real-auth purchase-to-payment workflow, receipt replay and isolated teardown; see [handoff](handoffs/33-pilot-browser-workflow.md) and PR #54 |
-| 34 | In progress; PR #62 merged | Staging rows/runtime grants and real-auth restored workflow verified; monitor emails and quota controls recorded. Staging freshness activation/provider spend-email evidence and production recovery/retention gates remain open; see [handoff](handoffs/34-staging-recovery-verification.md) |
+| 34 | In progress; recovery recorded | Isolated synthetic restore, restricted roles, hosted health, main disposable workflow and freshness UP verified on 16 November UTC. Provider spend-email/B2 account-control evidence and production recovery/retention gates remain open; see [handoff](handoffs/34-isolated-staging-recovery.md) |
 | 35 | Pilot required; not started | Synthetic onboarding, support and measurement preparation/internal dry run after staging verification; real business use remains gated |
 
 ### Foundation
@@ -1084,8 +1086,8 @@ recovery targets. Record end-to-end sign-in in the deployed environment.
 restore evidence date.
 
 Track free-staging acceptance separately from deferred production acceptance.
-The [current staging handoff](handoffs/34-staging-recovery-verification.md)
-records completed evidence and remaining activation/alert checks. Finishing those
+The [current staging handoff](handoffs/34-isolated-staging-recovery.md)
+records completed recovery/activation and remaining provider control/receipt checks. Finishing those
 staging checks permits Task 35's synthetic preparation and internal dry run;
 Task 34 remains open until its production recovery, retention, cost and alert
 requirements pass. Paid setup and real-business pilot access are not authorized

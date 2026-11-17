@@ -1,12 +1,23 @@
 # Connect the temporary test environment
 
-Prepared 9 November; updated 15 November 2026. The founder-owned Netlify/Neon test
+Prepared 9 November; updated 17 November 2026. The founder-owned Netlify/Neon test
 environment is connected at https://bazardaftar.netlify.app. See the dated
-[application recovery handoff](handoffs/34-staging-recovery-verification.md) for evidence
+[isolated recovery handoff](handoffs/34-isolated-staging-recovery.md) for evidence
 and remaining acceptance. Follow [ADR 0018](adr/0018-managed-pilot-hosting.md): synthetic records
 only, founder-owned accounts, no paid upgrade. Task 34 and G4 remain open.
 
+The current target is the independent Free synthetic project restored from the
+15 November 10:50:55 UTC archive, not an existing production-named branch. The
+restricted pooled runtime and direct read-only backup credentials are separate
+from the restore owner. Main's cleared-cache deploy, `/health` 200 and freshness
+UP were recorded on 16 November UTC; provider quota/spending evidence still blocks
+Task 35. Hosted public navigation/development sign-in and the full disposable CI workflow
+are separate evidence. Do not repeat provisioning or overwrite an existing DB.
+
 ## Connect accounts and configure the app
+
+These are initial-setup instructions. The connected environment already exists;
+use its private recovery record and do not repeat resource creation during resumption.
 
 1. Sign in to Netlify and Neon with founder-owned accounts; enable account MFA.
    Recheck current free-plan eligibility and quotas before creating resources.
@@ -140,11 +151,11 @@ with an expiring signed GET for a separate harmless `ok` marker. No archive link
 is shared. Expiry is at recovery-point age 45 minutes; provider tolerance and
 five-minute polling add detection latency. The separate workflow-badge monitor
 detects failed runs. Both use the existing founder email contact.
-[PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November;
-the latest [operational handoff](handoffs/34-staging-recovery-verification.md)
-records freshness monitoring paused. Verify a successful main-branch run updates
-the target before resuming it; the merge alone does not establish activation.
-Pause it before disabling the backup workflow.
+The [17 November operational handoff](handoffs/34-isolated-staging-recovery.md)
+records a successful current-main refresh, verification of the actual unexpired
+marker, and monitor resume with UP readback. Before any future resume, verify a
+fresh successful run and its actual target again; old evidence or a merge alone
+does not establish current freshness. Pause it before disabling the backup workflow.
 
 For the full restored-app drill, manually dispatch the **Pilot browser workflow**
 with `recovery=true` on the reviewed branch. It uses a fresh PostgreSQL 18 service,

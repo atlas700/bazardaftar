@@ -1,11 +1,14 @@
 # Deployment
 
-## Recorded baseline (15 November 2026)
+## Recorded baseline (17 November 2026)
+
+Recovery observations below were recorded on 16 November UTC; they do not
+establish current health or freshness without a new check.
 
 - Synthetic staging is connected on Netlify Free and Neon Free. Application and
   backup secrets are configured privately; the repository includes the scheduled
   staging backup workflow. See [the staging checklist](staging-setup.md) and
-  [recovery evidence](handoffs/34-staging-recovery-verification.md).
+  [isolated recovery evidence](handoffs/34-isolated-staging-recovery.md).
 - Amended [ADR 0018](adr/0018-managed-pilot-hosting.md) selects Netlify Free and
   Neon Free for temporary testing with synthetic business records. Paid production
   hosting is deferred. The founder owns hosting, billing, alerts, and recovery;
@@ -17,11 +20,16 @@
   disposable PostgreSQL 18. The founder confirmed monitor DOWN/UP and freshness
   DOWN emails. This is synthetic recovery evidence, not hosted failover or
   production OTP acceptance.
-- [PR #62](https://github.com/atlas700/bazardaftar/pull/62) merged on 15 November.
-  The latest operational handoff leaves freshness monitoring paused pending the
-  first verified main-branch refresh. Activation has not been reverified here.
+- The inaccessible staging target was recovered into a new independent Free
+  synthetic Neon project from the 15 November 10:50:55 UTC archive. Existing DBs
+  were untouched; continuity after that snapshot is not established. Separate
+  restricted runtime/backup roles are verified. Only the confirmed site's main
+  runtime DB value and GitHub backup DB secret changed. A cleared-cache main
+  deploy restored `/health` 200; a fresh successful backup preceded verified
+  freshness activation and UP readback. Hosted public navigation/development
+  sign-in worked; full business workflow evidence remains disposable CI.
   Production recovery/scheduling, elapsed retention and provider quota/spending
-  email evidence remain open; paid setup remains deferred.
+  email evidence remain open; Task 35 admission and paid setup remain gated.
 
 ## Environment configuration
 
@@ -226,8 +234,8 @@ and [Task 11 recovery](handoffs/11-staff-management.md#expiry-and-recovery).
 
 **Partially resolved — G4 deployment:** G1 was accepted on 1 November. Temporary
 staging is connected and has the dated recovery/monitoring evidence above.
-Task 34 remains open for staging freshness activation and provider quota/spending
-email evidence, elapsed retention, and production provider/region/destination,
+Task 34 remains open for provider quota/spending evidence and B2 account-control
+verification, elapsed retention, and production provider/region/destination,
 separate costs, spending controls, scheduling and hosted recovery acceptance.
 Paid setup is deferred. A free test deployment does not authorize real-business
 pilot use; follow the [build plan's delivery order](agent-sized-build-plan.md).
