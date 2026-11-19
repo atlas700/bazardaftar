@@ -1,4 +1,4 @@
-# Agent-Sized Build Plan — BazarDaftar
+# Agent-Sized Build Plan — GoldenBase
 
 ## Purpose
 
@@ -78,8 +78,10 @@ task readiness and order. Update both when an approved decision changes the scop
   [ADR 0013's amendment](adr/0013-local-postgresql-foundation.md#amendment--disposable-ci-verification-28-october-2026).
   This does not advance Task 32 or close G1, pilot sign-in, or deployment gates.
 - Preserve unrelated worktree changes.
-- The founder-authorized 1 November project rename uses **BazarDaftar** and
+- The founder-authorized 1 November project rename used **BazarDaftar** and
   `atlas700/bazardaftar`; see its [handoff](handoffs/project-rename-bazardaftar.md).
+  The 19 November rename to GoldenBase is recorded in its
+  [handoff](handoffs/project-rename-goldenbase.md).
   Existing infrastructure identifiers remain compatible. This advances no
   numbered domain task and did not change the then-open G1 gate.
 - On 1 November the founder accepted the consolidated retrospective research and
@@ -104,30 +106,30 @@ acceptance evidence in its handoff. Track these additional states separately:
   deployment, and recovery evidence has been recorded and reviewed.
 
 **Task 22 delivery, checked 5 November 2026:**
-[PR #42](https://github.com/atlas700/bazardaftar/pull/42) is merged. Its head was
+[PR #42](https://github.com/atlas700/goldenbase/pull/42) is merged. Its head was
 `bb9bba9d569f9bb929d80508e4c4925485df61d2`; the
-[quality and PostgreSQL checks](https://github.com/atlas700/bazardaftar/actions/runs/42009750351)
+[quality and PostgreSQL checks](https://github.com/atlas700/goldenbase/actions/runs/42009750351)
 passed. The original Task 22 handoff remains the dated local-evidence record.
 This delivery update closes no live pilot gate. Task 25 implementation is recorded
 in its [handoff](handoffs/25-supplier-payments.md) and merged in
-[PR #44](https://github.com/atlas700/bazardaftar/pull/44) on 5 November with passing
+[PR #44](https://github.com/atlas700/goldenbase/pull/44) on 5 November with passing
 CI. Task 26 implementation and local evidence are recorded in its
 [handoff](handoffs/26-supplier-statements.md); it merged in
-[PR #45](https://github.com/atlas700/bazardaftar/pull/45) on 7 November with passing
+[PR #45](https://github.com/atlas700/goldenbase/pull/45) on 7 November with passing
 quality/database CI. Task 27 implementation and local evidence are recorded in its
 [handoff](handoffs/27-audit-logging.md). Task 28 implementation and local evidence
 are recorded in its [handoff](handoffs/28-pilot-dashboard.md); it merged in
-[PR #48](https://github.com/atlas700/bazardaftar/pull/48) on 7 November.
+[PR #48](https://github.com/atlas700/goldenbase/pull/48) on 7 November.
 Task 30's implementation and local checks are recorded in its
 [handoff](handoffs/30-safe-diagnostics.md). Task 31's local acceptance is recorded
 in its [handoff](handoffs/31-abuse-controls.md). Task 31 merged in
-[PR #52](https://github.com/atlas700/bazardaftar/pull/52); its main-branch
-[quality/database CI](https://github.com/atlas700/bazardaftar/actions/runs/42358039728)
+[PR #52](https://github.com/atlas700/goldenbase/pull/52); its main-branch
+[quality/database CI](https://github.com/atlas700/goldenbase/actions/runs/42358039728)
 passed. Task 32's acceptance and local checks are recorded in its
 [handoff](handoffs/32-pilot-test-coverage.md). Task 33's local browser acceptance is
 recorded in its [handoff](handoffs/33-pilot-browser-workflow.md).
-Checked 15 November: [PR #53](https://github.com/atlas700/bazardaftar/pull/53)
-and [PR #54](https://github.com/atlas700/bazardaftar/pull/54) are merged.
+Checked 15 November: [PR #53](https://github.com/atlas700/goldenbase/pull/53)
+and [PR #54](https://github.com/atlas700/goldenbase/pull/54) are merged.
 **Task 34 was closed by founder direction on 18 November for synthetic staging
 tracking:** the [recovery handoff](handoffs/34-isolated-staging-recovery.md)
 records the isolated Free synthetic Neon restore, restricted runtime/backup roles,
@@ -139,7 +141,7 @@ addresses enabled, while custom cap editing requires a credit card; no provider
 quota/spending email was found. These operational gates remain unpassed, block
 Task 35 admission under issue #65, and are not waived by the task-status closure.
 Paid setup, production recovery and real-business use remain unauthorized.
-Earlier [PR #62](https://github.com/atlas700/bazardaftar/pull/62) remains merged.
+Earlier [PR #62](https://github.com/atlas700/goldenbase/pull/62) remains merged.
 
 The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 
@@ -183,7 +185,7 @@ The project rules in `AGENTS.md` and `docs/` are mandatory. In particular:
 Copy this, then replace the bracketed task reference with exactly one task below.
 
 ```text
-You are continuing the BazarDaftar repository (formerly AFCS).
+You are continuing the GoldenBase repository (formerly AFCS).
 
 First inspect: AGENTS.md; the relevant docs/*.md rules; git diff; the current
 implementation; the gate status and pilot delivery order in this plan; and the

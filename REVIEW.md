@@ -1,6 +1,6 @@
 # Code review
 
-Use this guide when reviewing BazarDaftar changes. Start with [AGENTS.md](AGENTS.md)
+Use this guide when reviewing GoldenBase changes. Start with [AGENTS.md](AGENTS.md)
 and follow its task-specific links. The review procedure and validation order live
 in [Testing](docs/testing.md#pre-validation-code-review); required checks and the
 documentation-only exemption live in the [development workflow](docs/agents/development.md).

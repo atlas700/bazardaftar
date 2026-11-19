@@ -50,7 +50,7 @@ def run(args, env):
 def backup(s3, environment):
     env = database_environment(environment["STAGING_DATABASE_URL"])
     bucket = environment["BACKBLAZE_BUCKET_NAME"]
-    with tempfile.TemporaryDirectory(prefix="bazardaftar-backup-") as directory:
+    with tempfile.TemporaryDirectory(prefix="goldenbase-backup-") as directory:
         archive = Path(directory) / "database.dump"
         recovery_point = run([
             "psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c",
@@ -130,7 +130,7 @@ def restore_drill(s3, environment, saved):
                    "and c.relkind in ('r','p','v','m','S','f')"], env)
     if objects != "0":
         raise RuntimeError("Restore target is not empty.")
-    with tempfile.TemporaryDirectory(prefix="bazardaftar-restore-") as directory:
+    with tempfile.TemporaryDirectory(prefix="goldenbase-restore-") as directory:
         archive = Path(directory) / "downloaded.dump"
         s3.download_file(environment["BACKBLAZE_BUCKET_NAME"], saved["key"], str(archive))
         with archive.open("rb") as source:
