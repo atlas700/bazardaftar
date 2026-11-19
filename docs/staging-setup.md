@@ -31,7 +31,7 @@ use its private recovery record and do not repeat resource creation during resum
    Preserve the provider's TLS options. Do not disable certificate verification.
    Do not place credentials in this document, shell history, URLs shared in chat,
    GitHub artifacts, or `netlify.toml`.
-3. Import `atlas700/bazardaftar` into Netlify. Select the reviewed staging branch,
+3. Import `atlas700/goldenbase` into Netlify. Select the reviewed staging branch,
    keep initial deployment stopped until environment and migration setup is done,
    and record the stable HTTPS `*.netlify.app` origin. The committed
    [`netlify.toml`](../netlify.toml) sets Node 24, `npm run build`, and `.next`.

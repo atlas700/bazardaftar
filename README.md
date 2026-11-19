@@ -1,11 +1,9 @@
-# BazarDaftar
+# GoldenBase
 
-A Pashto-first workspace for grain and mixed-goods wholesalers, starting in
-Helmand, Afghanistan. The name pairs **Bazar** with **Daftar** to evoke a market's
-business records, with room to serve different kinds of wholesale goods.
+A Pashto-first workspace for grain and mixed-goods wholesalers in Afghanistan.
 
-Repository: [atlas700/bazardaftar](https://github.com/atlas700/bazardaftar).
-The npm package name is `bazardaftar`.
+Repository: [atlas700/goldenbase](https://github.com/atlas700/goldenbase).
+The npm package name is `goldenbase`.
 
 The current application supports business onboarding, staff access, products,
 weight units, categories, suppliers, one warehouse, and purchase drafting,
@@ -60,12 +58,12 @@ Database integration tests require the dedicated isolated database described in
 
 ## Rename compatibility
 
-BazarDaftar was previously called AFCS (Afghanistan Agricultural Supply Chain OS),
-and the repository was `atlas700/code-1`. Historical ADRs and handoffs retain their
-original names. Existing `AFCS_TEST_DATABASE_URL`, PostgreSQL names, Clerk
+GoldenBase was previously called BazarDaftar and AFCS (Afghanistan Agricultural
+Supply Chain OS). Historical ADRs and handoffs retain their original names.
+Existing `AFCS_TEST_DATABASE_URL`, PostgreSQL names, Clerk
 `afcs-` onboarding slugs, and `afcsOnboardingId` metadata remain stable so the
-rename does not interrupt existing setups or onboarding recovery. Existing local
-checkouts may keep their folder names; the folder name is not the product name.
+rename does not interrupt existing setups or onboarding recovery. The local
+checkout folder is `goldenbase`.
 
 ## Deployment plan
 

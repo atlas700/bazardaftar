@@ -1,6 +1,6 @@
-# BazarDaftar
+# GoldenBase
 
-BazarDaftar is a Pashto-first business workspace for grain and mixed-goods wholesalers in Afghanistan.
+GoldenBase is a Pashto-first business workspace for grain and mixed-goods wholesalers in Afghanistan.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -10,7 +10,7 @@ type Pilot = { email: string; clerkOrganizationId: string; organizationId: strin
 export const test = base.extend<{ pilot: Pilot }>({
   pilot: async ({}, runScenario) => {
     const runId = randomUUID();
-    const email = `bazardaftar+clerk_test_${runId}@example.com`;
+    const email = `goldenbase+clerk_test_${runId}@example.com`;
     assert.ok(process.env.CLERK_SECRET_KEY?.startsWith("sk_test_"), "Use a Clerk development instance.");
     const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
     const client = new Client({ connectionString: requireTestDatabaseUrl(process.env.AFCS_TEST_DATABASE_URL) });
@@ -18,10 +18,10 @@ export const test = base.extend<{ pilot: Pilot }>({
     await client.connect();
     try {
       assert.equal((await client.query("select current_database() as name")).rows[0].name, "afcs_task07_verify");
-      const user = await clerk.users.createUser({ emailAddress: [email], skipPasswordRequirement: true, privateMetadata: { bazardaftarE2eRun: runId } });
+      const user = await clerk.users.createUser({ emailAddress: [email], skipPasswordRequirement: true, privateMetadata: { goldenbaseE2eRun: runId } });
       userId = user.id;
       // Clerk rejects UUID digits as phone numbers; ownership stays in private metadata.
-      const organization = await clerk.organizations.createOrganization({ name: "BazarDaftar browser test", createdBy: userId, privateMetadata: { bazardaftarE2eRun: runId } });
+      const organization = await clerk.organizations.createOrganization({ name: "GoldenBase browser test", createdBy: userId, privateMetadata: { goldenbaseE2eRun: runId } });
       clerkOrganizationId = organization.id;
       const { data: memberships } = await clerk.organizations.getOrganizationMembershipList({ organizationId: organization.id, userId: [userId] });
       assert.equal(memberships.length, 1);
@@ -38,7 +38,7 @@ export const test = base.extend<{ pilot: Pilot }>({
       try {
         if (organizationId && clerkOrganizationId) {
           const remote = await clerk.organizations.getOrganization({ organizationId: clerkOrganizationId });
-          assert.equal(remote.privateMetadata.bazardaftarE2eRun, runId);
+          assert.equal(remote.privateMetadata.goldenbaseE2eRun, runId);
           const local = await client.query("select clerk_organization_id from organizations where id=$1", [organizationId]);
           assert.equal(local.rows[0]?.clerk_organization_id, clerkOrganizationId);
           await client.query("begin");
@@ -54,12 +54,12 @@ export const test = base.extend<{ pilot: Pilot }>({
         }
         if (clerkOrganizationId) {
           const remote = await clerk.organizations.getOrganization({ organizationId: clerkOrganizationId });
-          assert.equal(remote.privateMetadata.bazardaftarE2eRun, runId);
+          assert.equal(remote.privateMetadata.goldenbaseE2eRun, runId);
           await clerk.organizations.deleteOrganization(clerkOrganizationId);
         }
         if (userId) {
           const remote = await clerk.users.getUser(userId);
-          assert.equal(remote.privateMetadata.bazardaftarE2eRun, runId);
+          assert.equal(remote.privateMetadata.goldenbaseE2eRun, runId);
           await clerk.users.deleteUser(userId);
           const key = createHmac("sha256", process.env.CLERK_SECRET_KEY!).update(JSON.stringify(["request-limits-v1", userId])).digest("hex");
           await client.query("delete from request_rate_limits where scope='mutation' and key=$1", [key]);

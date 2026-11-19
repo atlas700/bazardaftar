@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "BazarDaftar",
-    template: "%s | BazarDaftar",
+    default: "GoldenBase",
+    template: "%s | GoldenBase",
   },
   description: "A Pashto-first workspace for grain and mixed-goods wholesalers.",
 };
